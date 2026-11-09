@@ -1,77 +1,52 @@
-import { Suspense } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
-import { LoadingState } from '@/components/shared/LoadingState';
+import { type ReactNode, Suspense } from 'react';
+import { Outlet } from 'react-router';
+import { AppLogo } from '@/components/shared/AppLogo';
+import { PageSkeleton } from '@/components/shared/skeletons';
 import {
     Sidebar,
     SidebarContent,
-    SidebarGroup,
-    SidebarGroupContent,
     SidebarHeader,
     SidebarInset,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
     SidebarProvider,
     SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { usePermission } from '@/hooks/usePermission';
-import { navigationItems } from './navigation';
+import { APP_NAME } from '@/lib/app-name';
+import { MainNavigation } from './MainNavigation';
 import { UserMenu } from './UserMenu';
 
-export function AppLayout() {
-    const { can } = usePermission();
-    const { pathname } = useLocation();
+interface AppLayoutProps {
+    children?: ReactNode;
+}
 
-    const visibleItems = navigationItems.filter(
-        (item) => item.permission === undefined || can(item.permission),
-    );
-
+export function AppLayout({ children }: AppLayoutProps) {
     return (
-        <SidebarProvider>
+        // SidebarProvider writes this cookie but cannot read it without a server render.
+        <SidebarProvider defaultOpen={!document.cookie.includes('sidebar_state=false')}>
             <a
                 href="#main-content"
                 className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background focus:p-2"
             >
                 Lewati ke konten utama
             </a>
-            <Sidebar>
-                <SidebarHeader className="px-4 py-3 text-sm font-semibold">
-                    Enterprise System
+            <Sidebar collapsible="icon">
+                <SidebarHeader className="h-14 flex-row items-center gap-2.5 px-3 text-sm font-semibold">
+                    <AppLogo className="bg-primary text-primary-foreground" />
+                    <span className="truncate group-data-[collapsible=icon]:hidden">
+                        {APP_NAME}
+                    </span>
                 </SidebarHeader>
                 <SidebarContent>
-                    <SidebarGroup>
-                        <SidebarGroupContent>
-                            <SidebarMenu aria-label="Menu utama">
-                                {visibleItems.map((item) => (
-                                    <SidebarMenuItem key={item.to}>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={
-                                                item.to === '/'
-                                                    ? pathname === '/'
-                                                    : pathname.startsWith(item.to)
-                                            }
-                                        >
-                                            <NavLink to={item.to} end={item.to === '/'}>
-                                                <item.icon aria-hidden="true" />
-                                                <span>{item.label}</span>
-                                            </NavLink>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
+                    <MainNavigation />
                 </SidebarContent>
             </Sidebar>
             <SidebarInset>
-                <header className="flex h-12 items-center justify-between border-b px-3">
+                <header className="flex h-14 items-center justify-between border-b bg-card px-3 md:px-4">
                     <SidebarTrigger aria-label="Buka atau tutup menu" />
                     <UserMenu />
                 </header>
-                <div id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none">
-                    <Suspense fallback={<LoadingState label="Memuat halaman" />}>
-                        <Outlet />
+                <div id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6">
+                    <Suspense fallback={<PageSkeleton label="Memuat halaman" />}>
+                        {children ?? <Outlet />}
                     </Suspense>
                 </div>
             </SidebarInset>

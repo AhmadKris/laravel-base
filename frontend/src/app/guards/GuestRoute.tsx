@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { type Location, Navigate, useLocation } from 'react-router';
-import { LoadingState } from '@/components/shared/LoadingState';
+import { FormSkeleton } from '@/components/shared/skeletons';
 import { useAuthStore } from '@/stores/auth-store';
 
 interface GuestRouteProps {
@@ -12,7 +12,7 @@ export function GuestRoute({ children }: GuestRouteProps) {
     const location = useLocation();
 
     if (status === 'loading') {
-        return <LoadingState label="Memeriksa sesi" />;
+        return <FormSkeleton label="Memeriksa sesi" />;
     }
 
     if (status === 'authenticated') {

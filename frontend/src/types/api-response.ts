@@ -3,6 +3,7 @@ import type { components } from './api';
 type Schemas = components['schemas'];
 
 export type AuthenticatedUser = Schemas['AuthenticatedUserResource'];
+export type AuditLog = Schemas['AuditLogResource'];
 export type ForgotPasswordPayload = Schemas['ForgotPasswordRequest'];
 export type ResetPasswordPayload = Schemas['ResetPasswordRequest'];
 export type ChangePasswordPayload = Schemas['ChangePasswordRequest'];

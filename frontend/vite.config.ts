@@ -35,5 +35,7 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: './src/test/setup.ts',
         include: ['src/**/*.test.{ts,tsx}'],
+        // The theme contrast test reads the raw tokens from this file.
+        css: { include: [/index.css/] },
     },
 });

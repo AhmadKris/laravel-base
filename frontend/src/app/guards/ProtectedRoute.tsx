@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { ForbiddenPage } from '@/app/pages/ForbiddenPage';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { LoadingState } from '@/components/shared/LoadingState';
+import { AppShellSkeleton } from '@/components/shared/skeletons';
 import { useLoadCurrentUser } from '@/features/authentication/hooks/useLoadCurrentUser';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuthStore } from '@/stores/auth-store';
@@ -19,7 +19,7 @@ export function ProtectedRoute({ requiredPermission, children }: ProtectedRouteP
     const loadCurrentUser = useLoadCurrentUser();
 
     if (status === 'loading') {
-        return <LoadingState label="Memeriksa sesi" />;
+        return <AppShellSkeleton label="Memeriksa sesi" />;
     }
 
     if (status === 'unavailable') {

@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useLoadCurrentUser } from '@/features/authentication/hooks/useLoadCurrentUser';
+import { useThemeSync } from '@/hooks/useThemeSync';
 import { setUnauthenticatedHandler } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-error';
 import { useAuthStore } from '@/stores/auth-store';
@@ -24,6 +25,8 @@ export function AppProviders({ children }: AppProvidersProps) {
         () => new QueryClient({ defaultOptions: { queries: { retry: shouldRetry } } }),
     );
     const loadCurrentUser = useLoadCurrentUser();
+
+    useThemeSync();
 
     useEffect(() => {
         setUnauthenticatedHandler(useAuthStore.getState().setGuest);

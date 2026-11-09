@@ -17,7 +17,7 @@ interface ControlAttributes {
 
 type InputProps = Omit<ComponentProps<typeof Input>, 'name' | 'value' | 'defaultValue' | 'id'>;
 
-interface FormFieldProps<TValues extends FieldValues> extends InputProps {
+export interface FormFieldProps<TValues extends FieldValues> extends InputProps {
     control: Control<TValues>;
     name: FieldPath<TValues>;
     label: string;
