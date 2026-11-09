@@ -111,15 +111,15 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-701 | `GET /audit-logs` dan `GET /audit-logs/{id}` dengan filter user, modul, tanggal, dan aksi | M | T-108 | Tidak ada endpoint ubah atau hapus | Todo |
-| T-702 | Test bahwa login, perubahan user, role, permission, dan konfigurasi tercatat | S | T-605, T-701 | Setiap aksi menghasilkan satu record tanpa secret | Todo |
+| T-701 | `GET /audit-logs` dan `GET /audit-logs/{id}` dengan filter user, modul, tanggal, dan aksi | M | T-108 | Tidak ada endpoint ubah atau hapus | Done |
+| T-702 | Test bahwa login, perubahan user, role, permission, dan konfigurasi tercatat | S | T-605, T-701 | Setiap aksi menghasilkan satu record tanpa secret | Done |
 
 ## Fase 8: System Configuration
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
 | T-801 | `GET /system-configurations` dan `GET /system-configurations/{key}` | S | T-204 | Nilai `is_sensitive` tidak pernah dikirim | Todo |
-| T-802 | `PATCH /system-configurations/{key}` | M | T-105, T-801 | Memakai `version`, nilai sensitif terenkripsi, tercatat di audit | Todo |
+| T-802 | `PATCH /system-configurations/{key}` | M | T-105, T-801 | Memakai `version`, nilai sensitif terenkripsi, tercatat di audit dan masuk `AuditCoverageTest` | Todo |
 | T-803 | `GET /system-configurations/public` dan `GET /system-configurations/feature-flags` | S | T-801 | Route terdaftar sebelum `{key}`, `public` hanya berisi `is_public` | Todo |
 
 ## Fase 9: Frontend Shell

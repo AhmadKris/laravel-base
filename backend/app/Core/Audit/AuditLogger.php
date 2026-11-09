@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 final class AuditLogger
 {
-    private const string LOG_NAME = 'audit';
+    public const string LOG_NAME = 'audit';
 
     private const string REDACTED = '[REDACTED]';
 

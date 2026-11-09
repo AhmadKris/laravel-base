@@ -337,7 +337,7 @@ Error response tidak boleh menampilkan stack trace, SQL query, credential, atau 
 
 | API Field | Database | Rule |
 |---|---|---|
-| `id` dan relasi `*_id` | Kolom `uuid` | Semua resource, kecuali `roles` dan `permissions` yang memakai ID bawaan Spatie |
+| `id` dan relasi `*_id` | Kolom `uuid` | Semua resource, kecuali `roles`, `permissions`, dan `audit-logs` yang memakai ID bawaan paket |
 | `status` pada user dan department | `is_active` | `active` = true, `inactive` = false |
 | `subject_type`, `subject_id` | `reference_type`, `reference_id` | `subject_type` divalidasi terhadap allowlist; UUID di-resolve menjadi ID internal |
 | `workflow_id` | `workflow_definitions.uuid` | Instance baru memakai versi `published` terbaru |
@@ -1000,6 +1000,18 @@ Base resource:
 | POST | /audit-logs/export | audit.export |
 
 Audit log bersifat read-only melalui API operasional. Tidak menyediakan endpoint edit atau delete untuk user biasa.
+
+`GET /audit-logs` diurutkan dari yang terbaru dan mendukung parameter berikut:
+
+| Parameter | Keterangan |
+|---|---|
+| `user_id` | UUID user yang melakukan aksi |
+| `module` | `auth`, `user`, `role`, `permission`, `department`, atau `system` |
+| `action` | Nama event lengkap, misalnya `user.created` |
+| `date_from`, `date_to` | Format `YYYY-MM-DD` dalam UTC, inklusif |
+| `search` | Pencarian pada nama event |
+
+Setiap record berisi `id`, `event`, `actor`, `subject`, `properties`, dan `created_at`. Actor dan subject yang sudah di-soft delete tetap ditampilkan. `POST /audit-logs/export` tidak termasuk Base v1.
 
 ---
 
