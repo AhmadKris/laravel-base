@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -14,16 +14,14 @@ import { useAuthStore } from '@/stores/auth-store';
 
 export function UserMenu() {
     const userName = useAuthStore((state) => state.user?.name);
-    const setGuest = useAuthStore((state) => state.setGuest);
+    const setSignedOut = useAuthStore((state) => state.setSignedOut);
     const queryClient = useQueryClient();
-    const navigate = useNavigate();
 
     const logout = useMutation({
         mutationFn: authService.logout,
         onSuccess: () => {
-            setGuest();
+            setSignedOut();
             queryClient.clear();
-            void navigate('/login', { replace: true });
         },
         onError: notifyError,
     });
@@ -37,6 +35,9 @@ export function UserMenu() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                    <Link to="/change-password">Ubah password</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem disabled={logout.isPending} onSelect={() => logout.mutate()}>
                     Keluar
                 </DropdownMenuItem>

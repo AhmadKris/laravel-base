@@ -36,6 +36,10 @@ export function ProtectedRoute({ requiredPermission, children }: ProtectedRouteP
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
+    if (status === 'signed-out') {
+        return <Navigate to="/login" replace />;
+    }
+
     if (requiredPermission !== undefined && !can(requiredPermission)) {
         return <ForbiddenPage />;
     }

@@ -1,5 +1,5 @@
 import type { FieldPath, FieldValues, UseFormSetError } from 'react-hook-form';
-import { ApiError } from './api-error';
+import { ApiError, toApiError } from './api-error';
 
 /**
  * Shows server validation errors on their form fields. Returns false when the error has none.
@@ -23,4 +23,15 @@ export function applyFieldErrors<TValues extends FieldValues>(
     });
 
     return entries.length > 0;
+}
+
+/**
+ * Also sets a form-level message, so an error on a field the form does not render stays visible.
+ */
+export function applyFormError<TValues extends FieldValues>(
+    error: unknown,
+    setError: UseFormSetError<TValues>,
+): void {
+    applyFieldErrors(error, setError);
+    setError('root.server', { type: 'server', message: toApiError(error).message });
 }

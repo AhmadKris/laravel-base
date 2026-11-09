@@ -3,6 +3,9 @@ import type { components } from './api';
 type Schemas = components['schemas'];
 
 export type AuthenticatedUser = Schemas['AuthenticatedUserResource'];
+export type ForgotPasswordPayload = Schemas['ForgotPasswordRequest'];
+export type ResetPasswordPayload = Schemas['ResetPasswordRequest'];
+export type ChangePasswordPayload = Schemas['ChangePasswordRequest'];
 
 export interface ApiEnvelope<TData> {
     success: boolean;

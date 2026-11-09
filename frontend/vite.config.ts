@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import type { ProxyOptions } from 'vite';
 import { defineConfig } from 'vitest/config';
 
-const backendUrl = 'http://localhost:8000';
+const backendUrl = process.env.BACKEND_URL ?? 'http://localhost:8000';
 
 const backendProxy: ProxyOptions = { target: backendUrl };
 
