@@ -127,3 +127,9 @@ it('limits repeated login attempts', function () {
         ->assertTooManyRequests()
         ->assertJsonPath('code', 'TOO_MANY_REQUESTS');
 });
+
+it('explains missing credentials in Indonesian', function () {
+    $this->postJson('/login', [])
+        ->assertJsonPath('errors.email.0', 'Email wajib diisi.')
+        ->assertJsonPath('errors.password.0', 'Password wajib diisi.');
+});

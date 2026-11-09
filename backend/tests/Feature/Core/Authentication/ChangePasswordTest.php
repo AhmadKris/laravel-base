@@ -143,3 +143,20 @@ it('limits repeated password change attempts', function () {
         ->assertTooManyRequests()
         ->assertJsonPath('code', 'TOO_MANY_REQUESTS');
 });
+
+it('explains password failures in Indonesian', function () {
+    $this->breachedSuffixes = strtoupper(substr(sha1('kata-sandi-yang-bocor-1'), 5)).':42';
+    $user = User::factory()->create(['password' => CURRENT_PASSWORD]);
+
+    postChange($this, changePayload(['current_password' => 'not-my-current-password']), $user)
+        ->assertJsonPath('errors.current_password.0', 'Password saat ini salah.');
+
+    postChange($this, changePayload(['password' => 'pendek', 'password_confirmation' => 'pendek']), $user)
+        ->assertJsonPath('errors.password.0', 'Password minimal 12 karakter.');
+
+    postChange($this, changePayload(['password_confirmation' => 'berbeda-dari-password-baru']), $user)
+        ->assertJsonPath('errors.password.0', 'Konfirmasi password tidak sama.');
+
+    postChange($this, changePayload(['password' => 'kata-sandi-yang-bocor-1', 'password_confirmation' => 'kata-sandi-yang-bocor-1']), $user)
+        ->assertJsonPath('errors.password.0', 'Password ini pernah muncul di kebocoran data. Gunakan password lain.');
+});

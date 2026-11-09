@@ -136,8 +136,8 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-1001 | Halaman login, lupa password, reset password | M | T-304, T-903 | Pesan error mengikuti backend | Todo |
-| T-1002 | Halaman ubah password | S | T-305, T-904 | Error validasi tampil per field | Todo |
+| T-1001 | Halaman login, lupa password, reset password | M | T-304, T-903 | Pesan error mengikuti backend | Done |
+| T-1002 | Halaman ubah password | S | T-305, T-904 | Error validasi tampil per field | Done |
 | T-1003 | Departemen: daftar, detail, form, parent, hapus | M | T-503, T-905 | Konfirmasi hapus menyebut nama departemen | Todo |
 | T-1004 | User: daftar, filter, detail, form, role, deaktivasi | L | T-605, T-905 | Aksi mengikuti permission | Todo |
 | T-1005 | Role: daftar, form, pengaturan permission | L | T-404, T-905 | Konflik `version` meminta user memuat ulang data | Todo |

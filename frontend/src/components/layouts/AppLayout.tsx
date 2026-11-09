@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
+import { LoadingState } from '@/components/shared/LoadingState';
 import {
     Sidebar,
     SidebarContent,
@@ -68,7 +70,9 @@ export function AppLayout() {
                     <UserMenu />
                 </header>
                 <div id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none">
-                    <Outlet />
+                    <Suspense fallback={<LoadingState label="Memuat halaman" />}>
+                        <Outlet />
+                    </Suspense>
                 </div>
             </SidebarInset>
         </SidebarProvider>

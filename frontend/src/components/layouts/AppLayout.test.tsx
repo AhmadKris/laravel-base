@@ -1,25 +1,31 @@
+import { QueryClient } from '@tanstack/react-query';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, expect, it } from 'vitest';
+import { ProtectedRoute } from '@/app/guards/ProtectedRoute';
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from '@/test/server';
 import { makeUser, renderWithProviders } from '@/test/utils';
 import { AppLayout } from './AppLayout';
 
-function renderLayout(permissions: string[]) {
+function renderLayout(permissions: string[], queryClient?: QueryClient) {
     useAuthStore.getState().setUser(makeUser(permissions));
 
     const router = createMemoryRouter([
         {
-            element: <AppLayout />,
+            element: (
+                <ProtectedRoute>
+                    <AppLayout />
+                </ProtectedRoute>
+            ),
             children: [{ path: '/', element: <p>page content</p> }],
         },
         { path: '/login', element: <p>login page</p> },
     ]);
 
-    renderWithProviders(<RouterProvider router={router} />);
+    renderWithProviders(<RouterProvider router={router} />, queryClient);
 }
 
 function menuLabels(): string[] {
@@ -79,7 +85,21 @@ it('logs out with the keyboard and returns to login', async () => {
 
     expect(await screen.findByText('login page')).toBeInTheDocument();
     expect(loggedOut).toBe(true);
-    expect(useAuthStore.getState().status).toBe('guest');
+    expect(useAuthStore.getState().status).toBe('signed-out');
+});
+
+it('removes cached data when the user logs out', async () => {
+    server.use(http.post('*/logout', () => new HttpResponse(null, { status: 204 })));
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['users'], ['data pengguna sebelumnya']);
+    const user = userEvent.setup();
+    renderLayout([], queryClient);
+
+    await user.click(screen.getByRole('button', { name: /Menu akun/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Keluar' }));
+    await screen.findByText('login page');
+
+    expect(queryClient.getQueryData(['users'])).toBeUndefined();
 });
 
 it('keeps the session and reports a failed logout', async () => {

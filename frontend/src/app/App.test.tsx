@@ -19,7 +19,7 @@ it('shows the home page with the profile from the backend', async () => {
     expect(screen.getByText('Finance')).toBeInTheDocument();
 });
 
-it('sends a guest away from protected pages without looping', async () => {
+it('sends a guest from a protected page to the login page', async () => {
     server.use(
         http.get('*/api/v1/auth/user', () =>
             HttpResponse.json({ success: false, code: 'AUTH_UNAUTHENTICATED' }, { status: 401 }),
@@ -28,6 +28,6 @@ it('sends a guest away from protected pages without looping', async () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('heading', { name: 'Halaman tidak ditemukan' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Masuk' })).toBeVisible();
     expect(window.location.pathname).toBe('/login');
 });
