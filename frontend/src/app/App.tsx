@@ -1,7 +1,14 @@
+import { createBrowserRouter } from 'react-router';
+import { RouterProvider } from 'react-router/dom';
+import { AppProviders } from '@/app/providers/AppProviders';
+import { routes } from '@/app/router/routes';
+
+const router = createBrowserRouter(routes);
+
 export function App() {
     return (
-        <main className="flex min-h-svh items-center justify-center">
-            <h1 className="text-2xl font-semibold">Enterprise System</h1>
-        </main>
+        <AppProviders>
+            <RouterProvider router={router} />
+        </AppProviders>
     );
 }

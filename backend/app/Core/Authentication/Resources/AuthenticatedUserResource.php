@@ -22,7 +22,9 @@ final class AuthenticatedUserResource extends JsonResource
             'id' => $this->uuid,
             'name' => $this->name,
             'email' => $this->email,
+            /** @var list<string> */
             'roles' => $this->getRoleNames(),
+            /** @var list<string> */
             'permissions' => $this->getAllPermissions()->pluck('name'),
             'department' => $this->department === null ? null : [
                 'id' => $this->department->uuid,

@@ -126,11 +126,11 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-901 | Axios client, inisialisasi CSRF, dan penanganan 401, 403, 404, 409, 422, 429 | M | T-006, T-101 | Error 422 terhubung ke field form | Todo |
-| T-902 | Tipe TypeScript dari OpenAPI | S | T-110, T-005 | Type-check gagal jika kontrak berubah | Todo |
-| T-903 | Auth store, `usePermission`, `ProtectedRoute` | M | T-303, T-901 | Route mengikuti permission dari backend | Todo |
-| T-904 | Layout aplikasi, menu sesuai permission, halaman awal, 403, 404 | M | T-903 | Responsif dan dapat dipakai dengan keyboard | Todo |
-| T-905 | Komponen bersama: DataTable, pagination, FormField, ConfirmDialog, loading, empty, error, toast | L | T-005 | Dipakai oleh semua modul | Todo |
+| T-901 | Axios client, inisialisasi CSRF, dan penanganan 401, 403, 404, 409, 422, 429 | M | T-006, T-101 | Error 422 terhubung ke field form | Done |
+| T-902 | Tipe TypeScript dari OpenAPI | S | T-110, T-005 | Type-check gagal jika kontrak berubah | Done |
+| T-903 | Auth store, `usePermission`, `ProtectedRoute` | M | T-303, T-901 | Route mengikuti permission dari backend | Done |
+| T-904 | Layout aplikasi, menu sesuai permission, halaman awal, 403, 404 | M | T-903 | Responsif dan dapat dipakai dengan keyboard | Done |
+| T-905 | Komponen bersama: DataTable, pagination, FormField, ConfirmDialog, loading, empty, error, toast | L | T-005 | Dipakai oleh semua modul | Doing |
 
 ## Fase 10: Frontend Modul
 

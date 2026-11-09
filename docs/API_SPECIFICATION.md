@@ -1642,7 +1642,7 @@ Backend:
 
 Frontend:
 
-- OpenAPI-generated TypeScript types.
+- OpenAPI-generated TypeScript types di `frontend/src/types/api.d.ts`. Setelah kontrak berubah, jalankan `php artisan scramble:export --path=storage/app/openapi.json` di `backend/`, lalu `npm run api:types` di `frontend/`. CI gagal jika file ini berbeda dari kontrak.
 - Generated API client jika dibutuhkan.
 
 Gunakan satu sumber kontrak yang jelas agar dokumentasi tidak berbeda dari implementasi.
