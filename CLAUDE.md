@@ -27,7 +27,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Controller hanya menerima request dan mengembalikan response.
 - Satu Action untuk satu use case. Service hanya untuk logika yang dipakai ulang.
 - Repository, Contract, dan DTO hanya dibuat jika ada kebutuhan nyata saat itu.
-- Antarmodul berkomunikasi lewat contract atau event. Jangan memakai controller atau model internal modul lain.
+- Antarmodul berkomunikasi lewat contract atau event. Jangan memakai controller atau model internal modul lain. Pengecualian: `User` dan `Department` adalah model bersama yang boleh direferensikan langsung.
 - Gunakan transaksi untuk perubahan yang harus konsisten. Jangan memanggil HTTP, email, atau proses lambat di dalamnya.
 - Event yang memicu proses lanjutan dikirim setelah commit.
 - Job harus aman dijalankan ulang, payload minimal, dan tanpa secret.

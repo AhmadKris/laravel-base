@@ -70,6 +70,7 @@ Jika dua dokumen berbeda, dokumen yang menjadi sumber kebenaran untuk topik ters
 |---|---|
 | PHP | 8.4.x |
 | Struktur backend | `app/Core`, `app/Modules`, `app/Shared` |
+| Model bersama | `User` dan `Department` boleh direferensikan langsung antarmodul; model lain melalui contract atau event |
 | Model perusahaan | Satu perusahaan per instalasi, tanpa company, branch, atau tabel `organizations`; profil perusahaan disimpan di `system_configurations` |
 | Keanggotaan user | Untuk saat ini maksimal satu departemen melalui `users.department_id` |
 | Role | Global per user, tanpa Spatie teams; departemen membatasi data |

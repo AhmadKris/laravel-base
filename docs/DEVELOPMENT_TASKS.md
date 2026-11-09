@@ -92,10 +92,10 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-501 | `GET /departments`, `POST /departments`, `GET /departments/{id}`, `PATCH /departments/{id}` | M | T-401 | `parent_id` memakai UUID, kode duplikat ditolak | Todo |
-| T-502 | Validasi hierarchy | S | T-501 | Circular reference ditolak | Todo |
-| T-503 | `DELETE /departments/{id}` | S | T-501 | Departemen yang memiliki user atau sub-departemen ditolak | Todo |
-| T-504 | `GET /departments/{id}/users` | S | T-501 | Mengikuti `visibleTo` | Todo |
+| T-501 | `GET /departments`, `POST /departments`, `GET /departments/{id}`, `PATCH /departments/{id}` | M | T-401 | `parent_id` memakai UUID, kode duplikat ditolak | Done |
+| T-502 | Validasi hierarchy | S | T-501 | Circular reference ditolak | Done |
+| T-503 | `DELETE /departments/{id}` | S | T-501 | Departemen yang memiliki user atau sub-departemen ditolak | Done |
+| T-504 | `GET /departments/{id}/users` | S | T-501 | Mengikuti `visibleTo` | Done |
 
 ## Fase 6: User Management
 
