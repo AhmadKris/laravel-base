@@ -72,11 +72,11 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-301 | `POST /login` | M | T-106, T-107, T-108, T-201 | Pesan gagal generik, user nonaktif ditolak, session diregenerasi, `last_login_at` terisi, login berhasil dan gagal tercatat | Todo |
-| T-302 | `POST /logout` | S | T-301 | Session tidak dapat dipakai lagi | Todo |
-| T-303 | `GET /auth/user` | S | T-301, T-206 | Mengembalikan role, permission, dan department tanpa field sensitif | Todo |
-| T-304 | `POST /auth/forgot-password` dan `POST /auth/reset-password` | M | T-301 | Respons tidak mengungkap email terdaftar, token sekali pakai dan kedaluwarsa, session lama diakhiri | Todo |
-| T-305 | `POST /auth/change-password` | S | T-301 | Password lama diverifikasi, minimal 12 karakter, password bocor ditolak | Todo |
+| T-301 | `POST /login` | M | T-106, T-107, T-108, T-201 | Pesan gagal generik, user nonaktif ditolak, session diregenerasi, `last_login_at` terisi, login berhasil dan gagal tercatat | Done |
+| T-302 | `POST /logout` | S | T-301 | Session tidak dapat dipakai lagi | Done |
+| T-303 | `GET /auth/user` | S | T-301, T-206 | Mengembalikan role, permission, dan department tanpa field sensitif | Done |
+| T-304 | `POST /auth/forgot-password` dan `POST /auth/reset-password` | M | T-301 | Respons tidak mengungkap email terdaftar, token sekali pakai dan kedaluwarsa, session lama diakhiri | Done |
+| T-305 | `POST /auth/change-password` | S | T-301 | Password lama diverifikasi, minimal 12 karakter, password bocor ditolak | Done |
 
 ## Fase 4: Authorization
 
