@@ -57,14 +57,14 @@ Fase 9 boleh dimulai setelah fase 3 selesai, dan task fase 10 mengikuti endpoint
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-201 | Migration `users`: `uuid`, `is_active`, `last_login_at`, `deleted_at` | S | T-002 | Sesuai `DATABASE_DESIGN.md` | Todo |
-| T-202 | Migration `departments` dan `users.department_id` | S | T-201 | Foreign key dan unique `code` teruji | Todo |
-| T-203 | Migration package, `version` pada `roles`, dan guard `web` | S | T-003 | Tidak ada tabel ganda | Todo |
-| T-204 | Migration `system_configurations` | S | T-002 | Sesuai `DATABASE_DESIGN.md` | Todo |
-| T-205 | Factory untuk User, Department, dan SystemConfiguration | S | T-202, T-204 | Dapat dipakai di test | Todo |
-| T-206 | Seeder 19 permission Base v1 dan role Super Admin, Admin, Staff, Viewer | M | T-203 | Isi role cocok dengan `AUTHORIZATION_MATRIX.md` | Todo |
-| T-207 | Seeder department dan konfigurasi awal termasuk profil perusahaan | S | T-202, T-204 | Dapat dijalankan berulang tanpa data ganda | Todo |
-| T-208 | Command pembuatan Super Admin pertama dengan input password | S | T-206 | Tidak ada password default di kode atau seeder | Todo |
+| T-201 | Migration `users`: `uuid`, `is_active`, `last_login_at`, `deleted_at` | S | T-002 | Sesuai `DATABASE_DESIGN.md` | Done |
+| T-202 | Migration `departments` dan `users.department_id` | S | T-201 | Foreign key dan unique `code` teruji | Done |
+| T-203 | Migration package, `version` pada `roles`, dan guard `web` | S | T-003 | Tidak ada tabel ganda | Done |
+| T-204 | Migration `system_configurations` | S | T-002 | Sesuai `DATABASE_DESIGN.md` | Done |
+| T-205 | Factory untuk User, Department, dan SystemConfiguration | S | T-202, T-204 | Dapat dipakai di test | Done |
+| T-206 | Seeder 19 permission Base v1 dan role Super Admin, Admin, Staff, Viewer | M | T-203 | Isi role cocok dengan `AUTHORIZATION_MATRIX.md` | Done |
+| T-207 | Seeder department dan konfigurasi awal termasuk profil perusahaan | S | T-202, T-204 | Dapat dijalankan berulang tanpa data ganda | Done |
+| T-208 | Command pembuatan Super Admin pertama dengan input password | S | T-206 | Tidak ada password default di kode atau seeder | Done |
 
 Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `user.assign_role`, `department.view`, `department.create`, `department.update`, `department.delete`, `role.view`, `role.create`, `role.update`, `role.delete`, `permission.view`, `permission.assign`, `system_config.view`, `system_config.update`, `system_config.feature_flags`, `audit.view`.
 
