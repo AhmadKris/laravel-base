@@ -34,9 +34,9 @@ Fase 9 boleh dimulai setelah fase 3 selesai, dan task fase 10 mengikuti endpoint
 | T-002 | Pasang Laravel 13 dengan PHP 8.4, MySQL `utf8mb4_unicode_ci`, timezone UTC, `.env.example` | M | T-001 | Migration bawaan berjalan di MySQL lokal | Done |
 | T-003 | Pasang Sanctum, Spatie Permission, Activitylog, Scramble, Pest, Larastan, Pint; pastikan kompatibel dengan Laravel 13 | S | T-002 | `composer audit`, Pint, PHPStan, dan Pest berjalan | Done |
 | T-004 | Struktur `app/Core`, `app/Modules`, `app/Shared` dan pemuatan route per modul dengan prefix `/api/v1` | M | T-002 | Route di `Modules/*/Routes/api.php` terdaftar otomatis | Done |
-| T-005 | Pasang React, TypeScript strict, Vite, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand, React Hook Form, Zod, Axios, ESLint, Prettier, Vitest, Testing Library, MSW, Playwright | M | T-001 | Lint, type-check, test, dan build berjalan | Todo |
-| T-006 | Proxy Vite untuk `/api`, `/sanctum`, `/login`, dan `/logout` agar development meniru satu domain | S | T-002, T-005 | Frontend lokal dapat memanggil Laravel tanpa CORS | Todo |
-| T-007 | CI: Pint, PHPStan, test backend dengan MySQL, lint, type-check, test frontend, build, `composer audit`, `npm audit` | M | T-003, T-005 | Pipeline berjalan pada setiap PR | Todo |
+| T-005 | Pasang React, TypeScript strict, Vite, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand, React Hook Form, Zod, Axios, ESLint, Prettier, Vitest, Testing Library, MSW, Playwright | M | T-001 | Lint, type-check, test, dan build berjalan | Done |
+| T-006 | Proxy Vite untuk `/api`, `/sanctum`, `/login`, dan `/logout` agar development meniru satu domain | S | T-002, T-005 | Frontend lokal dapat memanggil Laravel tanpa CORS | Done |
+| T-007 | CI: Pint, PHPStan, test backend dengan MySQL, lint, type-check, test frontend, build, `composer audit`, `npm audit` | M | T-003, T-005 | Pipeline berjalan pada setiap PR | Blocked (workflow siap, perlu remote GitHub) |
 
 ## Fase 1: Fondasi Backend
 
