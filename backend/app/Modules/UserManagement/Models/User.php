@@ -6,11 +6,13 @@ namespace App\Modules\UserManagement\Models;
 
 use App\Modules\Department\Models\Department;
 use App\Modules\Department\Services\DepartmentAccessService;
+use App\Modules\UserManagement\Policies\UserPolicy;
 use App\Shared\Traits\HasPublicUuid;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +24,7 @@ use Spatie\Permission\Traits\HasRoles;
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 #[UseFactory(UserFactory::class)]
+#[UsePolicy(UserPolicy::class)]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

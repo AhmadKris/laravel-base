@@ -20,4 +20,16 @@ final class DepartmentAccessService
     {
         return $this->hasGlobalAccess($user) || $user->department_id === $department->id;
     }
+
+    public function canAccessUser(User $viewer, User $target): bool
+    {
+        return $this->hasGlobalAccess($viewer)
+            || $viewer->is($target)
+            || ($viewer->department_id !== null && $viewer->department_id === $target->department_id);
+    }
+
+    public function canAssignDepartment(User $actor, ?int $departmentId): bool
+    {
+        return $this->hasGlobalAccess($actor) || $departmentId === $actor->department_id;
+    }
 }

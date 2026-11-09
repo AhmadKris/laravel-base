@@ -19,7 +19,10 @@ final class UserListRequest extends ListRequest
 
     protected function filterRules(): array
     {
-        return ['status' => ['sometimes', Rule::enum(ActiveStatus::class)]];
+        return [
+            'status' => ['sometimes', Rule::enum(ActiveStatus::class)],
+            'department_id' => ['sometimes', 'uuid'],
+        ];
     }
 
     /**
@@ -35,6 +38,8 @@ final class UserListRequest extends ListRequest
                     ->orWhere('email', 'like', "%{$search}%")))
             ->when($this->validated('status'), fn (Builder $users, string $status) => $users
                 ->where('is_active', ActiveStatus::from($status)->toBoolean()))
+            ->when($this->validated('department_id'), fn (Builder $users, string $departmentId) => $users
+                ->whereRelation('department', 'uuid', $departmentId))
             ->orderBy('name')
             ->orderBy('id');
     }

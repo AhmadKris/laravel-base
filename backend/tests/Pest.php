@@ -7,6 +7,8 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)->in('Feature');
 
+const UNKNOWN_USER = '01932f5e-1234-7000-8000-123456789abc';
+
 /**
  * @param  array<string, mixed>  $attributes
  */

@@ -577,6 +577,18 @@ Request:
 }
 ```
 
+Field yang dapat diubah: `name`, `email`, `status`, dan `department_id`. Password tidak dapat diubah melalui endpoint ini.
+
+### Aturan Pengelolaan User
+
+- `DELETE /users/{id}` menonaktifkan akun tanpa menghapusnya dan mengakhiri semua session user. `PATCH` dengan `status: inactive` memiliki efek yang sama. Akun diaktifkan kembali dengan `status: active`.
+- User tidak dapat menonaktifkan akunnya sendiri (`USER_SELF_DEACTIVATION`), dan Super Admin aktif terakhir tidak dapat dinonaktifkan (`USER_LAST_SUPER_ADMIN`). Keduanya mengembalikan HTTP 409.
+- Actor hanya dapat mengubah, menonaktifkan, atau mengatur role user yang seluruh role-nya berada dalam kewenangan actor. Pengecualian: actor boleh mengubah profilnya sendiri.
+- Actor dengan scope departemen tidak dapat memindahkan user ke departemen lain atau membuat user di luar departemennya (`AUTH_PRIVILEGE_ESCALATION`).
+- `GET /users/{id}/roles` mengembalikan `data.roles` berupa daftar nama role.
+- `PUT /users/{id}/roles` menerima `roles` berupa daftar nama role dan mengganti seluruh role user. Actor tidak dapat mengubah role-nya sendiri.
+- `GET /users` mendukung `search` pada nama dan email, filter `status` dan `department_id`, serta `sort_by` untuk `name`, `email`, dan `created_at`.
+
 ---
 
 ## 8.2 Department Management
@@ -1132,6 +1144,8 @@ AUTH_PRIVILEGE_ESCALATION
 ROLE_PROTECTED
 ROLE_IN_USE
 DEPARTMENT_HAS_DEPENDENCIES
+USER_SELF_DEACTIVATION
+USER_LAST_SUPER_ADMIN
 INVALID_REQUEST
 RESOURCE_NOT_FOUND
 RESOURCE_CONFLICT
