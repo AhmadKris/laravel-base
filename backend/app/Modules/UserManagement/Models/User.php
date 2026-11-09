@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\UserManagement\Models;
 
 use App\Modules\Department\Models\Department;
+use App\Modules\Department\Services\DepartmentAccessService;
 use App\Shared\Traits\HasPublicUuid;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -38,6 +40,24 @@ class User extends Authenticatable
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     */
+    public function scopeVisibleTo(Builder $query, self $viewer): void
+    {
+        if (app(DepartmentAccessService::class)->hasGlobalAccess($viewer)) {
+            return;
+        }
+
+        $query->where(function (Builder $visible) use ($viewer): void {
+            $visible->whereKey($viewer->getKey());
+
+            if ($viewer->department_id !== null) {
+                $visible->orWhere('department_id', $viewer->department_id);
+            }
+        });
     }
 
     /**

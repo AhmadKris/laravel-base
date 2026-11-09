@@ -817,6 +817,7 @@ Contoh:
 ```text
 Super Admin
     |
+    +-- Can assign: Super Admin
     +-- Can assign: System Admin
     +-- Can assign: Admin
     +-- Can assign: Manager
@@ -832,7 +833,7 @@ Admin
     +-- Can assign: Viewer
 ```
 
-Matriks di atas merupakan contoh kebijakan assignment. Role yang boleh diberikan harus disimpan atau dikonfigurasi secara eksplisit, bukan hanya mengandalkan nama role.
+Matriks di atas merupakan contoh kebijakan assignment. Role yang boleh diberikan harus disimpan atau dikonfigurasi secara eksplisit, bukan hanya mengandalkan nama role. Konfigurasinya berada di `backend/config/authorization.php`. Super Admin dapat memberikan semua role, termasuk role custom dan Super Admin. Role tanpa entri tidak dapat memberikan role apa pun.
 
 ## 11.3 Permission Change Flow
 
