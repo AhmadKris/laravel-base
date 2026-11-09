@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Core\Api\Exceptions\ApiException;
+use App\Core\Api\Exceptions\ApiExceptionRenderer;
+use App\Core\Logging\AssignRequestId;
 use App\Core\Routing\ModuleRoutes;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,9 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         then: fn () => ModuleRoutes::loadFrom(app_path('Modules')),
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->prepend(AssignRequestId::class);
+        $middleware->statefulApi();
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReport(ApiException::class);
+        $exceptions->render(new ApiExceptionRenderer);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
