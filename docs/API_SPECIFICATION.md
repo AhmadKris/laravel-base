@@ -609,6 +609,13 @@ Base resource:
 
 Backend wajib memverifikasi bahwa `parent_id`, jika diberikan, valid dan tidak membentuk circular reference.
 
+Aturan tambahan:
+
+- Role dengan akses global melihat semua departemen. Role lain hanya melihat departemennya sendiri; departemen lain mengembalikan HTTP 404.
+- Kode departemen tetap unik terhadap departemen yang sudah di-soft delete.
+- `GET /departments` mendukung `search` pada nama dan kode, filter `status`, serta `sort_by` untuk `code`, `name`, dan `created_at`.
+- `DELETE /departments/{id}` melakukan soft delete dan ditolak dengan HTTP 409 serta code `DEPARTMENT_HAS_DEPENDENCIES` jika masih memiliki user atau sub-departemen yang belum dihapus.
+
 ---
 
 ## 8.3 Role & Permission Management
@@ -1124,6 +1131,7 @@ AUTH_PASSWORD_RESET_INVALID
 AUTH_PRIVILEGE_ESCALATION
 ROLE_PROTECTED
 ROLE_IN_USE
+DEPARTMENT_HAS_DEPENDENCIES
 INVALID_REQUEST
 RESOURCE_NOT_FOUND
 RESOURCE_CONFLICT
