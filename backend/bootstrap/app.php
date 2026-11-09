@@ -6,6 +6,7 @@ use App\Core\Api\Exceptions\ApiException;
 use App\Core\Api\Exceptions\ApiExceptionRenderer;
 use App\Core\Logging\AssignRequestId;
 use App\Core\Routing\ModuleRoutes;
+use App\Modules\UserManagement\Console\CreateSuperAdminCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: fn () => ModuleRoutes::loadFrom(app_path('Modules')),
     )
+    ->withCommands([CreateSuperAdminCommand::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->statefulApi();

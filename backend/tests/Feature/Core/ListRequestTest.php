@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Tests\Fixtures\Http\SampleListRequest;
+use Tests\Fixtures\Models\SampleRecord;
 
 beforeEach(function () {
     Route::get('/api/v1/samples', fn (SampleListRequest $request) => [
         'per_page' => $request->perPage(),
-        'sql' => $request->applySorting(User::query())->toSql(),
+        'sql' => $request->applySorting(SampleRecord::query())->toSql(),
     ]);
 });
 
@@ -38,17 +38,17 @@ it('rejects invalid list parameters', function (string $query, string $field) {
 it('sorts by an allowed field', function () {
     $this->getJson('/api/v1/samples?sort_by=created_at&sort_direction=desc')
         ->assertOk()
-        ->assertJsonPath('sql', 'select * from `users` order by `created_at` desc');
+        ->assertJsonPath('sql', 'select * from `sample_records` order by `created_at` desc');
 });
 
 it('defaults to ascending when no direction is given', function () {
     $this->getJson('/api/v1/samples?sort_by=name')
         ->assertOk()
-        ->assertJsonPath('sql', 'select * from `users` order by `name` asc');
+        ->assertJsonPath('sql', 'select * from `sample_records` order by `name` asc');
 });
 
 it('does not sort when no field is given', function () {
     $this->getJson('/api/v1/samples')
         ->assertOk()
-        ->assertJsonPath('sql', 'select * from `users`');
+        ->assertJsonPath('sql', 'select * from `sample_records`');
 });

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Core\Audit\AuditLogger;
-use App\Models\User;
+use App\Modules\UserManagement\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;

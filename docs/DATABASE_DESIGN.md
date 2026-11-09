@@ -903,8 +903,10 @@ database/
 │   ├── 0001_01_01_000000_create_users_table.php
 │   ├── 0001_01_01_000001_create_cache_table.php
 │   ├── 0001_01_01_000002_create_jobs_table.php
+│   ├── 2026_01_01_000000_add_account_columns_to_users_table.php
 │   ├── 2026_01_01_000001_create_departments_table.php
 │   ├── 2026_01_01_000002_add_department_id_to_users_table.php
+│   ├── 2026_01_01_000003_create_permission_tables.php
 │   ├── 2026_01_01_000004_create_workflow_definitions_table.php
 │   ├── 2026_01_01_000005_create_workflow_versions_table.php
 │   ├── 2026_01_01_000006_create_workflow_steps_table.php
