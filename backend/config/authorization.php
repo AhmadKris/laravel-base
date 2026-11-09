@@ -9,4 +9,10 @@ return [
         'Super Admin' => ['*'],
         'Admin' => ['Manager', 'Supervisor', 'Staff', 'Viewer'],
     ],
+
+    // Roles outside "unrestricted_roles" only reach configuration keys under "allowed_prefixes".
+    'configuration_access' => [
+        'unrestricted_roles' => ['Super Admin', 'System Admin'],
+        'allowed_prefixes' => ['company.', 'localization.'],
+    ],
 ];

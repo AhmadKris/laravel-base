@@ -1035,6 +1035,15 @@ Route statis `public` dan `feature-flags` harus didaftarkan sebelum route `{key}
 
 Credential, secret, dan konfigurasi internal tidak boleh dikembalikan melalui endpoint umum.
 
+Aturan tambahan:
+
+- Konfigurasi diidentifikasi dengan `key`, misalnya `company.name`. Response berisi `key`, `value`, `is_public`, `is_sensitive`, `description`, `version`, dan `updated_at`.
+- Nilai `is_sensitive` selalu dikembalikan sebagai `null`, disimpan terenkripsi, dan tidak ditulis ke audit log.
+- `PATCH /system-configurations/{key}` menerima `value` dan `version`. Flag `is_public` dan `is_sensitive` tidak dapat diubah melalui API.
+- Nilai divalidasi per key untuk `company.*`, `localization.*`, dan `feature.*`.
+- `GET /system-configurations/public` mengembalikan objek `key: value` dari konfigurasi publik yang tidak sensitif.
+- `GET /system-configurations/feature-flags` mengembalikan daftar `key` dan `enabled` dari key berawalan `feature.`.
+
 ---
 
 ## 8.11 Health Check
