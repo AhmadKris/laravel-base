@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,11 +10,9 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
-    $this->finance = Department::factory()->create(['name' => 'Finance']);
-    $this->it = Department::factory()->create(['name' => 'Technology']);
     $this->admin = userWithRole('Admin');
-    $this->financeUser = User::factory()->create(['name' => 'Ani', 'department_id' => $this->finance->id]);
-    $this->itUser = User::factory()->create(['name' => 'Budi', 'department_id' => $this->it->id]);
+    $this->financeUser = User::factory()->create(['name' => 'Ani']);
+    $this->itUser = User::factory()->create(['name' => 'Budi']);
 });
 
 it('rejects guests', function (string $method, string $path) {
@@ -45,7 +42,7 @@ it('rejects roles outside the matrix before looking up the user', function (stri
     'viewer cannot update' => ['Viewer', 'PATCH', '/users/'.UNKNOWN_USER],
 ]);
 
-it('lists all users with department and roles for global roles', function () {
+it('lists all users with roles for global roles', function () {
     $this->financeUser->forceFill(['name' => 'Qzxwy Ani'])->save();
     $this->financeUser->assignRole('Staff');
 
@@ -54,7 +51,6 @@ it('lists all users with department and roles for global roles', function () {
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $this->financeUser->uuid)
-        ->assertJsonPath('data.0.department.name', 'Finance')
         ->assertJsonPath('data.0.roles', ['Staff'])
         ->assertJsonPath('data.0.status', 'active')
         ->assertJsonMissingPath('data.0.password')
@@ -62,12 +58,14 @@ it('lists all users with department and roles for global roles', function () {
         ->assertJsonMissingPath('data.0.uuid');
 });
 
-it('limits the list to the department for other roles', function () {
-    $staff = userWithRole('Staff', ['department_id' => $this->finance->id]);
+it('limits the list to the own account for other roles', function () {
+    $staff = userWithRole('Staff');
 
-    $names = collect($this->actingAs($staff)->getJson('/api/v1/users')->assertOk()->json('data'))->pluck('id');
-
-    expect($names->all())->toEqualCanonicalizing([$this->financeUser->uuid, $staff->uuid]);
+    $this->actingAs($staff)
+        ->getJson('/api/v1/users')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $staff->uuid);
 });
 
 it('filters and sorts the list', function () {
@@ -75,29 +73,18 @@ it('filters and sorts the list', function () {
 
     $this->actingAs($this->admin)->getJson('/api/v1/users?status=inactive')
         ->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Budi');
-    $this->actingAs($this->admin)->getJson('/api/v1/users?department_id='.$this->finance->uuid)
-        ->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Ani');
     $this->actingAs($this->admin)->getJson('/api/v1/users?sort_by=password')
         ->assertUnprocessable()->assertJsonValidationErrors('sort_by');
-    $this->actingAs($this->admin)->getJson('/api/v1/users?department_id=12')
-        ->assertUnprocessable()->assertJsonValidationErrors('department_id');
 });
 
-it('shows a user only within the scope', function () {
-    $staff = userWithRole('Staff', ['department_id' => $this->finance->id]);
+it('shows other roles only their own account', function () {
+    $staff = userWithRole('Staff');
 
-    $this->actingAs($staff)->getJson("/api/v1/users/{$this->financeUser->uuid}")->assertOk();
     $this->actingAs($staff)->getJson("/api/v1/users/{$staff->uuid}")->assertOk();
     $this->actingAs($staff)
-        ->getJson("/api/v1/users/{$this->itUser->uuid}")
+        ->getJson("/api/v1/users/{$this->financeUser->uuid}")
         ->assertNotFound()
         ->assertJsonPath('code', 'RESOURCE_NOT_FOUND');
-});
-
-it('hides users from someone without a department', function () {
-    $this->actingAs(userWithRole('Staff'))
-        ->getJson('/api/v1/users/'.User::factory()->create()->uuid)
-        ->assertNotFound();
 });
 
 it('does not resolve a user by internal id or after soft delete', function () {

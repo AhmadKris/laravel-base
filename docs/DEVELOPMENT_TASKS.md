@@ -1,6 +1,6 @@
 # Development Tasks: Base v1
 
-Pecahan pekerjaan untuk modul Base v1 sesuai `README.md`: Authentication, User Management, Role & Permission, Department, Audit Log, System Configuration, dan `/health`.
+Pecahan pekerjaan untuk modul Base v1 sesuai `README.md`: Authentication, User Management, Role & Permission, Audit Log, System Configuration, dan `/health`.
 
 Ukuran: **S** kurang dari setengah hari, **M** sekitar satu hari, **L** dua sampai tiga hari. Angka ini perkiraan awal dan perlu disesuaikan dengan kapasitas tim.
 
@@ -19,7 +19,7 @@ Status: `Todo`, `Doing`, `Done`, `Blocked`.
 ```text
 0 Setup → 1 Fondasi → 2 Data → 3 Authentication → 4 Authorization
                                                       ↓
-          8 System Config ← 7 Audit API ← 6 User ← 5 Department
+          8 System Config ← 7 Audit API ← 6 User
                  ↓
 9 Frontend Shell → 10 Frontend Modul → 11 Verifikasi → 12 Deployment
 ```
@@ -66,7 +66,7 @@ Fase 9 boleh dimulai setelah fase 3 selesai, dan task fase 10 mengikuti endpoint
 | T-207 | Seeder department dan konfigurasi awal termasuk profil perusahaan | S | T-202, T-204 | Dapat dijalankan berulang tanpa data ganda | Done |
 | T-208 | Command pembuatan Super Admin pertama dengan input password | S | T-206 | Tidak ada password default di kode atau seeder | Done |
 
-Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `user.assign_role`, `department.view`, `department.create`, `department.update`, `department.delete`, `role.view`, `role.create`, `role.update`, `role.delete`, `permission.view`, `permission.assign`, `system_config.view`, `system_config.update`, `system_config.feature_flags`, `audit.view`.
+Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `user.assign_role`, `role.view`, `role.create`, `role.update`, `role.delete`, `permission.view`, `permission.assign`, `system_config.view`, `system_config.update`, `system_config.feature_flags`, `audit.view`.
 
 ## Fase 3: Authentication
 
@@ -74,7 +74,7 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 |---|---|---|---|---|---|
 | T-301 | `POST /login` | M | T-106, T-107, T-108, T-201 | Pesan gagal generik, user nonaktif ditolak, session diregenerasi, `last_login_at` terisi, login berhasil dan gagal tercatat | Done |
 | T-302 | `POST /logout` | S | T-301 | Session tidak dapat dipakai lagi | Done |
-| T-303 | `GET /auth/user` | S | T-301, T-206 | Mengembalikan role, permission, dan department tanpa field sensitif | Done |
+| T-303 | `GET /auth/user` | S | T-301, T-206 | Mengembalikan role dan permission tanpa field sensitif | Done |
 | T-304 | `POST /auth/forgot-password` dan `POST /auth/reset-password` | M | T-301 | Respons tidak mengungkap email terdaftar, token sekali pakai dan kedaluwarsa, session lama diakhiri | Done |
 | T-305 | `POST /auth/change-password` | S | T-301 | Password lama diverifikasi, minimal 12 karakter, password bocor ditolak | Done |
 
@@ -82,20 +82,22 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-401 | `DepartmentAccessService` dan query scope `visibleTo` pada User | M | T-202, T-206 | Super Admin dan Admin melihat semua user; Staff dan Viewer hanya departemennya | Done |
+| T-401 | `UserAccessService` dan query scope `visibleTo` pada User | M | T-202, T-206 | Super Admin dan Admin melihat semua user; role lain hanya akunnya sendiri | Done |
 | T-402 | `GET /permissions`, `GET /roles`, `GET /roles/{id}`, `GET /roles/{id}/permissions` | S | T-206 | Sesuai matriks | Done |
 | T-403 | `POST /roles`, `PATCH /roles/{id}`, `DELETE /roles/{id}` | M | T-402 | Role yang masih dipakai dan role bawaan tidak dapat dihapus | Done |
 | T-404 | `PUT /roles/{id}/permissions` | M | T-105, T-402 | Memakai `version`, permission tidak terdaftar ditolak, tidak dapat memberi di luar kewenangan, cache dibersihkan, tercatat di audit | Done |
 | T-405 | Konfigurasi role yang boleh diberikan oleh tiap role | S | T-206 | Admin tidak dapat memberikan Super Admin | Done |
 
-## Fase 5: Department
+## Fase 5: Department (dihapus)
+
+Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya dihapus oleh migration `remove_departments`.
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
 | T-501 | `GET /departments`, `POST /departments`, `GET /departments/{id}`, `PATCH /departments/{id}` | M | T-401 | `parent_id` memakai UUID, kode duplikat ditolak | Done |
-| T-502 | Validasi hierarchy | S | T-501 | Circular reference ditolak | Done |
-| T-503 | `DELETE /departments/{id}` | S | T-501 | Departemen yang memiliki user atau sub-departemen ditolak | Done |
-| T-504 | `GET /departments/{id}/users` | S | T-501 | Mengikuti `visibleTo` | Done |
+| T-502 | Validasi hierarchy | S | T-501 | Circular reference ditolak | Dibatalkan |
+| T-503 | `DELETE /departments/{id}` | S | T-501 | Departemen yang memiliki user atau sub-departemen ditolak | Dibatalkan |
+| T-504 | `GET /departments/{id}/users` | S | T-501 | Mengikuti `visibleTo` | Dibatalkan |
 
 ## Fase 6: User Management
 
@@ -103,7 +105,7 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 |---|---|---|---|---|---|
 | T-601 | `GET /users` dan `GET /users/{id}` dengan filter dan search | M | T-103, T-401 | User di luar scope mendapat 404 | Done |
 | T-602 | `POST /users` | M | T-601 | Email unik, password tidak pernah dikembalikan, tercatat di audit | Done |
-| T-603 | `PATCH /users/{id}` termasuk `department_id` dan `status` | M | T-601 | Perubahan tercatat, user tidak dapat memindahkan departemennya sendiri tanpa permission | Done |
+| T-603 | `PATCH /users/{id}` termasuk `status` | M | T-601 | Perubahan tercatat | Done |
 | T-604 | `DELETE /users/{id}` sebagai deaktivasi | M | T-601 | Session user berakhir, tidak dapat menonaktifkan diri sendiri atau Super Admin terakhir | Done |
 | T-605 | `GET /users/{id}/roles` dan `PUT /users/{id}/roles` | M | T-405, T-601 | Privilege escalation ditolak, tercatat di audit | Done |
 
@@ -145,7 +147,6 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 |---|---|---|---|---|---|
 | T-1001 | Halaman login, lupa password, reset password | M | T-304, T-903 | Pesan error mengikuti backend | Done |
 | T-1002 | Halaman ubah password | S | T-305, T-904 | Error validasi tampil per field | Done |
-| T-1003 | Departemen: daftar, detail, form, parent, hapus | M | T-503, T-905 | Konfirmasi hapus menyebut nama departemen | Todo |
 | T-1004 | User: daftar, filter, detail, form, role, deaktivasi | L | T-605, T-905 | Aksi mengikuti permission | Todo |
 | T-1005 | Role: daftar, form, pengaturan permission | L | T-404, T-905 | Konflik `version` meminta user memuat ulang data | Todo |
 | T-1006 | Audit log: daftar, filter, detail | M | T-701, T-905 | Hanya baca | Todo |

@@ -5,6 +5,7 @@ import { ListSkeleton } from '@/components/shared/skeletons';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toApiError } from '@/lib/api-error';
+import { formatDateTime } from '@/lib/format';
 import type { AuditLog } from '@/types/api-response';
 import { dashboardService } from '../services/dashboardService';
 
@@ -17,9 +18,6 @@ const EVENT_LABELS: Record<string, string> = {
     'auth.logout': 'keluar dari aplikasi',
     'auth.password_changed': 'mengubah password',
     'auth.password_reset': 'mereset password',
-    'department.created': 'menambahkan departemen',
-    'department.updated': 'memperbarui departemen',
-    'department.deleted': 'menghapus departemen',
     'permission.assigned': 'memberikan permission',
     'permission.revoked': 'mencabut permission',
     'role.created': 'membuat role',
@@ -29,12 +27,9 @@ const EVENT_LABELS: Record<string, string> = {
     'user.created': 'menambahkan pengguna',
     'user.updated': 'memperbarui data pengguna',
     'user.deactivated': 'menonaktifkan pengguna',
-    'user.department_changed': 'memindahkan departemen pengguna',
     'user.role_assigned': 'memberikan role kepada pengguna',
     'user.role_removed': 'mencabut role pengguna',
 };
-
-const timeFormat = new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 
 function ActivityRow({ activity }: { activity: AuditLog }) {
     const actorName = activity.actor?.name ?? UNKNOWN_ACTOR;
@@ -49,7 +44,7 @@ function ActivityRow({ activity }: { activity: AuditLog }) {
                 </span>
                 {activity.created_at !== null && (
                     <span className="text-xs text-muted-foreground">
-                        {timeFormat.format(new Date(activity.created_at))}
+                        {formatDateTime(activity.created_at)}
                     </span>
                 )}
             </div>

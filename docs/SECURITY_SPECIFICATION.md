@@ -51,7 +51,7 @@ Security specification mencakup:
 
 1. Authentication and session management.
 2. Authorization and access control.
-3. Department data scope.
+3. Scope data pengguna.
 4. Password and credential security.
 5. API security.
 6. Input validation and output encoding.
@@ -125,7 +125,7 @@ flowchart TD
 
     D --> M[Rate Limiting]
     E --> N[Session Security]
-    F --> O[Department Scope]
+    F --> O[Data Scope]
     H --> P[Audit Logging]
     P --> Q[Monitoring / Alerting]
 ```
@@ -302,7 +302,6 @@ Gunakan kombinasi:
 - Spatie Permission untuk Role-Based Access Control.
 - Laravel Policy untuk resource-level authorization.
 - Laravel Gate untuk authorization berbasis kemampuan.
-- Department scope untuk pembatasan data per departemen.
 
 Authorization harus diperiksa di backend untuk setiap operasi yang dilindungi.
 
@@ -314,7 +313,7 @@ Contoh role:
 |---|---|
 | Super Admin | Pengelolaan platform |
 | System Admin | Konfigurasi dan operasional sistem |
-| Admin | Pengelolaan user dan departemen |
+| Admin | Pengelolaan user |
 | Manager | Pengelolaan dan approval |
 | Supervisor | Operasional dan approval tertentu |
 | Staff | Operasional sesuai permission |
@@ -338,10 +337,6 @@ user.create
 user.update
 user.delete
 
-department.view
-department.create
-department.update
-department.delete
 
 workflow.submit
 workflow.approve
@@ -360,20 +355,13 @@ Permission harus menggunakan naming convention yang konsisten.
 Contoh:
 
 ```php
-class DepartmentPolicy
+class UserPolicy
 {
-    public function view(User $user, Department $department): bool
+    public function view(User $user, User $target): bool
     {
-        return $user->can('department.view')
-            && app(DepartmentAccessService::class)
-                ->canAccessDepartment($user, $department);
-    }
-
-    public function update(User $user, Department $department): bool
-    {
-        return $user->can('department.update')
-            && app(DepartmentAccessService::class)
-                ->canAccessDepartment($user, $department);
+        return $user->can('user.view')
+            && app(UserAccessService::class)
+                ->canAccessUser($user, $target);
     }
 }
 ```
@@ -382,40 +370,17 @@ Policy harus mempertimbangkan:
 
 - Permission.
 - Ownership.
-- Department membership.
 - Resource status.
 - Business rule.
 - Separation of duties.
 
-## 5.5 Department Data Scope
-
-Sistem melayani satu perusahaan per instalasi, sehingga tidak ada isolasi antarperusahaan. Data yang dibatasi per departemen wajib menyimpan `department_id` dan di-query melalui scope yang konsisten.
-
-Contoh:
-
-```php
-Document::query()
-    ->visibleTo($user)
-    ->where('uuid', $uuid)
-    ->firstOrFail();
-```
-
-Ketentuan:
-
-1. Departemen user diambil dari data user, bukan dari request.
-2. Semua query resource harus mengikuti data scope.
-3. Relasi antar-resource harus divalidasi terhadap scope yang sama.
-4. Background job harus memeriksa ulang scope saat diproses.
-5. Export dan reporting harus menerapkan scope yang sama.
-6. Cache key harus memuat scope jika hasilnya berbeda antardepartemen.
-
-## 5.6 Privilege Escalation Prevention
+## 5.5 Privilege Escalation Prevention
 
 Sistem harus mencegah:
 
 - User mengubah role sendiri tanpa izin.
 - User memberikan permission kepada dirinya sendiri.
-- User mengubah departemen atau ownership resource.
+- User mengubah ownership resource.
 - User mengakses endpoint administrator.
 - User memanipulasi request untuk mendapatkan privilege.
 - User mengubah field internal yang tidak diizinkan.
@@ -512,11 +477,10 @@ Contoh:
 protected $fillable = [
     'name',
     'email',
-    'department_id',
 ];
 ```
 
-Jangan menerima field internal seperti `is_admin`, `department_id`, atau `created_by` tanpa aturan authorization dan validasi yang sesuai.
+Jangan menerima field internal seperti `is_admin` atau `created_by` tanpa aturan authorization dan validasi yang sesuai.
 
 ## 6.5 SQL Injection Prevention
 
@@ -797,7 +761,7 @@ users:list:{scope_hash}:{filter_hash}
 users:detail:{user_id}
 ```
 
-Jangan menggunakan cache key global untuk data yang berbeda berdasarkan user atau departemen.
+Jangan menggunakan cache key global untuk data yang berbeda berdasarkan user.
 
 ## 11.3 Queue Security
 
@@ -1141,7 +1105,6 @@ Tool tersebut merupakan rekomendasi. Pemilihan dan konfigurasi harus disesuaikan
 
 - [ ] Role dan permission.
 - [ ] Resource ownership.
-- [ ] Department data scope.
 - [ ] Privilege escalation.
 - [ ] IDOR testing.
 - [ ] Deny-by-default behavior.
@@ -1321,7 +1284,6 @@ Sistem atau fitur dapat dinyatakan memenuhi security baseline apabila:
 
 - [ ] Authentication menggunakan mekanisme yang aman.
 - [ ] Authorization diterapkan di backend.
-- [ ] Department data scope tervalidasi.
 - [ ] Input validation diterapkan.
 - [ ] SQL injection prevention diterapkan.
 - [ ] XSS prevention diterapkan.
@@ -1387,7 +1349,6 @@ Catatan: Requirement ID harus diambil dari katalog resmi ASVS 5.0.0. Jangan meng
 - [ ] Password hashing.
 - [ ] RBAC.
 - [ ] Laravel Policies.
-- [ ] Department data scope.
 - [ ] Input validation.
 - [ ] Secure environment configuration.
 
@@ -1408,7 +1369,6 @@ Catatan: Requirement ID harus diambil dari katalog resmi ASVS 5.0.0. Jangan meng
 - [ ] Dependency scanning.
 - [ ] DAST.
 - [ ] Authorization testing.
-- [ ] Department data scope testing.
 - [ ] Security review.
 - [ ] ASVS Level 2 verification tracking.
 
@@ -1428,7 +1388,7 @@ Catatan: Requirement ID harus diambil dari katalog resmi ASVS 5.0.0. Jangan meng
 
 Security Specification menjadi acuan utama untuk menerapkan keamanan pada Enterprise System Starter Kit.
 
-Seluruh module harus mengikuti kontrol keamanan yang ditetapkan, terutama authentication, authorization, department data scope, input validation, sensitive data protection, dan auditability.
+Seluruh module harus mengikuti kontrol keamanan yang ditetapkan, terutama authentication, authorization, scope data, input validation, sensitive data protection, dan auditability.
 
 Security bukan hanya tanggung jawab developer, tetapi merupakan tanggung jawab bersama antara development, QA, DevOps, system owner, dan business owner.
 

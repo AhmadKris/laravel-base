@@ -55,7 +55,7 @@ it('lets an admin read roles and permissions', function () {
 
     $this->actingAs($admin)->getJson('/api/v1/permissions')
         ->assertOk()
-        ->assertJsonCount(19, 'data')
+        ->assertJsonCount(15, 'data')
         ->assertJsonStructure(['data' => [['id', 'name']]]);
 
     $this->actingAs($admin)->getJson('/api/v1/roles')->assertOk();
@@ -91,9 +91,8 @@ it('returns the permissions of a role', function () {
     $this->actingAs($this->superAdmin)
         ->getJson('/api/v1/roles/'.role('Staff')->id.'/permissions')
         ->assertOk()
-        ->assertJsonPath('data.0.name', 'department.view')
-        ->assertJsonPath('data.1.name', 'user.view')
-        ->assertJsonCount(2, 'data');
+        ->assertJsonPath('data.0.name', 'user.view')
+        ->assertJsonCount(1, 'data');
 });
 
 it('returns not found for an unknown role', function () {

@@ -11,9 +11,9 @@ function renderDialog(overrides: { isPending?: boolean } = {}) {
         <ConfirmDialog
             open
             onOpenChange={onOpenChange}
-            title="Hapus departemen Finance?"
-            description="Departemen Finance akan dihapus."
-            confirmLabel="Hapus departemen"
+            title="Hapus pengguna Ani?"
+            description="Pengguna Ani akan dihapus."
+            confirmLabel="Hapus pengguna"
             onConfirm={onConfirm}
             {...overrides}
         />,
@@ -26,15 +26,15 @@ it('names the affected object', () => {
     renderDialog();
 
     expect(
-        screen.getByRole('alertdialog', { name: 'Hapus departemen Finance?' }),
-    ).toHaveAccessibleDescription('Departemen Finance akan dihapus.');
+        screen.getByRole('alertdialog', { name: 'Hapus pengguna Ani?' }),
+    ).toHaveAccessibleDescription('Pengguna Ani akan dihapus.');
 });
 
 it('confirms without closing so a failed request can be retried', async () => {
     const user = userEvent.setup();
     const { onConfirm, onOpenChange } = renderDialog();
 
-    await user.click(screen.getByRole('button', { name: 'Hapus departemen' }));
+    await user.click(screen.getByRole('button', { name: 'Hapus pengguna' }));
 
     expect(onConfirm).toHaveBeenCalledOnce();
     expect(onOpenChange).not.toHaveBeenCalled();
@@ -55,6 +55,6 @@ it('focuses a button when opened and closes with the keyboard', async () => {
 it('blocks both actions while the request is running', () => {
     renderDialog({ isPending: true });
 
-    expect(screen.getByRole('button', { name: 'Hapus departemen' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Hapus pengguna' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Batal' })).toBeDisabled();
 });

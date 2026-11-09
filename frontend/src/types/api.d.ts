@@ -100,54 +100,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    '/v1/departments': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations['department.index'];
-        put?: never;
-        post: operations['department.store'];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    '/v1/departments/{department}': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations['department.show'];
-        put?: never;
-        post?: never;
-        delete: operations['department.destroy'];
-        options?: never;
-        head?: never;
-        patch: operations['department.update'];
-        trace?: never;
-    };
-    '/v1/departments/{department}/users': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations['department.users'];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     '/v1/health': {
         parameters: {
             query?: never;
@@ -379,7 +331,7 @@ export interface components {
          * AuditModule
          * @enum {string}
          */
-        AuditModule: 'auth' | 'user' | 'role' | 'permission' | 'department' | 'system';
+        AuditModule: 'auth' | 'user' | 'role' | 'permission' | 'system';
         /** AuthenticatedUserResource */
         AuthenticatedUserResource: {
             id: string;
@@ -387,30 +339,12 @@ export interface components {
             email: string;
             roles: string[];
             permissions: string[];
-            department: {
-                id: string;
-                name: string;
-            } | null;
         };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             current_password: string;
             password: string;
             password_confirmation: string;
-        };
-        /** DepartmentResource */
-        DepartmentResource: {
-            id: string;
-            code: string;
-            name: string;
-            description: string | null;
-            parent_id: string | null;
-            /** @enum {string} */
-            status: 'active' | 'inactive';
-            /** Format: date-time */
-            created_at: string | null;
-            /** Format: date-time */
-            updated_at: string | null;
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -440,15 +374,6 @@ export interface components {
             /** Format: date-time */
             created_at: string | null;
         };
-        /** StoreDepartmentRequest */
-        StoreDepartmentRequest: {
-            code: string;
-            name: string;
-            description?: string | null;
-            /** Format: uuid */
-            parent_id?: string | null;
-            status?: components['schemas']['ActiveStatus'];
-        };
         /** StoreRoleRequest */
         StoreRoleRequest: {
             name: string;
@@ -461,8 +386,7 @@ export interface components {
             username?: string | null;
             password: string;
             status?: components['schemas']['ActiveStatus'];
-            /** Format: uuid */
-            department_id?: string | null;
+            roles?: string[];
         };
         /** SystemConfigurationResource */
         SystemConfigurationResource: {
@@ -480,15 +404,6 @@ export interface components {
             value: boolean;
             version: number;
         };
-        /** UpdateDepartmentRequest */
-        UpdateDepartmentRequest: {
-            code?: string;
-            name?: string;
-            description?: string | null;
-            /** Format: uuid */
-            parent_id?: string | null;
-            status?: components['schemas']['ActiveStatus'];
-        };
         /** UpdateRoleRequest */
         UpdateRoleRequest: {
             name: string;
@@ -500,21 +415,16 @@ export interface components {
             email?: string;
             username?: string | null;
             status?: components['schemas']['ActiveStatus'];
-            /** Format: uuid */
-            department_id?: string | null;
+            roles?: string[];
         };
         /** UserResource */
         UserResource: {
             id: string;
             name: string;
             email: string;
-            username: string;
+            username: string | null;
             /** @enum {string} */
             status: 'active' | 'inactive';
-            department?: {
-                id: string;
-                name: string;
-            };
             roles?: string[];
             /** Format: date-time */
             created_at: string | null;
@@ -771,222 +681,6 @@ export interface operations {
                 };
             };
             401: components['responses']['AuthenticationException'];
-            422: components['responses']['ValidationException'];
-        };
-    };
-    'department.index': {
-        parameters: {
-            query?: {
-                page?: number;
-                per_page?: number;
-                search?: string | null;
-                sort_by?: 'code' | 'name' | 'created_at';
-                sort_direction?: 'asc' | 'desc';
-                status?: components['schemas']['ActiveStatus'];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        success: boolean;
-                        /** @constant */
-                        message: 'Departments retrieved successfully';
-                        data: string;
-                        meta: {
-                            pagination: {
-                                current_page: number;
-                                per_page: number;
-                                total: number;
-                                last_page: number;
-                                from: number | null;
-                                to: number | null;
-                            };
-                        };
-                    };
-                };
-            };
-            401: components['responses']['AuthenticationException'];
-            403: components['responses']['AuthorizationException'];
-            422: components['responses']['ValidationException'];
-        };
-    };
-    'department.store': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['StoreDepartmentRequest'];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        success: boolean;
-                        /** @constant */
-                        message: 'Department created successfully';
-                        data: unknown[] | components['schemas']['DepartmentResource'];
-                        meta: null;
-                    };
-                };
-            };
-            401: components['responses']['AuthenticationException'];
-            403: components['responses']['AuthorizationException'];
-            422: components['responses']['ValidationException'];
-        };
-    };
-    'department.show': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The department UUID */
-                department: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        success: boolean;
-                        /** @constant */
-                        message: 'Department retrieved successfully';
-                        data: unknown[] | components['schemas']['DepartmentResource'];
-                        meta: null;
-                    };
-                };
-            };
-            401: components['responses']['AuthenticationException'];
-            403: components['responses']['AuthorizationException'];
-            404: components['responses']['ModelNotFoundException'];
-        };
-    };
-    'department.destroy': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The department UUID */
-                department: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components['responses']['AuthenticationException'];
-            403: components['responses']['AuthorizationException'];
-            404: components['responses']['ModelNotFoundException'];
-        };
-    };
-    'department.update': {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The department UUID */
-                department: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                'application/json': components['schemas']['UpdateDepartmentRequest'];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        success: boolean;
-                        /** @constant */
-                        message: 'Department updated successfully';
-                        data: unknown[] | components['schemas']['DepartmentResource'];
-                        meta: null;
-                    };
-                };
-            };
-            401: components['responses']['AuthenticationException'];
-            403: components['responses']['AuthorizationException'];
-            404: components['responses']['ModelNotFoundException'];
-            422: components['responses']['ValidationException'];
-        };
-    };
-    'department.users': {
-        parameters: {
-            query?: {
-                page?: number;
-                per_page?: number;
-                search?: string | null;
-                sort_by?: 'name' | 'email' | 'created_at';
-                sort_direction?: 'asc' | 'desc';
-                status?: components['schemas']['ActiveStatus'];
-                department_id?: string;
-            };
-            header?: never;
-            path: {
-                /** @description The department UUID */
-                department: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        success: boolean;
-                        /** @constant */
-                        message: 'Department users retrieved successfully';
-                        data: string;
-                        meta: {
-                            pagination: {
-                                current_page: number;
-                                per_page: number;
-                                total: number;
-                                last_page: number;
-                                from: number | null;
-                                to: number | null;
-                            };
-                        };
-                    };
-                };
-            };
-            401: components['responses']['AuthenticationException'];
-            403: components['responses']['AuthorizationException'];
-            404: components['responses']['ModelNotFoundException'];
             422: components['responses']['ValidationException'];
         };
     };
@@ -1452,7 +1146,6 @@ export interface operations {
                 sort_by?: 'name' | 'email' | 'created_at';
                 sort_direction?: 'asc' | 'desc';
                 status?: components['schemas']['ActiveStatus'];
-                department_id?: string;
             };
             header?: never;
             path?: never;

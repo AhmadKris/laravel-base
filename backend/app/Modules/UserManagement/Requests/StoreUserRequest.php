@@ -21,7 +21,7 @@ final class StoreUserRequest extends UserRequest
             'username' => $this->usernameRules(),
             'password' => ['required', 'string', 'max:1024', Password::defaults()],
             'status' => ['sometimes', Rule::enum(ActiveStatus::class)],
-            'department_id' => ['sometimes', 'nullable', 'uuid', $this->existingDepartment()],
+            ...$this->roleRules(),
         ];
     }
 }

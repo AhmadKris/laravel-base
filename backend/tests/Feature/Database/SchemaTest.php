@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Modules\Department\Models\Department;
 use App\Modules\SystemConfiguration\Models\SystemConfiguration;
 use App\Modules\UserManagement\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -23,20 +21,10 @@ it('defines the columns specified for each table', function (string $table, arra
 })->with([
     'users' => ['users', [
         'uuid' => 'char(36)',
-        'department_id' => 'bigint unsigned',
         'name' => 'varchar(150)',
         'email' => 'varchar(255)',
         'is_active' => 'tinyint(1)',
         'last_login_at' => 'timestamp',
-        'deleted_at' => 'timestamp',
-    ]],
-    'departments' => ['departments', [
-        'uuid' => 'char(36)',
-        'parent_id' => 'bigint unsigned',
-        'code' => 'varchar(50)',
-        'name' => 'varchar(150)',
-        'description' => 'text',
-        'is_active' => 'tinyint(1)',
         'deleted_at' => 'timestamp',
     ]],
     'system_configurations' => ['system_configurations', [
@@ -69,36 +57,6 @@ it('reserves the email of a soft deleted user', function () {
     $user->delete();
 
     expect(fn () => User::factory()->create(['email' => $user->email]))->toThrow(QueryException::class);
-});
-
-it('requires an existing department for a user', function () {
-    expect(fn () => User::factory()->create(['department_id' => 999999]))->toThrow(QueryException::class);
-});
-
-it('prevents deleting a department that still has users', function () {
-    $department = Department::factory()->create();
-    User::factory()->create(['department_id' => $department->id]);
-
-    expect(fn () => $department->forceDelete())->toThrow(QueryException::class);
-});
-
-it('prevents deleting a department that still has children', function () {
-    $parent = Department::factory()->create();
-    DB::table('departments')->insert([
-        'uuid' => (string) Str::uuid(),
-        'parent_id' => $parent->id,
-        'code' => 'CHILD',
-        'name' => 'Child department',
-    ]);
-
-    expect(fn () => $parent->forceDelete())->toThrow(QueryException::class);
-});
-
-it('rejects a duplicate department code even when the original is soft deleted', function () {
-    $department = Department::factory()->create(['code' => 'IT']);
-    $department->delete();
-
-    expect(fn () => Department::factory()->create(['code' => 'IT']))->toThrow(QueryException::class);
 });
 
 it('rejects a duplicate configuration key', function () {

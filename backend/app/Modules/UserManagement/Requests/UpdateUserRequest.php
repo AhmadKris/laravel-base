@@ -23,7 +23,7 @@ final class UpdateUserRequest extends UserRequest
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'username' => $this->usernameRules($user->id),
             'status' => ['sometimes', Rule::enum(ActiveStatus::class)],
-            'department_id' => ['sometimes', 'nullable', 'uuid', $this->existingDepartment()],
+            ...$this->roleRules(),
         ];
     }
 }

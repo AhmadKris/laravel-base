@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,8 +36,7 @@ it('returns the roles of a user', function () {
 });
 
 it('hides the roles of a user outside the scope', function () {
-    $department = Department::factory()->create();
-    $staff = userWithRole('Staff', ['department_id' => $department->id]);
+    $staff = userWithRole('Staff');
 
     $this->actingAs($staff)->getJson("/api/v1/users/{$this->target->uuid}/roles")->assertNotFound();
 });

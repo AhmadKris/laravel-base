@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,9 +119,9 @@ it('prevents an admin from deactivating a higher or equal role', function (strin
 it('hides users outside the scope', function () {
     $role = Role::create(['name' => 'Scoped', 'guard_name' => 'web']);
     $role->givePermissionTo('user.delete');
-    $actor = User::factory()->create(['department_id' => Department::factory()->create()->id]);
+    $actor = User::factory()->create();
     $actor->assignRole($role);
-    $outsider = User::factory()->create(['department_id' => Department::factory()->create()->id]);
+    $outsider = User::factory()->create();
 
     $this->actingAs($actor)
         ->deleteJson("/api/v1/users/{$outsider->uuid}")

@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Core\Audit\AuditLogger;
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,17 +74,17 @@ it('shows the actor, subject, and properties', function () {
 
 it('keeps showing soft deleted actors and subjects', function () {
     $actor = User::factory()->create(['name' => 'Former Staff']);
-    $department = Department::factory()->create();
-    $log = recordAudit('department.deleted', $department, actor: $actor);
-    $department->delete();
+    $subject = User::factory()->create();
+    $log = recordAudit('user.deactivated', $subject, actor: $actor);
+    $subject->delete();
     $actor->delete();
 
     $this->actingAs($this->admin)
         ->getJson("/api/v1/audit-logs/{$log->id}")
         ->assertOk()
         ->assertJsonPath('data.actor.name', 'Former Staff')
-        ->assertJsonPath('data.subject.type', 'department')
-        ->assertJsonPath('data.subject.id', $department->uuid);
+        ->assertJsonPath('data.subject.type', 'user')
+        ->assertJsonPath('data.subject.id', $subject->uuid);
 });
 
 it('handles records without an actor or subject', function () {
@@ -99,14 +98,14 @@ it('handles records without an actor or subject', function () {
 });
 
 it('keeps the subject type when the subject no longer exists', function () {
-    $department = Department::factory()->create();
-    $log = recordAudit('department.deleted', $department);
-    $department->forceDelete();
+    $subject = User::factory()->create();
+    $log = recordAudit('user.deactivated', $subject);
+    $subject->forceDelete();
 
     $this->actingAs($this->admin)
         ->getJson("/api/v1/audit-logs/{$log->id}")
         ->assertOk()
-        ->assertJsonPath('data.subject.type', 'department')
+        ->assertJsonPath('data.subject.type', 'user')
         ->assertJsonPath('data.subject.id', null);
 });
 

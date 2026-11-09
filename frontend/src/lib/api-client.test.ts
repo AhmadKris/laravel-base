@@ -27,7 +27,7 @@ describe('csrf handling', () => {
             Promise.resolve({ data: {}, status: 200, statusText: 'OK', headers: {}, config }),
         );
 
-        await apiClient.get('/departments', { adapter });
+        await apiClient.get('/users', { adapter });
 
         expect(adapter.mock.calls[0]?.[0]).toMatchObject({
             withCredentials: true,
@@ -45,7 +45,7 @@ describe('csrf handling', () => {
 
                 return csrfCookie();
             }),
-            http.post('*/api/v1/departments', ({ request }) => {
+            http.post('*/api/v1/users', ({ request }) => {
                 calls.push('post');
                 tokenHeader = request.headers.get('x-xsrf-token');
 
@@ -53,7 +53,7 @@ describe('csrf handling', () => {
             }),
         );
 
-        await apiClient.post('/departments', {});
+        await apiClient.post('/users', {});
 
         expect(calls).toEqual(['csrf', 'post']);
         expect(tokenHeader).toBe('token-from-server');
@@ -64,10 +64,10 @@ describe('csrf handling', () => {
 
         server.use(
             http.get('*/sanctum/csrf-cookie', csrf),
-            http.get('*/api/v1/departments', () => HttpResponse.json({})),
+            http.get('*/api/v1/users', () => HttpResponse.json({})),
         );
 
-        await apiClient.get('/departments');
+        await apiClient.get('/users');
 
         expect(csrf).not.toHaveBeenCalled();
     });
@@ -78,10 +78,10 @@ describe('csrf handling', () => {
 
         server.use(
             http.get('*/sanctum/csrf-cookie', csrf),
-            http.post('*/api/v1/departments', () => HttpResponse.json({})),
+            http.post('*/api/v1/users', () => HttpResponse.json({})),
         );
 
-        await apiClient.post('/departments', {});
+        await apiClient.post('/users', {});
 
         expect(csrf).not.toHaveBeenCalled();
     });
@@ -92,7 +92,7 @@ describe('csrf handling', () => {
 
         server.use(
             http.get('*/sanctum/csrf-cookie', csrfCookie),
-            http.post('*/api/v1/departments', () => {
+            http.post('*/api/v1/users', () => {
                 attempts += 1;
 
                 return attempts === 1
@@ -101,7 +101,7 @@ describe('csrf handling', () => {
             }),
         );
 
-        const response = await apiClient.post('/departments', {});
+        const response = await apiClient.post('/users', {});
 
         expect(response.data).toEqual({ ok: true });
         expect(attempts).toBe(2);
@@ -113,14 +113,14 @@ describe('csrf handling', () => {
 
         server.use(
             http.get('*/sanctum/csrf-cookie', csrfCookie),
-            http.post('*/api/v1/departments', () => {
+            http.post('*/api/v1/users', () => {
                 attempts += 1;
 
                 return HttpResponse.json({ code: 'CSRF_TOKEN_MISMATCH' }, { status: 419 });
             }),
         );
 
-        const error = await captureError(apiClient.post('/departments', {}));
+        const error = await captureError(apiClient.post('/users', {}));
 
         expect(error.code).toBe('CSRF_TOKEN_MISMATCH');
         expect(attempts).toBe(2);

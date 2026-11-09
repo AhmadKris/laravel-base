@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,26 +13,12 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
     $this->admin = userWithRole('Admin');
-    $this->finance = Department::factory()->create(['name' => 'Finance']);
-    $this->it = Department::factory()->create(['name' => 'Technology']);
-    $this->target = userWithRole('Staff', ['name' => 'Old name', 'department_id' => $this->finance->id]);
+    $this->target = userWithRole('Staff', ['name' => 'Old name']);
 });
 
 function patchUser(mixed $test, User $actor, User $target, array $payload): mixed
 {
     return $test->actingAs($actor)->patchJson("/api/v1/users/{$target->uuid}", $payload);
-}
-
-function departmentLead(Department $department): User
-{
-    $role = Role::query()->firstOrCreate(['name' => 'Department Lead', 'guard_name' => 'web']);
-    $role->givePermissionTo('user.update');
-    config(['authorization.assignable_roles.Department Lead' => ['Staff']]);
-
-    $user = User::factory()->create(['department_id' => $department->id]);
-    $user->assignRole($role);
-
-    return $user;
 }
 
 it('updates only the given fields', function () {
@@ -58,24 +43,6 @@ it('records nothing when no field changes', function () {
     patchUser($this, $this->admin, $this->target, ['name' => 'Old name'])->assertOk();
 
     expect(Activity::query()->where('event', 'user.updated')->exists())->toBeFalse();
-});
-
-it('moves a user to another department and records it separately', function () {
-    patchUser($this, $this->admin, $this->target, ['department_id' => $this->it->uuid])
-        ->assertOk()
-        ->assertJsonPath('data.department.name', 'Technology');
-
-    $activity = Activity::query()->where('event', 'user.department_changed')->sole();
-
-    expect($activity->properties['old'])->toBe($this->finance->id)
-        ->and($activity->properties['new'])->toBe($this->it->id)
-        ->and(Activity::query()->where('event', 'user.updated')->exists())->toBeFalse();
-});
-
-it('removes the department when null is given', function () {
-    patchUser($this, $this->admin, $this->target, ['department_id' => null])
-        ->assertOk()
-        ->assertJsonPath('data.department', null);
 });
 
 it('reactivates a user', function () {
@@ -106,38 +73,19 @@ it('validates updates', function (array $payload, string $field) {
     'empty name' => [['name' => ''], 'name'],
     'duplicate email' => [['email' => 'taken@example.com'], 'email'],
     'invalid status' => [['status' => 'suspended'], 'status'],
-    'unknown department' => [['department_id' => UNKNOWN_USER], 'department_id'],
 ]);
 
 it('allows keeping the own email', function () {
     patchUser($this, $this->admin, $this->target, ['email' => $this->target->email])->assertOk();
 });
 
-it('prevents a department scoped actor from moving themselves', function () {
-    $lead = departmentLead($this->finance);
+it('hides other users from a scoped actor with update permission', function () {
+    $role = Role::query()->create(['name' => 'Scoped Editor', 'guard_name' => 'web']);
+    $role->givePermissionTo('user.update');
+    $actor = User::factory()->create();
+    $actor->assignRole($role);
 
-    patchUser($this, $lead, $lead, ['department_id' => $this->it->uuid])
-        ->assertForbidden()
-        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
-
-    expect($lead->refresh()->department_id)->toBe($this->finance->id);
-});
-
-it('prevents a department scoped actor from moving others out of the department', function () {
-    patchUser($this, departmentLead($this->finance), $this->target, ['department_id' => $this->it->uuid])
-        ->assertForbidden()
-        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
-});
-
-it('lets a department scoped actor edit their own department without moving anyone', function () {
-    patchUser($this, departmentLead($this->finance), $this->target, ['name' => 'Edited', 'department_id' => $this->finance->uuid])
-        ->assertOk();
-});
-
-it('hides users outside the scope of the actor', function () {
-    $outsider = userWithRole('Staff', ['department_id' => $this->it->id]);
-
-    patchUser($this, departmentLead($this->finance), $outsider, ['name' => 'Edited'])->assertNotFound();
+    patchUser($this, $actor, $this->target, ['name' => 'Edited'])->assertNotFound();
 });
 
 it('prevents an admin from editing a higher or equal role', function (string $role) {
@@ -167,4 +115,44 @@ it('can keep its own username and rejects one owned by another user', function (
     patchUser($this, $this->admin, $this->target, ['username' => 'other.user'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('username');
+});
+
+it('changes fields and roles together', function () {
+    patchUser($this, $this->admin, $this->target, ['name' => 'New name', 'roles' => ['Viewer']])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'New name')
+        ->assertJsonPath('data.roles', ['Viewer']);
+});
+
+it('keeps the old name when a requested role is refused', function () {
+    patchUser($this, $this->admin, $this->target, ['name' => 'New name', 'roles' => ['Super Admin']])
+        ->assertForbidden()
+        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
+
+    expect($this->target->refresh()->name)->toBe('Old name');
+});
+
+it('requires the assign permission to change roles here', function () {
+    $role = Role::query()->create(['name' => 'Editor', 'guard_name' => 'web']);
+    $role->givePermissionTo('user.update');
+    $actor = User::factory()->create();
+    $actor->assignRole($role);
+    config(['authorization.assignable_roles.Editor' => ['Staff']]);
+    $own = $actor;
+
+    patchUser($this, $actor, $own, ['name' => 'Edited', 'roles' => ['Viewer']])->assertForbidden();
+
+    expect($own->refresh()->name)->not->toBe('Edited');
+});
+
+it('does not let users change their own roles here', function () {
+    patchUser($this, $this->admin, $this->admin, ['roles' => ['Viewer']])
+        ->assertForbidden()
+        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
+});
+
+it('leaves roles untouched when none are given', function () {
+    patchUser($this, $this->admin, $this->target, ['name' => 'New name'])
+        ->assertOk()
+        ->assertJsonPath('data.roles', ['Staff']);
 });

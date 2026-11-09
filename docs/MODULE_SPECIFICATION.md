@@ -86,16 +86,15 @@ Modul dibagi menjadi tiga kategori.
 | 1 | Authentication | Core | Critical |
 | 2 | User Management | Core | Critical |
 | 3 | Authorization | Core | Critical |
-| 4 | Department Management | Core | High |
-| 5 | System Configuration | Core | High |
-| 6 | Workflow & Approval | Core | High |
-| 7 | Audit Log | Core | High |
-| 8 | Document Management | Supporting | High |
-| 9 | Notification | Supporting | High |
-| 10 | Master Data | Supporting | Medium |
-| 11 | Reporting | Supporting | Medium |
-| 12 | Integration | Supporting | Medium |
-| 13 | Monitoring | Supporting | Medium |
+| 4 | System Configuration | Core | High |
+| 5 | Workflow & Approval | Core | High |
+| 6 | Audit Log | Core | High |
+| 7 | Document Management | Supporting | High |
+| 8 | Notification | Supporting | High |
+| 9 | Master Data | Supporting | Medium |
+| 10 | Reporting | Supporting | Medium |
+| 11 | Integration | Supporting | Medium |
+| 12 | Monitoring | Supporting | Medium |
 
 Priority menunjukkan urutan implementasi yang disarankan, bukan tingkat kepentingan bisnis secara universal.
 
@@ -111,7 +110,6 @@ flowchart TB
         Auth["Authentication"]
         User["User Management"]
         Permission["Authorization"]
-        Org["Department"]
         Config["System Configuration"]
     end
 
@@ -138,7 +136,6 @@ flowchart TB
 
     Client --> Auth
     Client --> User
-    Client --> Org
     Client --> Business
     Client --> Supporting
 
@@ -279,7 +276,6 @@ Mengelola informasi pengguna dan status akun dalam sistem.
 - User listing.
 - User search.
 - User status.
-- Assign department.
 - Assign role.
 - User import.
 
@@ -293,7 +289,6 @@ Mengelola informasi pengguna dan status akun dalam sistem.
 | User Profile | Informasi profil |
 | User Status | Active / Inactive |
 | Assign Role | Menetapkan role |
-| Department Assignment | Menetapkan departemen |
 | Bulk Import | Import pengguna |
 | User Detail | Detail pengguna |
 
@@ -318,7 +313,6 @@ Mengelola informasi pengguna dan status akun dalam sistem.
 
 - Authentication
 - Authorization
-- Department
 - Audit Log
 - Notification
 
@@ -340,7 +334,6 @@ Mengelola informasi pengguna dan status akun dalam sistem.
 2. User yang sudah memiliki histori bisnis sebaiknya dinonaktifkan, bukan dihapus permanen.
 3. Setiap perubahan role harus melalui validasi authorization.
 4. User hanya dapat dikelola oleh pihak yang memiliki permission.
-5. User memiliki maksimal satu departemen.
 
 ---
 
@@ -357,7 +350,7 @@ Menggunakan kombinasi:
 - Role-Based Access Control (RBAC).
 - Laravel Policies.
 - Laravel Gates.
-- Department Scope.
+- Scope data pengguna.
 - Resource-level authorization.
 
 ### Main Features
@@ -421,10 +414,6 @@ user.create
 user.update
 user.delete
 
-department.view
-department.create
-department.update
-department.delete
 
 workflow.view
 workflow.approve
@@ -438,65 +427,7 @@ document.delete
 
 ---
 
-## 4.4 Department Management Module
-
-### Purpose
-
-Mengelola struktur departemen perusahaan dan penempatan pengguna. Sistem melayani satu perusahaan per instalasi, sehingga tidak ada pengelolaan company, branch, atau organisasi.
-
-### Responsibilities
-
-- Department management.
-- Department hierarchy.
-- User department assignment.
-- Department status.
-- Department data scope.
-
-### Main Features
-
-- Department listing.
-- Create department.
-- Update department.
-- Parent-child hierarchy.
-- Department detail.
-
-### Backend Components
-
-- DepartmentController
-- DepartmentAccessService
-- DepartmentPolicy
-- DepartmentResource
-
-### Database
-
-- departments
-- users.department_id
-
-### API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /api/v1/departments | List departments |
-| POST | /api/v1/departments | Create department |
-| GET | /api/v1/departments/{id} | Department detail |
-| PATCH | /api/v1/departments/{id} | Update department |
-| DELETE | /api/v1/departments/{id} | Delete department |
-| GET | /api/v1/departments/{id}/users | Department users |
-
-Penempatan user ke departemen dilakukan melalui field `department_id` pada `PATCH /api/v1/users/{id}`.
-
-### Business Rules
-
-1. Kode departemen harus unik.
-2. Department dapat memiliki sub-department.
-3. Hierarchy tidak boleh membentuk circular reference.
-4. Department yang masih memiliki user tidak boleh dihapus.
-5. User hanya dapat mengakses data departemen yang diizinkan.
-6. Perubahan struktur departemen harus mempertimbangkan histori transaksi.
-
----
-
-## 4.5 System Configuration Module
+## 4.4 System Configuration Module
 
 ### Purpose
 
@@ -839,7 +770,6 @@ Mengelola dokumen dan file yang digunakan oleh berbagai modul bisnis.
 
 - Authentication
 - Authorization
-- Department
 - Audit Log
 - Notification
 
@@ -1015,7 +945,6 @@ Menyediakan layanan laporan dan agregasi data dari berbagai modul bisnis.
 ### Dependencies
 
 - Authorization
-- Department
 - Business Modules
 - Document Management
 - Queue
@@ -1023,7 +952,7 @@ Menyediakan layanan laporan dan agregasi data dari berbagai modul bisnis.
 ### Business Rules
 
 1. Data laporan harus mengikuti permission user.
-2. Data laporan harus mengikuti department scope.
+2. Data laporan harus mengikuti scope data.
 3. Export berukuran besar harus diproses menggunakan queue.
 4. Laporan harus memiliki filter periode dan parameter yang jelas.
 5. Query reporting tidak boleh mengganggu transaksi operasional secara berlebihan.
@@ -1148,7 +1077,6 @@ Matriks berikut menggambarkan dependensi konseptual antar-modul.
 | Authentication | - | Yes | Yes | No | No | Yes | No | Yes |
 | User Management | Yes | - | Yes | Yes | No | Yes | No | Yes |
 | Authorization | Yes | Yes | - | Optional | No | Yes | No | No |
-| Department | Yes | Yes | Yes | - | No | Yes | No | No |
 | Workflow | Yes | Yes | Yes | Yes | - | Yes | Optional | Yes |
 | Audit Log | Yes | Yes | Yes | Optional | Optional | - | No | No |
 | Document | Yes | Yes | Yes | Optional | Optional | Yes | - | Optional |
@@ -1285,7 +1213,6 @@ app/
 │   │   ├── Jobs/
 │   │   └── Routes/
 │   │
-│   ├── Department/
 │   ├── Workflow/
 │   ├── Document/
 │   ├── Notification/
@@ -1374,7 +1301,6 @@ src/
 │   ├── users/
 │   ├── roles/
 │   ├── permissions/
-│   ├── departments/
 │   ├── workflows/
 │   ├── documents/
 │   ├── notifications/
@@ -1432,7 +1358,6 @@ Contoh:
 
 ```text
 /api/v1/users
-/api/v1/departments
 /api/v1/workflows
 /api/v1/documents
 /api/v1/notifications
@@ -1507,7 +1432,7 @@ Setiap modul harus menerapkan security controls yang relevan.
 | File Security | MIME validation, private storage, scanning |
 | Audit | Spatie Activitylog |
 | Secret Management | Encrypted configuration / secret manager |
-| Data Access | Department and resource scope |
+| Data Access | Resource scope |
 
 Security verification menggunakan OWASP ASVS Level 2 sebagai target baseline, dengan penyesuaian berdasarkan risiko setiap modul.
 
@@ -1584,7 +1509,6 @@ Procurement menggunakan foundation modules sebagai berikut:
 | Authentication | User login |
 | User Management | Requester and purchaser |
 | Authorization | Procurement permissions |
-| Department | Department scope |
 | Workflow | PR and PO approval |
 | Document | Quotation and attachment |
 | Notification | Approval notification |
@@ -1637,9 +1561,8 @@ Procurement memiliki tabel bisnis sendiri. Approval tetap menggunakan Workflow M
 | 1 | Authentication | Login, logout, session |
 | 2 | User Management | User CRUD |
 | 3 | Authorization | Role and permission |
-| 4 | Department | Department structure |
-| 5 | System Configuration | Application settings |
-| 6 | Audit Log | Centralized activity history |
+| 4 | System Configuration | Application settings |
+| 5 | Audit Log | Centralized activity history |
 
 ## Phase 2 – Business Process Foundation
 
@@ -1717,7 +1640,6 @@ Contoh:
 - ADR-012: Module Database Ownership.
 - ADR-013: Workflow Integration Contract.
 - ADR-014: Event and Queue Strategy.
-- ADR-015: Department Data Scope.
 
 ---
 

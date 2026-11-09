@@ -10,6 +10,5 @@ enum AuditModule: string
     case User = 'user';
     case Role = 'role';
     case Permission = 'permission';
-    case Department = 'department';
     case System = 'system';
 }

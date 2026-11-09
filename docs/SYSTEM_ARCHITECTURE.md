@@ -64,7 +64,6 @@ Tujuan pengembangan:
 
 - Authentication & Identity Management.
 - User, Role & Permission Management.
-- Department Management.
 - Workflow & Approval Engine.
 - Audit Trail.
 - Security Event Logging.
@@ -166,7 +165,6 @@ flowchart TB
 
     subgraph MODULES["BUSINESS MODULE LAYER"]
         USER["User Management"]
-        ORG["Department"]
         WORK["Workflow"]
         DOC["Document"]
         MASTER["Master Data"]
@@ -323,7 +321,6 @@ backend/
 │   │   │   ├── Routes/
 │   │   │   └── Providers/
 │   │   │
-│   │   ├── Department/
 │   │   ├── Workflow/
 │   │   ├── MasterData/
 │   │   ├── Document/
@@ -453,7 +450,6 @@ frontend/
     │   ├── users/
     │   ├── roles/
     │   ├── permissions/
-    │   ├── departments/
     │   ├── workflows/
     │   ├── documents/
     │   ├── notifications/
@@ -550,7 +546,7 @@ Menggunakan kombinasi:
 - Role-Based Access Control.
 - Laravel Gate.
 - Laravel Policy.
-- Department Scope.
+- User Scope.
 - Data Ownership Validation.
 
 Contoh permission naming:
@@ -581,7 +577,7 @@ system_config.update
 
 ## 7.3 Data Scope
 
-Sistem dirancang untuk satu perusahaan per instalasi. Tidak ada entitas company, branch, atau organisasi; profil perusahaan disimpan di `system_configurations`. Struktur internal dimodelkan melalui `departments`, dan setiap user memiliki maksimal satu `department_id`.
+Sistem dirancang untuk satu perusahaan per instalasi. Tidak ada entitas company, branch, atau organisasi; profil perusahaan disimpan di `system_configurations`.
 
 Contoh:
 
@@ -598,9 +594,8 @@ Authorization harus memperhatikan:
 1. User identity.
 2. Assigned roles.
 3. Permission.
-4. Department.
-5. Resource ownership.
-6. Additional business restrictions.
+4. Resource ownership.
+5. Additional business restrictions.
 
 Frontend permission rendering hanya berfungsi sebagai UI convenience. Backend tetap menjadi authority.
 
@@ -615,7 +610,6 @@ Frontend permission rendering hanya berfungsi sebagai UI convenience. Backend te
 | Authentication | Login, MFA, session |
 | User Management | User accounts |
 | Authorization | Roles, permissions |
-| Department | Company department structure |
 | Workflow | Approval process |
 | Audit | Business activity tracking |
 | Security | Security event management |
@@ -683,7 +677,6 @@ IDENTITY
 └── model_has_permissions
 
 ORGANIZATION
-└── departments
 
 WORKFLOW
 ├── workflow_definitions
@@ -1229,7 +1222,7 @@ Initial ADR list:
 | ADR-006 | Redis Cache and Queue |
 | ADR-007 | Private Document Storage |
 | ADR-008 | REST API Versioning |
-| ADR-009 | Single Company with Department Scope |
+| ADR-009 | Single Company |
 | ADR-010 | OWASP ASVS Level 2 Baseline |
 
 Every ADR should include:

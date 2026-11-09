@@ -8,7 +8,6 @@ use App\Core\Api\Responses\ApiResponse;
 use App\Core\Audit\AuditLogger;
 use App\Core\Audit\Requests\AuditLogListRequest;
 use App\Core\Audit\Resources\AuditLogResource;
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -44,7 +43,6 @@ final class AuditLogController
             'causer' => fn (MorphTo $causer) => $causer->constrain([User::class => $includeTrashed]),
             'subject' => fn (MorphTo $subject) => $subject->constrain([
                 User::class => $includeTrashed,
-                Department::class => $includeTrashed,
             ]),
         ]);
     }

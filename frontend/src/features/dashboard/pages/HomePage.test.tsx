@@ -6,7 +6,7 @@ import { server } from '@/test/server';
 import { makeUser, renderApp } from '@/test/utils';
 
 const TILE_LABEL = { selector: '[data-slot="card"] > span:first-child' };
-const ALL_PERMISSIONS = ['user.view', 'department.view', 'role.view', 'audit.view'];
+const ALL_PERMISSIONS = ['user.view', 'role.view', 'audit.view'];
 
 function asUser(permissions: string[]) {
     server.use(
@@ -32,7 +32,6 @@ const page = (data: unknown[], total: number) =>
 function serveAll() {
     server.use(
         http.get('*/api/v1/users', () => page([], 1280)),
-        http.get('*/api/v1/departments', () => page([], 12)),
         http.get('*/api/v1/roles', () => page([], 4)),
         http.get('*/api/v1/audit-logs', ({ request }) =>
             new URL(request.url).searchParams.get('per_page') === '1'
@@ -77,7 +76,6 @@ it('shows record totals from the backend', async () => {
     renderApp('/');
 
     expect(await tileValue('Pengguna aktif')).toBe('1.280');
-    expect(await tileValue('Departemen')).toBe('12');
     expect(await tileValue('Role')).toBe('4');
     expect(await tileValue('Aktivitas 7 hari terakhir')).toBe('37');
 });
@@ -101,14 +99,13 @@ it('counts only active users and asks for one row', async () => {
 });
 
 it('requests and shows nothing the user may not view', async () => {
-    asUser(['department.view']);
-    server.use(http.get('*/api/v1/departments', () => page([], 12)));
+    asUser(['role.view']);
+    server.use(http.get('*/api/v1/roles', () => page([], 4)));
 
     renderApp('/');
 
-    expect(await tileValue('Departemen')).toBe('12');
+    expect(await tileValue('Role')).toBe('4');
     expect(screen.queryByText('Pengguna aktif', TILE_LABEL)).not.toBeInTheDocument();
-    expect(screen.queryByText('Role', TILE_LABEL)).not.toBeInTheDocument();
     expect(screen.queryByText('Aktivitas terbaru')).not.toBeInTheDocument();
 });
 
@@ -162,10 +159,10 @@ it('shows skeletons while loading', async () => {
 });
 
 it('keeps other tiles working and retries the one that failed', async () => {
-    asUser(['user.view', 'department.view']);
+    asUser(['user.view', 'role.view']);
     let attempts = 0;
     server.use(
-        http.get('*/api/v1/departments', () => page([], 12)),
+        http.get('*/api/v1/roles', () => page([], 4)),
         http.get('*/api/v1/users', () => {
             attempts += 1;
 
@@ -180,7 +177,7 @@ it('keeps other tiles working and retries the one that failed', async () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Muat ulang Pengguna aktif' }));
 
     expect(await tileValue('Pengguna aktif')).toBe('7');
-    expect(await tileValue('Departemen')).toBe('12');
+    expect(await tileValue('Role')).toBe('4');
 });
 
 it('explains when recent activity cannot be loaded', async () => {

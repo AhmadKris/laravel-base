@@ -16,7 +16,7 @@ it('shows the home page with the profile from the backend', async () => {
 
     expect(await screen.findByRole('heading', { name: 'Beranda' })).toBeInTheDocument();
     expect(screen.getByText('ani@example.com')).toBeInTheDocument();
-    expect(screen.getByText('Finance')).toBeInTheDocument();
+    expect(screen.getByText('Staff')).toBeInTheDocument();
 });
 
 it('sends a guest from a protected page to the login page', async () => {

@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,21 +22,17 @@ function newUserPayload(array $overrides = []): array
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
     $this->admin = userWithRole('Admin');
-    $this->department = Department::factory()->create(['name' => 'Finance']);
 
     $this->breachedSuffixes = '';
     Http::fake(['api.pwnedpasswords.com/*' => fn () => Http::response($this->breachedSuffixes)]);
 });
 
 it('creates a user with a hashed password that is never returned', function () {
-    $response = $this->actingAs($this->admin)->postJson('/api/v1/users', newUserPayload([
-        'department_id' => $this->department->uuid,
-    ]));
+    $response = $this->actingAs($this->admin)->postJson('/api/v1/users', newUserPayload());
 
     $response->assertCreated()
         ->assertJsonPath('data.email', 'new@example.com')
         ->assertJsonPath('data.status', 'active')
-        ->assertJsonPath('data.department.name', 'Finance')
         ->assertJsonPath('data.roles', [])
         ->assertJsonMissingPath('data.password');
 
@@ -45,8 +40,7 @@ it('creates a user with a hashed password that is never returned', function () {
 
     $user = User::query()->where('email', 'new@example.com')->sole();
 
-    expect(Hash::check(USER_PASSWORD, $user->password))->toBeTrue()
-        ->and($user->department_id)->toBe($this->department->id);
+    expect(Hash::check(USER_PASSWORD, $user->password))->toBeTrue();
 });
 
 it('records the creation without the password', function () {
@@ -67,7 +61,7 @@ it('creates an inactive user when requested', function () {
 
 it('ignores fields that are not part of the contract', function () {
     $this->actingAs($this->admin)
-        ->postJson('/api/v1/users', newUserPayload(['is_admin' => true, 'uuid' => 'forced', 'roles' => ['Super Admin']]))
+        ->postJson('/api/v1/users', newUserPayload(['is_admin' => true, 'uuid' => 'forced']))
         ->assertCreated()
         ->assertJsonPath('data.roles', []);
 
@@ -90,7 +84,6 @@ it('validates new users', function (array $overrides, string $field) {
     'email of a soft deleted user' => [['email' => 'gone@example.com'], 'email'],
     'short password' => [['password' => 'short-pass'], 'password'],
     'invalid status' => [['status' => 'suspended'], 'status'],
-    'unknown department' => [['department_id' => UNKNOWN_USER], 'department_id'],
 ]);
 
 it('rejects a breached password', function () {
@@ -100,23 +93,6 @@ it('rejects a breached password', function () {
         ->postJson('/api/v1/users', newUserPayload())
         ->assertUnprocessable()
         ->assertJsonValidationErrors('password');
-});
-
-it('prevents a department scoped actor from creating users elsewhere', function () {
-    $role = Role::create(['name' => 'Department Lead', 'guard_name' => 'web']);
-    $role->givePermissionTo('user.create');
-    $own = Department::factory()->create();
-    $actor = User::factory()->create(['department_id' => $own->id]);
-    $actor->assignRole($role);
-
-    $this->actingAs($actor)
-        ->postJson('/api/v1/users', newUserPayload(['department_id' => $this->department->uuid]))
-        ->assertForbidden()
-        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
-
-    $this->actingAs($actor)
-        ->postJson('/api/v1/users', newUserPayload(['department_id' => $own->uuid]))
-        ->assertCreated();
 });
 
 it('stores an optional username in lowercase and returns it', function () {
@@ -147,3 +123,45 @@ it('rejects an invalid or taken username', function (string $username) {
     'too short' => 'ab',
     'too long' => str_repeat('a', 51),
 ]);
+
+it('assigns roles while creating the user', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/v1/users', newUserPayload(['roles' => ['Staff', 'Viewer']]))
+        ->assertCreated()
+        ->assertJsonPath('data.roles', ['Staff', 'Viewer']);
+
+    expect(Activity::query()->where('event', 'user.role_assigned')->sole()->properties['roles'])
+        ->toBe(['Staff', 'Viewer']);
+});
+
+it('creates nothing when a requested role is above the actor', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/v1/users', newUserPayload(['roles' => ['Super Admin']]))
+        ->assertForbidden()
+        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
+
+    expect(User::query()->where('email', 'new@example.com')->exists())->toBeFalse()
+        ->and(Activity::query()->where('event', 'user.created')->exists())->toBeFalse();
+});
+
+it('requires the assign permission to set roles while creating', function () {
+    $role = Role::query()->create(['name' => 'Creator', 'guard_name' => 'web']);
+    $role->givePermissionTo('user.create');
+    config(['authorization.assignable_roles.Creator' => ['Viewer']]);
+    $actor = User::factory()->create();
+    $actor->assignRole($role);
+
+    $this->actingAs($actor)
+        ->postJson('/api/v1/users', newUserPayload(['roles' => ['Viewer']]))
+        ->assertForbidden()
+        ->assertJsonPath('code', 'AUTH_FORBIDDEN');
+
+    expect(User::query()->where('email', 'new@example.com')->exists())->toBeFalse();
+});
+
+it('rejects an unknown role while creating', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/v1/users', newUserPayload(['roles' => ['Tidak Ada']]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('roles.0');
+});
