@@ -658,6 +658,15 @@ Backend harus memeriksa:
 - Perubahan tercatat dalam audit log.
 - Permission cache diinvalidasi.
 
+Aturan tambahan:
+
+- Body `POST /roles` dan `PATCH /roles/{id}` adalah `name`.
+- Role bawaan (Super Admin, Admin, Staff, Viewer) tidak dapat diganti nama atau dihapus, dengan code `ROLE_PROTECTED`. Permission role Super Admin tidak dapat diubah melalui API.
+- Role yang masih terpasang pada user, termasuk user yang di-soft delete, tidak dapat dihapus, dengan code `ROLE_IN_USE`.
+- Actor hanya dapat menambahkan permission yang dimilikinya sendiri. Pelanggaran mengembalikan HTTP 403 dengan code `AUTH_PRIVILEGE_ESCALATION`.
+- `GET /permissions` mengembalikan seluruh permission tanpa pagination agar dapat dipakai sebagai daftar pilihan.
+- Permission diperiksa sebelum resource dicari, sehingga user tanpa izin selalu menerima HTTP 403.
+
 ---
 
 ## 8.4 Workflow Management
@@ -1112,6 +1121,9 @@ AUTH_UNAUTHENTICATED
 AUTH_FORBIDDEN
 AUTH_INVALID_CREDENTIALS
 AUTH_PASSWORD_RESET_INVALID
+AUTH_PRIVILEGE_ESCALATION
+ROLE_PROTECTED
+ROLE_IN_USE
 INVALID_REQUEST
 RESOURCE_NOT_FOUND
 RESOURCE_CONFLICT

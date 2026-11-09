@@ -82,11 +82,11 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-401 | `DepartmentAccessService` dan query scope `visibleTo` pada User | M | T-202, T-206 | Super Admin dan Admin melihat semua user; Staff dan Viewer hanya departemennya | Todo |
-| T-402 | `GET /permissions`, `GET /roles`, `GET /roles/{id}`, `GET /roles/{id}/permissions` | S | T-206 | Sesuai matriks | Todo |
-| T-403 | `POST /roles`, `PATCH /roles/{id}`, `DELETE /roles/{id}` | M | T-402 | Role yang masih dipakai dan role bawaan tidak dapat dihapus | Todo |
-| T-404 | `PUT /roles/{id}/permissions` | M | T-105, T-402 | Memakai `version`, permission tidak terdaftar ditolak, tidak dapat memberi di luar kewenangan, cache dibersihkan, tercatat di audit | Todo |
-| T-405 | Konfigurasi role yang boleh diberikan oleh tiap role | S | T-206 | Admin tidak dapat memberikan Super Admin | Todo |
+| T-401 | `DepartmentAccessService` dan query scope `visibleTo` pada User | M | T-202, T-206 | Super Admin dan Admin melihat semua user; Staff dan Viewer hanya departemennya | Done |
+| T-402 | `GET /permissions`, `GET /roles`, `GET /roles/{id}`, `GET /roles/{id}/permissions` | S | T-206 | Sesuai matriks | Done |
+| T-403 | `POST /roles`, `PATCH /roles/{id}`, `DELETE /roles/{id}` | M | T-402 | Role yang masih dipakai dan role bawaan tidak dapat dihapus | Done |
+| T-404 | `PUT /roles/{id}/permissions` | M | T-105, T-402 | Memakai `version`, permission tidak terdaftar ditolak, tidak dapat memberi di luar kewenangan, cache dibersihkan, tercatat di audit | Done |
+| T-405 | Konfigurasi role yang boleh diberikan oleh tiap role | S | T-206 | Admin tidak dapat memberikan Super Admin | Done |
 
 ## Fase 5: Department
 
@@ -143,6 +143,7 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 | T-1005 | Role: daftar, form, pengaturan permission | L | T-404, T-905 | Konflik `version` meminta user memuat ulang data | Todo |
 | T-1006 | Audit log: daftar, filter, detail | M | T-701, T-905 | Hanya baca | Todo |
 | T-1007 | Pengaturan sistem | M | T-803, T-905 | Konflik `version` ditangani, nilai sensitif tidak ditampilkan | Todo |
+| T-1008 | Terjemahkan email reset password ke Bahasa Indonesia | S | T-304 | Subjek dan isi email berbahasa Indonesia dan teruji | Todo |
 
 ## Fase 11: Verifikasi
 
