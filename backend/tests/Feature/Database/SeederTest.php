@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Modules\Department\Models\Department;
 use App\Modules\SystemConfiguration\Models\SystemConfiguration;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -22,7 +20,7 @@ function rolePermissions(string $role): array
 it('seeds the base permissions under the web guard', function () {
     $this->seed(RolePermissionSeeder::class);
 
-    expect(Permission::query()->count())->toBe(19)
+    expect(Permission::query()->count())->toBe(15)
         ->and(Permission::query()->where('guard_name', '!=', 'web')->exists())->toBeFalse();
 });
 
@@ -40,10 +38,6 @@ it('matches the authorization matrix', function (string $role, array $expected) 
 })->with([
     'Admin' => ['Admin', [
         'audit.view',
-        'department.create',
-        'department.delete',
-        'department.update',
-        'department.view',
         'permission.view',
         'role.view',
         'system_config.update',
@@ -54,14 +48,14 @@ it('matches the authorization matrix', function (string $role, array $expected) 
         'user.update',
         'user.view',
     ]],
-    'Staff' => ['Staff', ['department.view', 'user.view']],
-    'Viewer' => ['Viewer', ['department.view', 'user.view']],
+    'Staff' => ['Staff', ['user.view']],
+    'Viewer' => ['Viewer', ['user.view']],
 ]);
 
 it('gives the super admin every permission', function () {
     $this->seed(RolePermissionSeeder::class);
 
-    expect(rolePermissions('Super Admin'))->toHaveCount(19);
+    expect(rolePermissions('Super Admin'))->toHaveCount(15);
 });
 
 it('applies seeded permissions to a user through the web guard', function () {
@@ -87,28 +81,9 @@ it('can be seeded repeatedly without duplicates', function () {
     $this->seed(DatabaseSeeder::class);
     $this->seed(DatabaseSeeder::class);
 
-    expect(Permission::query()->count())->toBe(19)
+    expect(Permission::query()->count())->toBe(15)
         ->and(Role::query()->count())->toBe(4)
-        ->and(Department::query()->count())->toBe(3)
         ->and(SystemConfiguration::query()->count())->toBe(7);
-});
-
-it('generates uuids for seeded departments', function () {
-    $this->seed(DatabaseSeeder::class);
-
-    Department::query()->each(fn (Department $department) => expect(Str::isUuid($department->uuid))->toBeTrue());
-});
-
-it('does not restore or overwrite existing department data', function () {
-    $this->seed(DatabaseSeeder::class);
-    $department = Department::query()->where('code', 'IT')->sole();
-    $department->update(['name' => 'Teknologi Informasi']);
-    $department->delete();
-
-    $this->seed(DatabaseSeeder::class);
-
-    expect(Department::withTrashed()->where('code', 'IT')->sole()->name)->toBe('Teknologi Informasi')
-        ->and(Department::query()->where('code', 'IT')->exists())->toBeFalse();
 });
 
 it('keeps configuration values changed in the application', function () {

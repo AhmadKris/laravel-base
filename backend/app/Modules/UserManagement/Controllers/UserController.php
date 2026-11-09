@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class UserController
 {
-    private const array DETAIL_RELATIONS = ['department', 'roles'];
+    private const array DETAIL_RELATIONS = ['roles'];
 
     public function index(UserListRequest $request): JsonResponse
     {
@@ -38,7 +38,11 @@ final class UserController
     {
         Gate::authorize('create', User::class);
 
-        $user = $action->execute($request->attributesForModel(), $this->actor($request));
+        if ($request->selectedRoles() !== null) {
+            Gate::authorize('assignRolesOnCreate', User::class);
+        }
+
+        $user = $action->execute($request->attributesForModel(), $request->selectedRoles(), $this->actor($request));
 
         return ApiResponse::success($this->detail($user), 'User created successfully', 201);
     }
@@ -54,7 +58,11 @@ final class UserController
     {
         Gate::authorize('update', $user);
 
-        $action->execute($user, $request->attributesForModel(), $this->actor($request));
+        if ($request->selectedRoles() !== null) {
+            Gate::authorize('assignRoles', $user);
+        }
+
+        $action->execute($user, $request->attributesForModel(), $request->selectedRoles(), $this->actor($request));
 
         return ApiResponse::success($this->detail($user), 'User updated successfully');
     }

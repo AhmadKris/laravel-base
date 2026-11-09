@@ -16,12 +16,12 @@ it('names the browser tab after the current page', async () => {
     const router = renderApp('/');
     await screen.findByRole('heading', { name: 'Beranda' });
 
-    expect(document.title).toBe('Beranda · Enterprise System');
+    expect(document.title).toBe('Beranda - Enterprise System');
 
     await act(() => router.navigate('/change-password'));
     await screen.findByRole('heading', { name: 'Ubah password' });
 
-    expect(document.title).toBe('Ubah password · Enterprise System');
+    expect(document.title).toBe('Ubah password - Enterprise System');
 });
 
 it('moves focus to the content after navigating', async () => {

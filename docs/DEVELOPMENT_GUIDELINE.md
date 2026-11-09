@@ -65,7 +65,7 @@ Standar penamaan harus konsisten antara Backend, Frontend, dan Database.
 | PHP Method | camelCase | `getUserList()` |
 | PHP Variable | camelCase | `$userData` |
 | PHP Constant | UPPER_SNAKE_CASE | `MAX_LOGIN_ATTEMPTS` |
-| Database Table | snake_case, plural | `users`, `departments` |
+| Database Table | snake_case, plural | `users`, `roles` |
 | Database Column | snake_case | `created_at` |
 | React Component | PascalCase | `UserTable.tsx` |
 | React Hook | camelCase with use prefix | `useUsers.ts` |
@@ -118,7 +118,6 @@ app/
 │
 ├── Modules/
 │   ├── UserManagement/
-│   ├── Department/
 │   ├── Workflow/
 │   ├── MasterData/
 │   ├── Document/
@@ -345,24 +344,16 @@ Semua perubahan struktur database harus menggunakan Laravel Migration.
 Contoh:
 
 ```php
-Schema::create('departments', function (Blueprint $table) {
+Schema::create('projects', function (Blueprint $table) {
     $table->id();
     $table->uuid('uuid')->unique();
     $table->string('code', 50)->unique();
     $table->string('name', 150);
-    $table->foreignId('parent_id')
-        ->nullable()
-        ->constrained('departments')
-        ->restrictOnDelete();
-
     $table->boolean('is_active')->default(true);
     $table->timestamps();
     $table->softDeletes();
 
-    $table->index(
-        ['parent_id', 'is_active'],
-        'idx_departments_parent_active'
-    );
+    $table->index('is_active');
 });
 ```
 
@@ -425,8 +416,8 @@ Contoh menghindari N+1:
 
 ```php
 $users = User::query()
-    ->with('department:id,name')
-    ->select(['id', 'uuid', 'name', 'department_id'])
+    ->with('roles:id,name')
+    ->select(['id', 'uuid', 'name'])
     ->paginate(20);
 ```
 
@@ -487,18 +478,12 @@ Gunakan:
 Contoh:
 
 ```php
-class StoreDepartmentRequest extends FormRequest
+class StoreRoleRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'code' => ['required', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:150'],
-            'parent_id' => [
-                'nullable',
-                'uuid',
-                'exists:departments,uuid'
-            ],
         ];
     }
 }
@@ -520,13 +505,12 @@ Validasi harus mencakup:
 Gunakan API Resource untuk menjaga konsistensi output.
 
 ```php
-class DepartmentResource extends JsonResource
+class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->uuid,
-            'code' => $this->code,
             'name' => $this->name,
             'status' => $this->is_active ? 'active' : 'inactive',
             'created_at' => $this->created_at,
@@ -551,7 +535,7 @@ Setiap endpoint harus mempertimbangkan:
 - SQL injection prevention.
 - Audit logging untuk aktivitas penting.
 
-Jangan mempercayai department ID, user ID, role, atau permission yang dikirim oleh client tanpa validasi server.
+Jangan mempercayai user ID, role, atau permission yang dikirim oleh client tanpa validasi server.
 
 ---
 
@@ -585,11 +569,11 @@ Gunakan kombinasi:
 Contoh:
 
 ```php
-public function update(User $user, Department $department): bool
+public function update(User $user, User $target): bool
 {
-    return $user->can('department.update')
-        && app(DepartmentAccessService::class)
-            ->canAccessDepartment($user, $department);
+    return $user->can('user.update')
+        && app(UserAccessService::class)
+            ->canAccessUser($user, $target);
 }
 ```
 
@@ -598,9 +582,8 @@ Rules:
 1. Default access adalah deny.
 2. Setiap endpoint yang memerlukan proteksi harus memiliki authorization.
 3. Jangan hanya menyembunyikan tombol di frontend.
-4. Validasi departemen user di backend.
 5. Jangan memberikan akses berdasarkan role name saja apabila permission lebih tepat.
-6. Uji skenario akses lintas departemen.
+6. Uji skenario akses antarpengguna.
 
 ---
 
@@ -629,7 +612,6 @@ src/
 │   ├── users/
 │   ├── roles/
 │   ├── permissions/
-│   ├── departments/
 │   ├── workflows/
 │   ├── documents/
 │   ├── notifications/
@@ -761,13 +743,13 @@ Contoh:
 ```typescript
 import { z } from 'zod';
 
-export const departmentSchema = z.object({
-    code: z.string().min(1).max(50),
+export const userSchema = z.object({
     name: z.string().min(1).max(150),
+    email: z.email(),
 });
 
-export type DepartmentFormData =
-    z.infer<typeof departmentSchema>;
+export type UserFormData =
+    z.infer<typeof userSchema>;
 ```
 
 Validasi frontend bertujuan meningkatkan user experience. Validasi backend tetap menjadi sumber kebenaran.
@@ -870,7 +852,6 @@ Aktivitas yang perlu dipertimbangkan untuk dicatat:
 - Role dan permission changes.
 - Approval dan rejection.
 - Data deletion.
-- Department changes.
 - System configuration changes.
 - Sensitive document access.
 
@@ -963,7 +944,6 @@ Prioritaskan pengujian:
 - Business rules.
 - Database transaction.
 - Workflow transitions.
-- Department data scope.
 - API response.
 - Queue processing.
 - File access.
@@ -971,27 +951,25 @@ Prioritaskan pengujian:
 Contoh:
 
 ```php
-it('can create a department', function () {
+it('can create a role', function () {
     $user = User::factory()->create();
-    $user->givePermissionTo('department.create');
+    $user->givePermissionTo('role.create');
 
     $response = $this
         ->actingAs($user)
-        ->postJson('/api/v1/departments', [
-            'code' => 'IT',
-            'name' => 'Information Technology',
+        ->postJson('/api/v1/roles', [
+            'name' => 'Auditor',
         ]);
 
     $response->assertCreated();
 
-    $this->assertDatabaseHas('departments', [
-        'code' => 'IT',
-        'name' => 'Information Technology',
+    $this->assertDatabaseHas('roles', [
+        'name' => 'Auditor',
     ]);
 });
 ```
 
-Contoh tersebut merupakan ilustrasi. Test harus menyiapkan permission dan departemen sesuai aturan aplikasi.
+Contoh tersebut merupakan ilustrasi. Test harus menyiapkan permission sesuai aturan aplikasi.
 
 ## 12.3 Frontend Testing
 
@@ -1076,7 +1054,7 @@ Contoh:
 ```text
 feature/user-management
 feature/purchase-request
-bugfix/department-validation
+bugfix/user-validation
 hotfix/login-session
 ```
 
@@ -1236,7 +1214,7 @@ Contoh key:
 ```text
 users:list:{scope_hash}:{filter_hash}
 users:detail:{user_id}
-departments:detail:{department_id}
+users:detail:{user_id}
 ```
 
 Jangan memasukkan data sensitif ke shared cache tanpa kontrol akses dan isolasi yang sesuai.
@@ -1260,7 +1238,7 @@ Setiap fitur harus mempertimbangkan keamanan berdasarkan OWASP ASVS Level 2 dan 
 | Rate Limiting | Proteksi endpoint yang relevan |
 | Logging | Tidak menyimpan secret atau token |
 | Dependency | Pemeriksaan vulnerability dependency |
-| Access Control | Validasi department dan resource ownership |
+| Access Control | Validasi resource ownership |
 
 Security review harus dilakukan sebelum fitur yang sensitif dirilis ke production.
 

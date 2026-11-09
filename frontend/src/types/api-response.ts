@@ -4,6 +4,10 @@ type Schemas = components['schemas'];
 
 export type AuthenticatedUser = Schemas['AuthenticatedUserResource'];
 export type AuditLog = Schemas['AuditLogResource'];
+export type Role = Schemas['RoleResource'];
+export type User = Schemas['UserResource'];
+export type StoreUserPayload = Schemas['StoreUserRequest'];
+export type UpdateUserPayload = Schemas['UpdateUserRequest'];
 export type ForgotPasswordPayload = Schemas['ForgotPasswordRequest'];
 export type ResetPasswordPayload = Schemas['ResetPasswordRequest'];
 export type ChangePasswordPayload = Schemas['ChangePasswordRequest'];

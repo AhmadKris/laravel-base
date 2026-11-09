@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from './server';
@@ -24,6 +24,9 @@ vi.stubGlobal(
 );
 Element.prototype.scrollIntoView = vi.fn();
 Element.prototype.hasPointerCapture = vi.fn(() => false);
+
+// The whole suite runs in parallel, and a first render can outlast the default one second.
+configure({ asyncUtilTimeout: 4000 });
 
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }));
 

@@ -1,5 +1,6 @@
 import { flexRender, type RowData, useTable } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import type { MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -36,6 +37,8 @@ interface DataTableProps<TRow extends RowData> {
     emptyDescription?: string;
     pagination?: PaginationMeta;
     onPageChange?: (page: number) => void;
+    onPerPageChange?: (perPage: number) => void;
+    onRowClick?: (row: TRow) => void;
     sort?: DataTableSort;
     onSortChange?: (sort: DataTableSort) => void;
 }
@@ -45,6 +48,19 @@ function nextSort(field: string, current: DataTableSort | undefined): DataTableS
         field,
         direction: current?.field === field && current.direction === 'asc' ? 'desc' : 'asc',
     };
+}
+
+/**
+ * Controls inside a row keep their own behavior, and menus rendered in a portal still bubble to the row in React.
+ */
+function isRowActivation(event: MouseEvent<HTMLTableRowElement>): boolean {
+    const target = event.target as Element;
+
+    return (
+        event.currentTarget.contains(target) &&
+        target.closest('a, button, input, select, label') === null &&
+        window.getSelection()?.isCollapsed !== false
+    );
 }
 
 const SORT_ICONS = { asc: ArrowUp, desc: ArrowDown };
@@ -66,6 +82,8 @@ export function DataTable<TRow extends RowData>({
     emptyDescription,
     pagination,
     onPageChange,
+    onPerPageChange,
+    onRowClick,
     sort,
     onSortChange,
 }: DataTableProps<TRow>) {
@@ -139,6 +157,7 @@ export function DataTable<TRow extends RowData>({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
+                                                className="-ml-2.5"
                                                 onClick={() =>
                                                     onSortChange(nextSort(header.column.id, sort))
                                                 }
@@ -157,7 +176,15 @@ export function DataTable<TRow extends RowData>({
                 </TableHeader>
                 <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
+                        <TableRow
+                            key={row.id}
+                            className={onRowClick ? 'cursor-pointer' : undefined}
+                            onClick={(event) => {
+                                if (onRowClick !== undefined && isRowActivation(event)) {
+                                    onRowClick(row.original);
+                                }
+                            }}
+                        >
                             {row.getAllCells().map((cell) => (
                                 <TableCell key={cell.id} className="px-4">
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -169,7 +196,11 @@ export function DataTable<TRow extends RowData>({
             </Table>
             {pagination !== undefined && onPageChange !== undefined && (
                 <div className="border-t px-4 py-3">
-                    <PaginationControls pagination={pagination} onPageChange={onPageChange} />
+                    <PaginationControls
+                        pagination={pagination}
+                        onPageChange={onPageChange}
+                        onPerPageChange={onPerPageChange}
+                    />
                 </div>
             )}
         </Card>

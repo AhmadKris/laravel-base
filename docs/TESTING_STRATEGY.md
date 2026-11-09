@@ -288,7 +288,7 @@ Contoh skenario:
 - Create user.
 - Update user.
 - Delete user.
-- Create department.
+- Create role.
 - Assign role.
 - Submit workflow.
 - Approve request.
@@ -297,23 +297,21 @@ Contoh skenario:
 Contoh:
 
 ```php
-it('can create a department', function () {
+it('can create a role', function () {
     $user = User::factory()->create();
 
-    $user->givePermissionTo('department.create');
+    $user->givePermissionTo('role.create');
 
     $response = $this
         ->actingAs($user)
-        ->postJson('/api/v1/departments', [
-            'code' => 'IT',
-            'name' => 'Information Technology',
+        ->postJson('/api/v1/roles', [
+            'name' => 'Auditor',
         ]);
 
     $response->assertCreated();
 
-    $this->assertDatabaseHas('departments', [
-        'code' => 'IT',
-        'name' => 'Information Technology',
+    $this->assertDatabaseHas('roles', [
+        'name' => 'Auditor',
     ]);
 });
 ```
@@ -351,13 +349,13 @@ Pengujian database mencakup:
 Contoh:
 
 ```php
-it('prevents duplicate department code', function () {
-    Department::factory()->create([
-        'code' => 'IT',
+it('prevents duplicate user email', function () {
+    User::factory()->create([
+        'email' => 'ani@example.com',
     ]);
 
-    expect(fn () => Department::factory()->create([
-        'code' => 'IT',
+    expect(fn () => User::factory()->create([
+        'email' => 'ani@example.com',
     ]))->toThrow(QueryException::class);
 });
 ```
@@ -448,7 +446,7 @@ Sesuaikan struktur response dengan kontrak API yang telah ditetapkan.
 
 # 7. Authentication & Authorization Testing
 
-Bagian ini termasuk prioritas tinggi karena kesalahan access control dapat menyebabkan kebocoran data antar-user atau antar-departemen.
+Bagian ini termasuk prioritas tinggi karena kesalahan access control dapat menyebabkan kebocoran data antar-user.
 
 ## 7.1 Authentication Testing
 
@@ -482,54 +480,14 @@ Contoh matrix:
 
 Matrix tersebut hanya contoh. Gunakan `AUTHORIZATION_MATRIX.md` sebagai sumber aturan akses aktual.
 
-## 7.3 Department Data Scope Testing
-
-Sistem harus mencegah user mengakses data departemen lain tanpa hak. Test ini berlaku sejak modul pertama yang menyimpan `department_id`.
-
-Skenario:
-
-1. User A berada di Department A dan hanya memiliki scope departemen.
-2. Resource X berada di Department B.
-3. User A mencoba membaca, mengubah, dan menghapus Resource X.
-4. User A mencoba memindahkan dirinya ke departemen lain melalui request.
-
-Expected result:
-
-- Resource tidak ditemukan (HTTP 404).
-- Tidak ada perubahan data.
-- Tidak ada informasi sensitif yang bocor.
-
-Contoh:
-
-```php
-it('hides documents from another department', function () {
-    $departmentA = Department::factory()->create();
-    $departmentB = Department::factory()->create();
-
-    $user = User::factory()->create([
-        'department_id' => $departmentA->id,
-    ]);
-
-    $user->givePermissionTo('document.view');
-
-    $document = Document::factory()->create([
-        'department_id' => $departmentB->id,
-    ]);
-
-    $this->actingAs($user)
-        ->getJson("/api/v1/documents/{$document->uuid}")
-        ->assertNotFound();
-});
-```
-
-## 7.4 Privilege Escalation Testing
+## 7.3 Privilege Escalation Testing
 
 Pastikan user tidak dapat:
 
 - Mengubah role sendiri tanpa otorisasi.
 - Memberikan permission kepada dirinya sendiri.
 - Mengakses admin endpoint.
-- Mengubah data scope atau departemen sendiri.
+- Mengubah data scope sendiri.
 - Mengubah ownership resource.
 - Mengakses fitur melalui manipulasi request.
 
@@ -698,7 +656,6 @@ Prioritas alur E2E:
 |---|---|
 | Authentication | Login dan logout |
 | User Management | Membuat dan mengubah user |
-| Department | Membuat dan mengubah department |
 | Authorization | Mengakses fitur sesuai permission |
 | Workflow | Submit, approve, dan reject |
 | Document | Upload dan download dokumen |
@@ -833,7 +790,7 @@ Angka di atas merupakan target awal untuk validasi, bukan jaminan performa atau 
 
 - Tidak terdapat bottleneck kritis.
 - Query utama memiliki execution plan yang wajar.
-- Tidak terdapat N+1 query yang berdampak signifikan.
+- Tidak terdapat N+1 query.
 - Tidak terjadi data corruption pada concurrent operation.
 - Error rate dan latency berada dalam target yang disepakati.
 
@@ -847,7 +804,6 @@ Regression testing dilakukan untuk memastikan perubahan tidak merusak fitur yang
 
 - Authentication.
 - User management.
-- Department.
 - Role dan permission.
 - Workflow.
 - Document.
@@ -1127,7 +1083,6 @@ tests/
 ├── Unit/
 │   ├── Modules/
 │   │   ├── UserManagement/
-│   │   ├── Department/
 │   │   └── Workflow/
 │   │
 │   └── Shared/
@@ -1135,7 +1090,6 @@ tests/
 ├── Feature/
 │   ├── Authentication/
 │   ├── UserManagement/
-│   ├── Department/
 │   ├── Authorization/
 │   ├── Workflow/
 │   └── Document/
@@ -1204,7 +1158,6 @@ Prioritas pengujian ditentukan berdasarkan dampak bisnis dan risiko.
 | Workflow | Critical | State transition, approval |
 | Document Management | High | Upload, download, access control |
 | User Management | High | CRUD, role assignment |
-| Department | High | CRUD dan data scope |
 | Notification | Medium | Queue dan delivery |
 | Reporting | Medium | Calculation dan filtering |
 | UI Components | Medium | Rendering dan interaction |

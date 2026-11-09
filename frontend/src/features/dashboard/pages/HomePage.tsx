@@ -18,7 +18,7 @@ export function HomePage() {
         <section className="flex flex-col gap-5">
             <PageHeader title="Beranda" description="Ringkasan data dan aktivitas terbaru." />
             {visibleStats.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {visibleStats.map((stat) => (
                         <StatTile key={stat.path} {...stat} />
                     ))}
@@ -41,8 +41,6 @@ export function HomePage() {
                             </div>
                         </div>
                         <dl className="grid grid-cols-[6rem_1fr] gap-y-1.5 text-sm">
-                            <dt className="text-muted-foreground">Departemen</dt>
-                            <dd>{user?.department?.name ?? NOT_ASSIGNED}</dd>
                             <dt className="text-muted-foreground">Role</dt>
                             <dd>{user?.roles.join(', ') || NOT_ASSIGNED}</dd>
                         </dl>

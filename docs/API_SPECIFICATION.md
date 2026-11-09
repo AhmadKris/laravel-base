@@ -160,7 +160,6 @@ Contoh:
 
 ```text
 /api/v1/users
-/api/v1/departments
 /api/v1/workflows
 /api/v1/documents
 ```
@@ -172,7 +171,6 @@ Gunakan plural noun dan lowercase.
 | Correct | Incorrect |
 |---|---|
 | /users | /getUsers |
-| /departments | /getDepartments |
 | /workflow-instances | /workflowInstances |
 | /audit-logs | /auditLogs |
 
@@ -338,7 +336,7 @@ Error response tidak boleh menampilkan stack trace, SQL query, credential, atau 
 | API Field | Database | Rule |
 |---|---|---|
 | `id` dan relasi `*_id` | Kolom `uuid` | Semua resource, kecuali `roles`, `permissions`, dan `audit-logs` yang memakai ID bawaan paket |
-| `status` pada user dan department | `is_active` | `active` = true, `inactive` = false |
+| `status` pada user | `is_active` | `active` = true, `inactive` = false |
 | `subject_type`, `subject_id` | `reference_type`, `reference_id` | `subject_type` divalidasi terhadap allowlist; UUID di-resolve menjadi ID internal |
 | `workflow_id` | `workflow_definitions.uuid` | Instance baru memakai versi `published` terbaru |
 
@@ -370,7 +368,7 @@ Batas default maksimum `per_page` adalah 100.
 Contoh:
 
 ```http
-GET /api/v1/users?status=active&department_id=01932f5e-1234-7000-8000-123456789def
+GET /api/v1/users?status=active
 ```
 
 Filter yang didukung harus didefinisikan per endpoint. Jangan menerima nama kolom SQL secara bebas dari client.
@@ -480,11 +478,7 @@ Response:
       "user.view",
       "user.create",
       "user.update"
-    ],
-    "department": {
-      "id": "01932f5e-1234-7000-8000-123456789def",
-      "name": "Information Technology"
-    }
+    ]
   },
   "meta": null
 }
@@ -548,8 +542,7 @@ Request:
   "name": "John Doe",
   "email": "john@example.com",
   "password": "StrongPassword123!",
-  "status": "active",
-  "department_id": "01932f5e-1234-7000-8000-123456789def"
+  "status": "active"
 }
 ```
 
@@ -562,9 +555,11 @@ Validation:
 | username | Optional, 3 sampai 50 karakter huruf, angka, titik, garis bawah, atau tanda hubung, unique, disimpan dalam huruf kecil |
 | password | Required, password policy |
 | status | Allowed enum |
-| department_id | Nullable, valid department identifier |
+| roles | Optional, daftar nama role yang valid |
 
 Password tidak boleh dikembalikan dalam response.
+
+`roles` pada `POST /users` dan `PATCH /users/{id}` memerlukan permission `user.assign_role` dan aturan yang sama dengan `PUT /users/{id}/roles`. Data pengguna dan role disimpan dalam satu transaksi, sehingga role yang ditolak membatalkan seluruh perubahan.
 
 ### Update User
 
@@ -581,60 +576,21 @@ Request:
 }
 ```
 
-Field yang dapat diubah: `name`, `email`, `username`, `status`, dan `department_id`. Password tidak dapat diubah melalui endpoint ini.
+Field yang dapat diubah: `name`, `email`, `username`, dan `status`. Password tidak dapat diubah melalui endpoint ini.
 
 ### Aturan Pengelolaan User
 
 - `DELETE /users/{id}` menonaktifkan akun tanpa menghapusnya dan mengakhiri semua session user. `PATCH` dengan `status: inactive` memiliki efek yang sama. Akun diaktifkan kembali dengan `status: active`.
 - User tidak dapat menonaktifkan akunnya sendiri (`USER_SELF_DEACTIVATION`), dan Super Admin aktif terakhir tidak dapat dinonaktifkan (`USER_LAST_SUPER_ADMIN`). Keduanya mengembalikan HTTP 409.
 - Actor hanya dapat mengubah, menonaktifkan, atau mengatur role user yang seluruh role-nya berada dalam kewenangan actor. Pengecualian: actor boleh mengubah profilnya sendiri.
-- Actor dengan scope departemen tidak dapat memindahkan user ke departemen lain atau membuat user di luar departemennya (`AUTH_PRIVILEGE_ESCALATION`).
+- Role selain Super Admin, System Admin, dan Admin hanya dapat melihat akunnya sendiri; pengguna lain mengembalikan HTTP 404.
 - `GET /users/{id}/roles` mengembalikan `data.roles` berupa daftar nama role.
 - `PUT /users/{id}/roles` menerima `roles` berupa daftar nama role dan mengganti seluruh role user. Actor tidak dapat mengubah role-nya sendiri.
-- `GET /users` mendukung `search` pada nama dan email, filter `status` dan `department_id`, serta `sort_by` untuk `name`, `email`, dan `created_at`.
+- `GET /users` mendukung `search` pada nama dan email, filter `status`, serta `sort_by` untuk `name`, `email`, dan `created_at`.
 
 ---
 
-## 8.2 Department Management
-
-Base resource:
-
-```text
-/api/v1/departments
-```
-
-| Method | Endpoint | Permission |
-|---|---|---|
-| GET | /departments | department.view |
-| POST | /departments | department.create |
-| GET | /departments/{id} | department.view |
-| PATCH | /departments/{id} | department.update |
-| DELETE | /departments/{id} | department.delete |
-| GET | /departments/{id}/users | user.view |
-
-### Create Department
-
-```json
-{
-  "code": "IT",
-  "name": "Information Technology",
-  "parent_id": null,
-  "status": "active"
-}
-```
-
-Backend wajib memverifikasi bahwa `parent_id`, jika diberikan, valid dan tidak membentuk circular reference.
-
-Aturan tambahan:
-
-- Role dengan akses global melihat semua departemen. Role lain hanya melihat departemennya sendiri; departemen lain mengembalikan HTTP 404.
-- Kode departemen tetap unik terhadap departemen yang sudah di-soft delete.
-- `GET /departments` mendukung `search` pada nama dan kode, filter `status`, serta `sort_by` untuk `code`, `name`, dan `created_at`.
-- `DELETE /departments/{id}` melakukan soft delete dan ditolak dengan HTTP 409 serta code `DEPARTMENT_HAS_DEPENDENCIES` jika masih memiliki user atau sub-departemen yang belum dihapus.
-
----
-
-## 8.3 Role & Permission Management
+## 8.2 Role & Permission Management
 
 Base resources:
 
@@ -667,7 +623,6 @@ Request:
   "permissions": [
     "user.view",
     "user.create",
-    "department.view"
   ],
   "version": 3
 }
@@ -692,7 +647,7 @@ Aturan tambahan:
 
 ---
 
-## 8.4 Workflow Management
+## 8.3 Workflow Management
 
 Base resources:
 
@@ -822,7 +777,7 @@ Approval, rejection, revision, resubmit, dan cancel harus diproses secara transa
 
 ---
 
-## 8.5 Document Management
+## 8.4 Document Management
 
 Base resource:
 
@@ -856,7 +811,6 @@ Fields:
 | title | String | Yes |
 | description | String | No |
 | document_type | String | No |
-| department_id | UUID | No (kosong berarti seluruh perusahaan) |
 | related_type | String | No |
 | related_id | UUID | No |
 
@@ -881,7 +835,7 @@ Download harus melewati pemeriksaan akses resource. Jangan mengekspos storage pa
 
 ---
 
-## 8.6 Master Data Management
+## 8.5 Master Data Management
 
 Base resource:
 
@@ -943,7 +897,7 @@ Untuk file besar, gunakan asynchronous job.
 
 ---
 
-## 8.7 Notification Management
+## 8.6 Notification Management
 
 Base resource:
 
@@ -965,7 +919,7 @@ Notification harus dibatasi berdasarkan penerima. User tidak boleh membaca atau 
 
 ---
 
-## 8.8 Reporting & Dashboard
+## 8.7 Reporting & Dashboard
 
 Base resource:
 
@@ -983,13 +937,13 @@ Base resource:
 | POST | /reports/{id}/export | report.export |
 | GET | /reports/exports/{id} | report.export |
 
-Filter laporan harus menerapkan department scope dan permission yang sesuai.
+Filter laporan harus menerapkan scope data dan permission yang sesuai.
 
 Export dengan waktu pemrosesan panjang sebaiknya menggunakan background job.
 
 ---
 
-## 8.9 Audit Log
+## 8.8 Audit Log
 
 Base resource:
 
@@ -1010,7 +964,7 @@ Audit log bersifat read-only melalui API operasional. Tidak menyediakan endpoint
 | Parameter | Keterangan |
 |---|---|
 | `user_id` | UUID user yang melakukan aksi |
-| `module` | `auth`, `user`, `role`, `permission`, `department`, atau `system` |
+| `module` | `auth`, `user`, `role`, `permission`, atau `system` |
 | `action` | Nama event lengkap, misalnya `user.created` |
 | `date_from`, `date_to` | Format `YYYY-MM-DD` dalam UTC, inklusif |
 | `search` | Pencarian pada nama event |
@@ -1019,7 +973,7 @@ Setiap record berisi `id`, `event`, `actor`, `subject`, `properties`, dan `creat
 
 ---
 
-## 8.10 System Configuration
+## 8.9 System Configuration
 
 Base resource:
 
@@ -1050,7 +1004,7 @@ Aturan tambahan:
 
 ---
 
-## 8.11 Health Check
+## 8.10 Health Check
 
 | Method | Endpoint | Auth |
 |---|---|---|
@@ -1127,9 +1081,7 @@ Contoh:
 
 ```text
 Cannot approve a completed workflow task.
-Cannot delete a department with active dependencies.
 Cannot assign an unauthorized role.
-Cannot upload a document to an inaccessible department.
 ```
 
 Business rule violation dapat menggunakan HTTP 422 atau 409 sesuai jenis konfliknya.
@@ -1168,7 +1120,6 @@ AUTH_PASSWORD_RESET_INVALID
 AUTH_PRIVILEGE_ESCALATION
 ROLE_PROTECTED
 ROLE_IN_USE
-DEPARTMENT_HAS_DEPENDENCIES
 USER_SELF_DEACTIVATION
 USER_LAST_SUPER_ADMIN
 INVALID_REQUEST
@@ -1308,7 +1259,7 @@ Endpoint berikut tidak memerlukan idempotency key:
 |---|---|
 | POST /workflow-tasks/{id}/approve, reject, delegate, request-revision | Pemeriksaan status dan `lockForUpdate`; request kedua mendapat HTTP 409 |
 | POST /workflow-instances/{id}/cancel | Pemeriksaan status dan `lockForUpdate` |
-| POST /users, POST /departments | Unique constraint pada email dan code |
+| POST /users | Unique constraint pada email |
 
 Aturan pemrosesan:
 
@@ -1336,7 +1287,7 @@ Digunakan ketika beberapa user dapat mengubah resource yang sama dan perubahan y
 
 Modul bisnis wajib menambahkan endpoint-nya ke daftar ini bila draft transaksi dapat diedit oleh lebih dari satu user.
 
-`PATCH /users/{id}` dan `PATCH /departments/{id}` tidak memakainya karena perubahan jarang bersamaan dan tercatat di audit log. Workflow task memakai `lockForUpdate`, bukan optimistic locking.
+`PATCH /users/{id}` tidak memakainya karena perubahan jarang bersamaan dan tercatat di audit log. Workflow task memakai `lockForUpdate`, bukan optimistic locking.
 
 Aturan pemrosesan:
 
@@ -1427,7 +1378,6 @@ app/
 │   │   ├── Policies/
 │   │   └── Routes/
 │   │
-│   ├── Department/
 │   ├── Workflow/
 │   ├── Document/
 │   ├── MasterData/
@@ -1736,7 +1686,6 @@ Untuk API token client, definisikan security scheme Bearer terpisah. Konfigurasi
 
 - [ ] Invalid email is rejected.
 - [ ] Duplicate email is rejected.
-- [ ] Invalid department is rejected.
 - [ ] Invalid status is rejected.
 - [ ] Invalid file type is rejected.
 
@@ -1818,7 +1767,6 @@ API dianggap siap digunakan apabila:
 
 - [ ] Authentication API.
 - [ ] User Management API.
-- [ ] Department API.
 - [ ] Role & Permission API.
 - [ ] Workflow API.
 - [ ] Document API.

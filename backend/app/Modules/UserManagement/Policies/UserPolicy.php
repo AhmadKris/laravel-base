@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\UserManagement\Policies;
 
 use App\Core\Authorization\Services\RoleAssignmentService;
-use App\Modules\Department\Services\DepartmentAccessService;
 use App\Modules\UserManagement\Models\User;
+use App\Modules\UserManagement\Services\UserAccessService;
 use Illuminate\Auth\Access\Response;
 
 final class UserPolicy
 {
     public function __construct(
-        private readonly DepartmentAccessService $accessService,
+        private readonly UserAccessService $accessService,
         private readonly RoleAssignmentService $roleAssignment,
     ) {}
 
@@ -33,6 +33,11 @@ final class UserPolicy
     public function create(User $actor): bool
     {
         return $actor->can('user.create');
+    }
+
+    public function assignRolesOnCreate(User $actor): bool
+    {
+        return $actor->can('user.assign_role');
     }
 
     public function update(User $actor, User $target): Response

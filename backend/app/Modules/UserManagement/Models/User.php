@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\UserManagement\Models;
 
-use App\Modules\Department\Models\Department;
-use App\Modules\Department\Services\DepartmentAccessService;
 use App\Modules\UserManagement\Policies\UserPolicy;
+use App\Modules\UserManagement\Services\UserAccessService;
 use App\Shared\Traits\HasPublicUuid;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,7 +15,6 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,29 +46,13 @@ class User extends Authenticatable
     }
 
     /**
-     * @return BelongsTo<Department, $this>
-     */
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-    /**
      * @param  Builder<self>  $query
      */
     public function scopeVisibleTo(Builder $query, self $viewer): void
     {
-        if (app(DepartmentAccessService::class)->hasGlobalAccess($viewer)) {
-            return;
+        if (! app(UserAccessService::class)->hasGlobalAccess($viewer)) {
+            $query->whereKey($viewer->getKey());
         }
-
-        $query->where(function (Builder $visible) use ($viewer): void {
-            $visible->whereKey($viewer->getKey());
-
-            if ($viewer->department_id !== null) {
-                $visible->orWhere('department_id', $viewer->department_id);
-            }
-        });
     }
 
     /**

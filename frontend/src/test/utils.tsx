@@ -43,6 +43,5 @@ export function makeUser(permissions: string[] = []): AuthenticatedUser {
         email: 'ani@example.com',
         roles: ['Staff'],
         permissions,
-        department: { id: '01932f5e-1234-7000-8000-123456789def', name: 'Finance' },
     };
 }

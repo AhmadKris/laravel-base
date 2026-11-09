@@ -24,7 +24,6 @@ const MESSAGES_BY_CODE: Record<string, string> = {
     SYSTEM_INTERNAL_ERROR: 'Terjadi gangguan pada server. Coba lagi beberapa saat.',
     ROLE_PROTECTED: 'Role bawaan tidak dapat diubah.',
     ROLE_IN_USE: 'Role masih dipakai oleh pengguna.',
-    DEPARTMENT_HAS_DEPENDENCIES: 'Departemen masih memiliki pengguna atau sub-departemen.',
     USER_SELF_DEACTIVATION: 'Anda tidak dapat menonaktifkan akun sendiri.',
     USER_LAST_SUPER_ADMIN: 'Super Admin aktif terakhir tidak dapat dinonaktifkan.',
 };

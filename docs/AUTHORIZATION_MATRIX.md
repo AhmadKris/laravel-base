@@ -26,7 +26,6 @@ Authorization digunakan untuk memastikan bahwa setiap user hanya dapat mengakses
 
 1. Mendefinisikan role dan permission.
 2. Menetapkan akses setiap role terhadap modul.
-3. Mengatur akses berdasarkan departemen.
 4. Mengatur akses terhadap data yang dimiliki user.
 5. Menetapkan standar implementasi Laravel Policies.
 6. Menetapkan standar permission untuk frontend.
@@ -42,7 +41,6 @@ Authorization digunakan untuk memastikan bahwa setiap user hanya dapat mengakses
 | Separation of Duties | Fungsi kritis dapat dipisahkan antar-user |
 | RBAC | Akses diberikan berdasarkan role |
 | Resource-Level Access | Akses divalidasi terhadap data tertentu |
-| Department Scope | Akses dibatasi berdasarkan departemen |
 | Backend Enforcement | Semua otorisasi wajib diperiksa backend |
 | Auditability | Perubahan hak akses harus tercatat |
 
@@ -61,7 +59,7 @@ Sistem menggunakan empat lapisan authorization.
 | Permission-Based Access | Menentukan akses fitur | Laravel Gate / Middleware |
 | Resource-Level Access | Memeriksa akses terhadap data tertentu | Laravel Policies |
 
-Department scope menjadi batas tambahan untuk membatasi data yang dapat diakses.
+Scope data menjadi batas tambahan untuk membatasi data yang dapat diakses.
 
 ## 2.2 Authorization Flow
 
@@ -100,9 +98,9 @@ Role berikut menjadi baseline untuk aplikasi enterprise.
 |---|---|---|
 | Super Admin | Administrator tertinggi aplikasi | System-wide |
 | System Admin | Mengelola konfigurasi dan operasional sistem | System-wide, limited |
-| Admin | Mengelola user dan departemen | Global |
-| Manager | Monitoring dan approval | Assigned department |
-| Supervisor | Monitoring operasional dan approval tertentu | Assigned department |
+| Admin | Mengelola user | Global |
+| Manager | Monitoring dan approval | Own / Assigned |
+| Supervisor | Monitoring operasional dan approval tertentu | Own / Assigned |
 | Staff | Melaksanakan aktivitas operasional | Assigned resources |
 | Viewer | Melihat data yang diizinkan | Read-only |
 
@@ -110,14 +108,13 @@ Role merupakan template awal. Setiap implementasi aplikasi dapat menambah, mengh
 
 Base v1 melakukan seed untuk Super Admin, Admin, Staff, dan Viewer. Role lain ditambahkan sebagai data saat dibutuhkan.
 
-Role berlaku global untuk seorang user dan Spatie teams tidak diaktifkan. Departemen membatasi data yang dapat diakses, bukan role yang dimiliki.
+Role berlaku global untuk seorang user dan Spatie teams tidak diaktifkan.
 
 ## 3.1 Role Responsibilities
 
 ### Super Admin
 
 - Mengelola seluruh konfigurasi sistem.
-- Mengelola seluruh departemen.
 - Mengelola role dan permission.
 - Mengelola seluruh user.
 - Melihat audit log sistem.
@@ -135,7 +132,6 @@ Role berlaku global untuk seorang user dan Spatie teams tidak diaktifkan. Depart
 ### Admin
 
 - Mengelola user perusahaan.
-- Mengelola departemen.
 - Mengatur role dalam batas yang diizinkan.
 - Melihat laporan perusahaan.
 - Tidak dapat mengubah konfigurasi global.
@@ -144,7 +140,6 @@ Role berlaku global untuk seorang user dan Spatie teams tidak diaktifkan. Depart
 
 - Melihat data dalam scope kewenangannya.
 - Melakukan approval jika ditugaskan.
-- Melihat laporan departemennya.
 - Memantau aktivitas operasional.
 
 ### Supervisor
@@ -186,10 +181,6 @@ user.create
 user.update
 user.delete
 
-department.view
-department.create
-department.update
-department.delete
 
 workflow.view
 workflow.approve
@@ -240,8 +231,6 @@ user.view
 user.create
 user.update
 
-department.view
-department.update
 
 workflow.approve
 workflow.reject
@@ -275,16 +264,7 @@ Keterangan:
 | user.assign_role | A | A | C/U | - | - | - | - |
 | user.export | A | A | E | - | - | - | - |
 
-## 5.2 Department Management
-
-| Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
-|---|---|---|---|---|---|---|---|
-| department.view | A | R | R | R | R | R | R |
-| department.create | A | - | C | - | - | - | - |
-| department.update | A | - | U | - | - | - | - |
-| department.delete | A | - | D | - | - | - | - |
-
-## 5.3 Authorization Management
+## 5.2 Authorization Management
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -297,7 +277,7 @@ Keterangan:
 
 Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrator sistem. Mereka tidak boleh memberikan privilege di luar batas kewenangannya.
 
-## 5.4 Workflow & Approval
+## 5.3 Workflow & Approval
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -317,7 +297,7 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 
 `X*` Requester hanya dapat membatalkan instance miliknya selama belum ada task `approved` atau `rejected` pada pengajuan berjalan. Pengajuan ulang setelah revisi memakai `workflow.submit` dan hanya dapat dilakukan oleh requester.
 
-## 5.5 Document Management
+## 5.4 Document Management
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -328,9 +308,9 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 | document.delete | A | - | D* | - | - | - | - |
 | document.export | A | - | E | E | - | - | - |
 
-`*` Hak update dan delete dibatasi oleh ownership, status dokumen, dan kebijakan departemen.
+`*` Hak update dan delete dibatasi oleh ownership dan status dokumen.
 
-## 5.6 Master Data
+## 5.5 Master Data
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -341,9 +321,8 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 | master_data.import | A | C | C* | - | - | - | - |
 | master_data.export | A | E | E* | E | - | - | - |
 
-`*` Hanya master data milik departemen user jika master tersebut memang bersifat spesifik departemen.
 
-## 5.7 Reporting
+## 5.6 Reporting
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -354,7 +333,7 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 
 `*` Data yang tampil tetap dibatasi sesuai kebutuhan tugas dan data scope user.
 
-## 5.8 Integration Management
+## 5.7 Integration Management
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -365,7 +344,7 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 | integration.execute | A | C | - | - | - | - | - |
 | integration.logs.view | A | R | - | - | - | - | - |
 
-## 5.9 System Configuration
+## 5.8 System Configuration
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -376,7 +355,7 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 
 `*` Admin hanya dapat mengakses konfigurasi yang secara eksplisit diizinkan untuk Admin, yaitu key berawalan `company.` dan `localization.` sesuai `backend/config/authorization.php`. Key lain mengembalikan HTTP 404. Role custom mengikuti batasan yang sama.
 
-## 5.10 Audit Log
+## 5.9 Audit Log
 
 | Permission | Super Admin | System Admin | Admin | Manager | Supervisor | Staff | Viewer |
 |---|---|---|---|---|---|---|---|
@@ -397,7 +376,6 @@ Permission menentukan fitur yang boleh digunakan. Data Access Scope menentukan d
 | Scope | Description |
 |---|---|
 | Global | Seluruh data sistem |
-| Department | Data departemen tertentu |
 | Own | Data milik user sendiri |
 | Assigned | Data yang ditugaskan kepada user |
 | Explicit Resource | Resource tertentu yang diberikan aksesnya |
@@ -409,40 +387,14 @@ Permission menentukan fitur yang boleh digunakan. Data Access Scope menentukan d
 | Super Admin | Global |
 | System Admin | Global untuk fungsi administratif yang diizinkan |
 | Admin | Global |
-| Manager | Department |
-| Supervisor | Department / Assigned |
+| Manager | Own / Assigned |
+| Supervisor | Own / Assigned |
 | Staff | Own / Assigned |
 | Viewer | Explicitly granted scope |
 
-Scope di atas merupakan default. Hak akses aktual ditentukan oleh permission, departemen, assignment, dan resource policy.
+Scope di atas merupakan default. Hak akses aktual ditentukan oleh permission, assignment, dan resource policy.
 
-## 6.3 Scope Evaluation
-
-Contoh:
-
-User memiliki permission:
-
-```text
-procurement.view
-```
-
-Tetapi user hanya terdaftar pada:
-
-```text
-Department: Purchasing
-```
-
-Maka user hanya dapat melihat data procurement yang berada dalam scope tersebut.
-
-## 6.4 Department Scope Rules
-
-1. Sistem melayani satu perusahaan per instalasi.
-2. User memiliki maksimal satu departemen.
-3. Data bisnis menyimpan `department_id` jika perlu dibatasi per departemen.
-4. Department scope harus diterapkan pada query backend.
-5. Departemen user diambil dari data user, bukan dari request.
-
-## 6.5 Resource-Level Rules
+## 6.3 Resource-Level Rules
 
 Contoh transaksi procurement:
 
@@ -451,7 +403,6 @@ Contoh transaksi procurement:
 | User adalah requester | Own transaction |
 | User ditugaskan sebagai approver | Assigned transaction |
 | User adalah Admin | Seluruh transaksi perusahaan |
-| User adalah Manager | Data sesuai department policy |
 | User adalah Viewer | Read-only data sesuai scope |
 
 ---
@@ -500,7 +451,6 @@ Approval wajib memeriksa:
 - User merupakan approver yang ditugaskan.
 - Workflow masih dalam status yang dapat diproses.
 - User tidak melanggar aturan self-approval.
-- User memiliki akses ke departemen transaksi.
 - Task belum diselesaikan oleh proses lain.
 
 ---
@@ -559,7 +509,7 @@ class UserPolicy
             return false;
         }
 
-        return app(DepartmentAccessService::class)
+        return app(UserAccessService::class)
             ->canAccessUser($user, $target);
     }
 
@@ -569,15 +519,15 @@ class UserPolicy
             return false;
         }
 
-        return app(DepartmentAccessService::class)
-            ->canManageUser($user, $target);
+        return app(UserAccessService::class)
+            ->canAccessUser($user, $target);
     }
 
     public function delete(User $user, User $target): bool
     {
         return $user->can('user.delete')
-            && app(DepartmentAccessService::class)
-                ->canManageUser($user, $target);
+            && app(UserAccessService::class)
+                ->canAccessUser($user, $target);
     }
 }
 ```
@@ -605,8 +555,7 @@ class WorkflowTaskPolicy
             return false;
         }
 
-        return app(DepartmentAccessService::class)
-            ->canAccessWorkflow($user, $task->workflowInstance);
+        return true;
     }
 }
 ```
@@ -634,26 +583,6 @@ class WorkflowInstancePolicy
 }
 ```
 
-## 8.5 Department Access Service
-
-```php
-class DepartmentAccessService
-{
-    public function canAccessDepartment(
-        User $user,
-        Department $department
-    ): bool {
-        if ($user->hasAnyRole(['Super Admin', 'System Admin', 'Admin'])) {
-            return true;
-        }
-
-        return $user->department_id === $department->id;
-    }
-}
-```
-
-Jangan menganggap pemeriksaan departemen saja cukup untuk seluruh kebutuhan authorization. Permission, status resource, dan resource ownership tetap perlu diperiksa.
-
 ---
 
 # 9. Query-Level Data Authorization
@@ -664,7 +593,7 @@ Contoh query:
 
 ```php
 $query = PurchaseRequest::query()
-    ->where('department_id', auth()->user()->department_id);
+    ->where('created_by', auth()->id());
 ```
 
 Untuk data milik user:
@@ -691,7 +620,7 @@ PurchaseRequest::query()
     ->paginate();
 ```
 
-Scope harus memiliki pengujian khusus untuk memastikan tidak terjadi kebocoran data lintas departemen.
+Scope harus memiliki pengujian khusus untuk memastikan tidak terjadi kebocoran data antarpengguna.
 
 ---
 
@@ -720,13 +649,8 @@ Contoh response:
       "user.view",
       "user.create",
       "user.update",
-      "department.view",
       "document.view"
-    ],
-    "department": {
-      "id": "01932f5e-1234-7000-8000-123456789def",
-      "name": "Information Technology"
-    }
+    ]
   },
   "meta": null
 }
@@ -871,7 +795,7 @@ Contoh:
 
 | Endpoint | Authentication | Permission | Scope |
 |---|---|---|---|
-| GET /users | Required | user.view | Global untuk Super Admin, System Admin, dan Admin; Department untuk role lain |
+| GET /users | Required | user.view | Global untuk Super Admin, System Admin, dan Admin; akun sendiri untuk role lain |
 | POST /users | Required | user.create | Global |
 | PATCH /users/{id} | Required | user.update | Resource |
 | DELETE /users/{id} | Required | user.delete | Resource |
@@ -880,7 +804,7 @@ Contoh:
 | POST /workflow-tasks/{id}/request-revision | Required | workflow.request_revision | Assigned |
 | POST /workflow-instances/{id}/resubmit | Required | workflow.submit | Own |
 | POST /workflow-instances/{id}/cancel | Required | workflow.cancel | Own |
-| POST /documents | Required | document.upload | Department |
+| POST /documents | Required | document.upload | Own |
 | GET /documents/{id}/download | Required | document.download | Resource |
 
 Endpoint yang sensitif harus memiliki authorization test.
@@ -902,7 +826,6 @@ permission.revoked
 user.role_assigned
 user.role_removed
 
-user.department_changed
 
 authorization.denied
 authorization.privilege_changed
@@ -914,7 +837,6 @@ Audit log minimal mencatat:
 - Action.
 - Target resource.
 - Timestamp.
-- Department context jika relevan.
 - IP address jika sesuai kebijakan privasi.
 - Metadata perubahan yang aman.
 
@@ -931,7 +853,6 @@ Jangan mencatat password, session token, API secret, atau credential.
 | Authentication Test | User tanpa autentikasi ditolak |
 | Permission Test | User tanpa permission ditolak |
 | Role Test | Role mendapatkan permission yang tepat |
-| Department Scope Test | Data departemen lain tidak dapat diakses tanpa hak |
 | Resource Ownership Test | User tidak dapat mengakses resource milik pihak lain |
 | Approval Test | Hanya approver yang ditugaskan dapat menyetujui |
 | SoD Test | Self-approval diblokir jika kebijakan melarang |
@@ -943,8 +864,7 @@ Jangan mencatat password, session token, API secret, atau credential.
 
 - [ ] Unauthenticated user tidak dapat mengakses protected endpoint.
 - [ ] User tanpa permission menerima 403.
-- [ ] User tidak dapat melihat transaksi departemen lain tanpa hak.
-- [ ] Manager tidak dapat mengelola data di luar departemennya.
+- [ ] User tidak dapat melihat transaksi pengguna lain tanpa hak.
 - [ ] Staff tidak dapat mengubah transaksi user lain tanpa izin.
 - [ ] Viewer tidak dapat membuat transaksi.
 - [ ] User yang bukan approver tidak dapat melakukan approval.
@@ -962,13 +882,13 @@ Authorization dianggap selesai apabila:
 1. Semua role telah didefinisikan.
 2. Semua permission telah didaftarkan.
 3. Permission matrix telah disetujui.
-4. Department scope sudah diterapkan.
+4. Scope data sudah diterapkan.
 5. Laravel Policies tersedia untuk resource penting.
 6. Semua endpoint terlindungi.
 7. Frontend permission guard tersedia.
 8. Audit perubahan permission tersedia.
 9. Pengujian privilege escalation lulus.
-10. Pengujian akses lintas departemen lulus.
+10. Pengujian akses antarpengguna lulus.
 
 ---
 
@@ -991,14 +911,6 @@ Authorization dianggap selesai apabila:
 - [ ] Implement role assignment policy.
 - [ ] Implement permission management.
 - [ ] Implement privilege escalation prevention.
-
-## Department Scope
-
-- [ ] Implement user department validation.
-- [ ] Implement department scope.
-- [ ] Implement resource-level authorization.
-- [ ] Implement query scope.
-- [ ] Test cross-department access.
 
 ## Frontend
 
@@ -1044,7 +956,7 @@ Implementasikan hanya jika kebutuhan bisnis dan tingkat risiko memang memerlukan
 
 Authorization merupakan komponen keamanan fundamental dalam Enterprise System Starter Kit.
 
-Kombinasi RBAC, Laravel Policies, Department Scope, dan Resource-Level Authorization memberikan kontrol yang lebih baik dibandingkan sistem yang hanya menggunakan role untuk mengatur akses menu.
+Kombinasi RBAC, Laravel Policies, dan Resource-Level Authorization memberikan kontrol yang lebih baik dibandingkan sistem yang hanya menggunakan role untuk mengatur akses menu.
 
 Setiap modul baru wajib mendefinisikan permission, scope, resource policy, dan test authorization sebelum dinyatakan siap digunakan.
 

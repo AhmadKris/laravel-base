@@ -8,7 +8,7 @@ Dokumen spesifikasi berisi rancangan lengkap. Tabel di bawah menentukan bagian y
 
 | Tahap | Modul | Kapan |
 |---|---|---|
-| **Base v1** | Authentication, User Management, Role & Permission, Department, Audit Log, System Configuration, `/health` | Sekarang |
+| **Base v1** | Authentication, User Management, Role & Permission, Audit Log, System Configuration, `/health` | Sekarang |
 | **Tahap 2** | Notification, Document, Workflow | Saat modul bisnis pertama membutuhkannya |
 | **Tahap 3** | Master Data, Reporting, Integration, Monitoring lanjutan | Berdasarkan kebutuhan nyata |
 
@@ -19,7 +19,7 @@ Dokumen spesifikasi berisi rancangan lengkap. Tabel di bawah menentukan bagian y
 | Area | Standar |
 |---|---|
 | Identifier | `id` BIGINT internal dan `uuid` untuk API |
-| Data | Migration, foreign key, transaksi, dan `department_id` pada data yang perlu scope |
+| Data | Migration, foreign key, dan transaksi |
 | Otorisasi | Permission di backend, Policy per resource, query data scope, deny by default |
 | API | `/api/v1`, Form Request, API Resource, format response dan error `code` seragam, pagination, optimistic locking pada `PUT /roles/{id}/permissions` dan `PATCH /system-configurations/{key}` |
 | Autentikasi | Sanctum SPA cookie, CSRF, rate limit login, password reset, session regeneration, Argon2id |
@@ -70,10 +70,10 @@ Jika dua dokumen berbeda, dokumen yang menjadi sumber kebenaran untuk topik ters
 |---|---|
 | PHP | 8.4.x |
 | Struktur backend | `app/Core`, `app/Modules`, `app/Shared` |
-| Model bersama | `User` dan `Department` boleh direferensikan langsung antarmodul; model lain melalui contract atau event |
+| Model bersama | `User` boleh direferensikan langsung antarmodul; model lain melalui contract atau event |
 | Model perusahaan | Satu perusahaan per instalasi, tanpa company, branch, atau tabel `organizations`; profil perusahaan disimpan di `system_configurations` |
-| Keanggotaan user | Untuk saat ini maksimal satu departemen melalui `users.department_id` |
-| Role | Global per user, tanpa Spatie teams; departemen membatasi data |
+| Scope data pengguna | Super Admin, System Admin, dan Admin melihat semua pengguna; role lain hanya akunnya sendiri |
+| Role | Global per user, tanpa Spatie teams |
 | Seed role Base v1 | Super Admin, Admin, Staff, Viewer |
 | Identifier API | `id` berisi UUID, kecuali `roles`, `permissions`, dan `audit-logs` |
 | Format permission | `{resource}.{action}`, singular, snake_case |

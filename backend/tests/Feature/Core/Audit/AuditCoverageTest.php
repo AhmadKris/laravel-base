@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
-use App\Modules\Department\Models\Department;
 use App\Modules\SystemConfiguration\Models\SystemConfiguration;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -32,7 +31,6 @@ beforeEach(function () {
     $this->withRole = userWithRole('Viewer');
     $this->customRole = Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
     $this->customRole->givePermissionTo('user.view');
-    $this->department = Department::factory()->create();
 });
 
 it('records each sensitive action exactly once without secrets', function (string $event, Closure $action) {
@@ -75,10 +73,6 @@ it('records each sensitive action exactly once without secrets', function (strin
     'user update' => ['user.updated', fn ($test) => $test
         ->actingAs($test->superAdmin)
         ->patchJson("/api/v1/users/{$test->target->uuid}", ['name' => 'Renamed'])
-        ->assertOk()],
-    'department change' => ['user.department_changed', fn ($test) => $test
-        ->actingAs($test->superAdmin)
-        ->patchJson("/api/v1/users/{$test->target->uuid}", ['department_id' => $test->department->uuid])
         ->assertOk()],
     'user deactivation' => ['user.deactivated', fn ($test) => $test
         ->actingAs($test->superAdmin)

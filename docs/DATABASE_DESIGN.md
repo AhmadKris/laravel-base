@@ -36,7 +36,6 @@ Database dirancang agar dapat digunakan kembali untuk berbagai kebutuhan aplikas
 1. Modular dan mudah dikembangkan.
 2. Konsisten dalam penamaan tabel dan kolom.
 3. Mendukung role-based access control.
-4. Mendukung struktur departemen perusahaan.
 5. Mendukung workflow dan approval.
 6. Memiliki audit trail untuk aktivitas penting.
 7. Mendukung versioning dokumen.
@@ -69,7 +68,6 @@ Contoh:
 - users
 - roles
 - permissions
-- departments
 - workflow_instances
 - document_versions
 - activity_log
@@ -81,7 +79,7 @@ Pengecualian bentuk plural: `activity_log` (nama bawaan Spatie Activitylog) dan 
 | Column | Convention |
 |---|---|
 | Primary Key | id |
-| Foreign Key | user_id, department_id |
+| Foreign Key | user_id |
 | UUID | uuid |
 | Created At | created_at |
 | Updated At | updated_at |
@@ -138,7 +136,6 @@ Database dibagi menjadi beberapa domain utama.
 |---|---|---|
 | Authentication | auth | User authentication |
 | Authorization | auth | Roles and permissions |
-| Department | department | Company department structure |
 | Workflow | workflow | Approval and business process |
 | Audit | audit | Activity and audit trail |
 | Document | document | Document storage and versioning |
@@ -167,7 +164,6 @@ erDiagram
     USERS {
         bigint id PK
         char uuid UK
-        bigint department_id FK
         varchar name
         varchar email UK
         varchar password
@@ -215,24 +211,7 @@ erDiagram
 
 **Catatan:** Tabel authorization mengikuti struktur Spatie Laravel Permission. Kolom dan relasi perlu disesuaikan dengan konfigurasi package yang digunakan.
 
-## 4.2 Department ERD
-
-```mermaid
-erDiagram
-    DEPARTMENTS ||--o{ DEPARTMENTS : parent
-    DEPARTMENTS ||--o{ USERS : contains
-
-    DEPARTMENTS {
-        bigint id PK
-        char uuid UK
-        bigint parent_id FK
-        varchar code UK
-        varchar name
-        boolean is_active
-    }
-```
-
-## 4.3 Workflow & Approval ERD
+## 4.2 Workflow & Approval ERD
 
 ```mermaid
 erDiagram
@@ -276,7 +255,6 @@ erDiagram
         bigint id PK
         char uuid UK
         bigint workflow_version_id FK
-        bigint department_id FK
         bigint initiated_by FK
         varchar reference_type
         bigint reference_id
@@ -309,7 +287,7 @@ erDiagram
     }
 ```
 
-## 4.4 Document Management ERD
+## 4.3 Document Management ERD
 
 ```mermaid
 erDiagram
@@ -320,7 +298,6 @@ erDiagram
     DOCUMENTS {
         bigint id PK
         char uuid UK
-        bigint department_id FK
         bigint uploaded_by FK
         varchar document_code
         varchar title
@@ -347,7 +324,7 @@ erDiagram
     }
 ```
 
-## 4.5 Notification ERD
+## 4.4 Notification ERD
 
 ```mermaid
 erDiagram
@@ -376,7 +353,7 @@ erDiagram
     }
 ```
 
-## 4.6 Integration ERD
+## 4.5 Integration ERD
 
 ```mermaid
 erDiagram
@@ -417,7 +394,6 @@ erDiagram
 |---|---|---|---|
 | id | BIGINT UNSIGNED | PK | Internal identifier |
 | uuid | CHAR(36) | UNIQUE | External identifier |
-| department_id | BIGINT UNSIGNED | FK, NULL | Departemen user |
 | name | VARCHAR(150) | NOT NULL | User name |
 | email | VARCHAR(255) | UNIQUE, CHECK | Login email, ternormalisasi |
 | username | VARCHAR(50) | UNIQUE, CHECK, NULL | Login username, ternormalisasi |
@@ -461,28 +437,7 @@ Gunakan satu `guard_name`, yaitu `web`, termasuk untuk request yang memakai Sanc
 
 Tabel `roles` ditambah kolom `version` (INT UNSIGNED, default 1) untuk optimistic locking.
 
-## 5.2 Department Module
-
-Sistem melayani satu perusahaan per instalasi. Tidak ada tabel company, branch, atau organisasi; profil perusahaan disimpan di `system_configurations`.
-
-### departments
-
-| Column | Type | Constraint |
-|---|---|---|
-| id | BIGINT UNSIGNED | PK |
-| uuid | CHAR(36) | UNIQUE |
-| parent_id | BIGINT UNSIGNED | FK, NULL |
-| code | VARCHAR(50) | UNIQUE |
-| name | VARCHAR(150) | NOT NULL |
-| description | TEXT | NULL |
-| is_active | BOOLEAN | DEFAULT TRUE |
-| created_at | TIMESTAMP | |
-| updated_at | TIMESTAMP | |
-| deleted_at | TIMESTAMP | NULL |
-
-Data yang perlu dibatasi per departemen menyimpan `department_id`. Nilai NULL berarti data berlaku untuk seluruh perusahaan.
-
-## 5.3 Workflow Module
+## 5.2 Workflow Module
 
 ### workflow_definitions
 
@@ -538,7 +493,6 @@ Unique: `(workflow_version_id, code)` dan `(workflow_version_id, sequence)`.
 | id | BIGINT UNSIGNED | PK |
 | uuid | CHAR(36) | UNIQUE |
 | workflow_version_id | BIGINT UNSIGNED | FK |
-| department_id | BIGINT UNSIGNED | FK, NULL |
 | initiated_by | BIGINT UNSIGNED | FK |
 | reference_type | VARCHAR(100) | NOT NULL |
 | reference_id | BIGINT UNSIGNED | NOT NULL |
@@ -584,7 +538,7 @@ API menerima `subject_type` dan `subject_id` (UUID). Backend memvalidasi `subjec
 
 History bersifat append-only melalui kebijakan aplikasi.
 
-## 5.4 Document Module
+## 5.3 Document Module
 
 ### documents
 
@@ -592,7 +546,6 @@ History bersifat append-only melalui kebijakan aplikasi.
 |---|---|---|
 | id | BIGINT UNSIGNED | PK |
 | uuid | CHAR(36) | UNIQUE |
-| department_id | BIGINT UNSIGNED | FK, NULL |
 | uploaded_by | BIGINT UNSIGNED | FK |
 | document_code | VARCHAR(100) | NULL |
 | title | VARCHAR(255) | NOT NULL |
@@ -641,7 +594,7 @@ Menghubungkan dokumen dengan transaksi bisnis (kontrak `attachToBusiness`).
 
 Unique: `(document_id, reference_type, reference_id)`. Index: `(reference_type, reference_id)`.
 
-## 5.5 Notification Module
+## 5.4 Notification Module
 
 Tahap awal memakai tabel bawaan Laravel Database Notifications (`make:notifications-table`). Tabel custom pada bagian ini hanya digunakan jika pelacakan delivery per channel benar-benar dibutuhkan. Jangan memakai keduanya sekaligus.
 
@@ -671,7 +624,7 @@ Tahap awal memakai tabel bawaan Laravel Database Notifications (`make:notificati
 | sent_at | TIMESTAMP | NULL |
 | created_at | TIMESTAMP | |
 
-## 5.6 Integration Module
+## 5.5 Integration Module
 
 ### integration_connections
 
@@ -703,7 +656,7 @@ Tahap awal memakai tabel bawaan Laravel Database Notifications (`make:notificati
 
 Payload sensitif harus disanitasi sebelum disimpan. Terapkan retensi dan pembatasan akses untuk log integrasi.
 
-## 5.7 System & Security Module
+## 5.6 System & Security Module
 
 ### system_configurations
 
@@ -762,8 +715,6 @@ Unique: `(user_id, endpoint, idempotency_key)`. Key yang sama dengan `request_ha
 | users | model_has_roles | 1 : N | User dapat memiliki beberapa role |
 | permissions | model_has_permissions | 1 : N | Permission dapat diberikan langsung ke user |
 | roles | role_has_permissions | 1 : N | Role memiliki banyak permission |
-| departments | departments | 1 : N | Departemen memiliki sub-departemen |
-| departments | users | 1 : N | Departemen memiliki banyak user |
 | workflow_definitions | workflow_versions | 1 : N | Workflow memiliki beberapa versi |
 | workflow_versions | workflow_steps | 1 : N | Versi workflow memiliki beberapa step |
 | workflow_versions | workflow_instances | 1 : N | Versi workflow digunakan banyak instance |
@@ -781,8 +732,6 @@ Unique: `(user_id, endpoint, idempotency_key)`. Key yang sama dengan `request_ha
 1. Setiap user memiliki satu internal ID.
 2. User dapat memiliki lebih dari satu role.
 3. Role dapat memiliki banyak permission.
-4. User terhubung dengan maksimal satu departemen.
-5. Departemen dapat memiliki struktur parent-child.
 6. Workflow instance wajib menggunakan satu workflow version.
 7. Workflow task harus terhubung dengan satu workflow instance dan satu workflow step.
 8. Dokumen dapat memiliki beberapa versi.
@@ -802,21 +751,16 @@ Index dibuat berdasarkan pola pencarian, join, filtering, sorting, dan kebutuhan
 | users | email | UNIQUE | Login lookup |
 | users | uuid | UNIQUE | External lookup |
 | users | is_active | INDEX | Filter active users |
-| departments | code | UNIQUE | Department lookup |
-| departments | parent_id | INDEX | Department hierarchy |
-| users | department_id | INDEX | Department membership |
 | workflow_definitions | code | UNIQUE | Workflow lookup |
 | workflow_versions | workflow_definition_id, version_number | UNIQUE | Version lookup |
 | workflow_steps | workflow_version_id, sequence | UNIQUE | Ordered workflow steps |
 | workflow_instances | uuid | UNIQUE | External lookup |
-| workflow_instances | department_id, status, created_at | INDEX | Department scope |
 | workflow_instances | status, created_at | INDEX | Monitoring |
 | workflow_instances | reference_type, reference_id | INDEX | Business reference |
 | workflow_tasks | assigned_to, status | INDEX | User task list |
 | workflow_tasks | workflow_instance_id, status | INDEX | Workflow task lookup |
 | workflow_history | workflow_instance_id, created_at | INDEX | Timeline |
 | documents | uuid | UNIQUE | Document lookup |
-| documents | department_id, status | INDEX | Department scope |
 | documents | uploaded_by, created_at | INDEX | User document history |
 | document_versions | document_id, version_number | UNIQUE | Version lookup |
 | notifications | user_id, read_at, created_at | INDEX | Notification inbox |
@@ -874,7 +818,6 @@ Urutan kolom harus divalidasi berdasarkan pola query aktual dan execution plan.
 
 | Relationship | ON DELETE | Reason |
 |---|---|---|
-| departments → users | RESTRICT | Mencegah departemen dihapus saat masih memiliki user |
 | workflow_definitions → workflow_versions | RESTRICT | Menjaga histori versi workflow |
 | workflow_instances → workflow_tasks | RESTRICT | Menjaga histori approval |
 | workflow_instances → workflow_history | RESTRICT | Menjaga audit workflow |
@@ -907,8 +850,6 @@ database/
 │   ├── 0001_01_01_000001_create_cache_table.php
 │   ├── 0001_01_01_000002_create_jobs_table.php
 │   ├── 2026_01_01_000000_add_account_columns_to_users_table.php
-│   ├── 2026_01_01_000001_create_departments_table.php
-│   ├── 2026_01_01_000002_add_department_id_to_users_table.php
 │   ├── 2026_01_01_000003_create_permission_tables.php
 │   ├── 2026_01_01_000004_create_workflow_definitions_table.php
 │   ├── 2026_01_01_000005_create_workflow_versions_table.php
@@ -931,7 +872,6 @@ database/
 ├── seeders/
 │   ├── DatabaseSeeder.php
 │   ├── RolePermissionSeeder.php
-│   └── DepartmentSeeder.php
 └── factories/
 ```
 
@@ -939,46 +879,7 @@ Daftar di atas adalah rancangan lengkap. Migration dibuat bertahap sesuai modul 
 
 Migration package pihak ketiga, seperti Sanctum dan Spatie Permission, sebaiknya menggunakan migration bawaan package agar kompatibel dengan versi yang dipasang.
 
-## 9.2 Migration: Departments
-
-```php
-Schema::create('departments', function (Blueprint $table) {
-    $table->id();
-    $table->uuid('uuid')->unique();
-
-    $table->foreignId('parent_id')
-        ->nullable()
-        ->constrained('departments')
-        ->restrictOnDelete();
-
-    $table->string('code', 50)->unique();
-    $table->string('name', 150);
-    $table->text('description')->nullable();
-
-    $table->boolean('is_active')->default(true);
-
-    $table->timestamps();
-    $table->softDeletes();
-
-    $table->index(['parent_id', 'is_active']);
-});
-```
-
-## 9.3 Migration: Add Department to Users
-
-Tabel `users` dibuat sebelum `departments`, sehingga kolom ini ditambahkan melalui migration terpisah.
-
-```php
-Schema::table('users', function (Blueprint $table) {
-    $table->foreignId('department_id')
-        ->nullable()
-        ->after('uuid')
-        ->constrained('departments')
-        ->restrictOnDelete();
-});
-```
-
-## 9.4 Migration: Workflow Definitions
+## 9.2 Migration: Workflow Definitions
 
 ```php
 Schema::create('workflow_definitions', function (Blueprint $table) {
@@ -996,7 +897,7 @@ Schema::create('workflow_definitions', function (Blueprint $table) {
 });
 ```
 
-## 9.5 Migration: Workflow Versions
+## 9.3 Migration: Workflow Versions
 
 ```php
 Schema::create('workflow_versions', function (Blueprint $table) {
@@ -1020,7 +921,7 @@ Schema::create('workflow_versions', function (Blueprint $table) {
 });
 ```
 
-## 9.6 Migration: Workflow Steps
+## 9.4 Migration: Workflow Steps
 
 ```php
 Schema::create('workflow_steps', function (Blueprint $table) {
@@ -1043,7 +944,7 @@ Schema::create('workflow_steps', function (Blueprint $table) {
 });
 ```
 
-## 9.7 Migration: Workflow Instances
+## 9.5 Migration: Workflow Instances
 
 ```php
 Schema::create('workflow_instances', function (Blueprint $table) {
@@ -1052,11 +953,6 @@ Schema::create('workflow_instances', function (Blueprint $table) {
 
     $table->foreignId('workflow_version_id')
         ->constrained('workflow_versions')
-        ->restrictOnDelete();
-
-    $table->foreignId('department_id')
-        ->nullable()
-        ->constrained('departments')
         ->restrictOnDelete();
 
     $table->foreignId('initiated_by')
@@ -1074,12 +970,11 @@ Schema::create('workflow_instances', function (Blueprint $table) {
     $table->timestamps();
 
     $table->index(['reference_type', 'reference_id']);
-    $table->index(['department_id', 'status', 'created_at']);
     $table->index(['status', 'created_at']);
 });
 ```
 
-## 9.8 Migration: Workflow Tasks
+## 9.6 Migration: Workflow Tasks
 
 ```php
 Schema::create('workflow_tasks', function (Blueprint $table) {
@@ -1118,7 +1013,7 @@ Schema::create('workflow_tasks', function (Blueprint $table) {
 });
 ```
 
-## 9.9 Migration: Workflow History
+## 9.7 Migration: Workflow History
 
 ```php
 Schema::create('workflow_history', function (Blueprint $table) {
@@ -1142,17 +1037,12 @@ Schema::create('workflow_history', function (Blueprint $table) {
 });
 ```
 
-## 9.10 Migration: Documents
+## 9.8 Migration: Documents
 
 ```php
 Schema::create('documents', function (Blueprint $table) {
     $table->id();
     $table->uuid('uuid')->unique();
-
-    $table->foreignId('department_id')
-        ->nullable()
-        ->constrained('departments')
-        ->restrictOnDelete();
 
     $table->foreignId('uploaded_by')
         ->constrained('users')
@@ -1171,12 +1061,11 @@ Schema::create('documents', function (Blueprint $table) {
     $table->timestamps();
     $table->softDeletes();
 
-    $table->index(['department_id', 'status']);
     $table->index(['uploaded_by', 'created_at']);
 });
 ```
 
-## 9.11 Migration: Document Versions
+## 9.9 Migration: Document Versions
 
 ```php
 Schema::create('document_versions', function (Blueprint $table) {
@@ -1206,7 +1095,7 @@ Schema::create('document_versions', function (Blueprint $table) {
 });
 ```
 
-## 9.12 Migration: Current Document Version FK
+## 9.10 Migration: Current Document Version FK
 
 Migration ini dijalankan setelah `documents` dan `document_versions` dibuat.
 
@@ -1221,7 +1110,7 @@ Schema::table('documents', function (Blueprint $table) {
 
 Validasi bahwa current version benar-benar milik dokumen yang bersangkutan tetap dilakukan pada application layer. Jika integritas ini perlu dijamin sepenuhnya di database, gunakan desain composite key atau pendekatan constraint tambahan yang sesuai.
 
-## 9.13 Migration: Notifications
+## 9.11 Migration: Notifications
 
 ```php
 Schema::create('notifications', function (Blueprint $table) {
@@ -1246,7 +1135,7 @@ Schema::create('notifications', function (Blueprint $table) {
 
 Migration ini hanya digunakan jika pelacakan delivery per channel dibutuhkan, dan menggantikan tabel bawaan Laravel. Nama tabelnya sama, sehingga keduanya tidak dapat digunakan bersamaan.
 
-## 9.14 Migration: Notification Deliveries
+## 9.12 Migration: Notification Deliveries
 
 ```php
 Schema::create('notification_deliveries', function (Blueprint $table) {
@@ -1267,7 +1156,7 @@ Schema::create('notification_deliveries', function (Blueprint $table) {
 });
 ```
 
-## 9.15 Migration: Integration Connections
+## 9.13 Migration: Integration Connections
 
 ```php
 Schema::create('integration_connections', function (Blueprint $table) {
@@ -1287,7 +1176,7 @@ Schema::create('integration_connections', function (Blueprint $table) {
 
 Jangan menyimpan credential atau secret dalam JSON biasa tanpa enkripsi. Gunakan encrypted cast atau secret manager.
 
-## 9.16 Migration: Integration Logs
+## 9.14 Migration: Integration Logs
 
 ```php
 Schema::create('integration_logs', function (Blueprint $table) {
@@ -1354,7 +1243,6 @@ Seeder digunakan untuk menyiapkan data awal sistem.
 database/seeders/
 ├── DatabaseSeeder.php
 ├── RolePermissionSeeder.php
-├── DepartmentSeeder.php
 ├── SystemConfigurationSeeder.php
 └── DevelopmentUserSeeder.php
 ```
@@ -1365,7 +1253,7 @@ database/seeders/
 |---|---|
 | Super Admin | Administrator tertinggi aplikasi |
 | System Admin | Konfigurasi dan operasional sistem |
-| Admin | Pengelolaan user dan departemen |
+| Admin | Pengelolaan user |
 | Manager | Monitoring dan approval |
 | Supervisor | Monitoring operasional dan approval tertentu |
 | Staff | Aktivitas operasional |
@@ -1389,9 +1277,6 @@ user.create
 user.update
 user.delete
 
-department.view
-department.create
-department.update
 
 workflow.view
 workflow.approve
@@ -1414,14 +1299,7 @@ document.delete
 - User nonaktif tidak dapat melakukan autentikasi.
 - User yang sudah memiliki histori transaksi tidak dihapus secara fisik tanpa proses yang terkontrol.
 
-## 12.2 Department
-
-- Kode departemen harus unik.
-- Parent department tidak boleh membentuk circular hierarchy.
-- Departemen yang masih memiliki user tidak boleh dihapus.
-- User hanya boleh mengakses data departemen sesuai scope otorisasi.
-
-## 12.3 Workflow
+## 12.2 Workflow
 
 - Workflow definition dapat memiliki banyak versi.
 - Workflow instance harus mengacu pada versi yang sudah dipublikasikan.
@@ -1429,7 +1307,7 @@ document.delete
 - Task hanya dapat diselesaikan oleh pihak yang berwenang.
 - Setiap perubahan status harus menghasilkan histori.
 
-## 12.4 Document
+## 12.3 Document
 
 - Dokumen dapat memiliki banyak versi.
 - Nomor versi harus unik per dokumen.
@@ -1437,7 +1315,7 @@ document.delete
 - File disimpan di private storage.
 - File harus melalui validasi tipe, ukuran, dan keamanan.
 
-## 12.5 Audit
+## 12.4 Audit
 
 - Audit log tidak boleh diubah oleh user biasa.
 - Aktivitas sensitif harus dicatat.
@@ -1494,7 +1372,6 @@ Soft delete digunakan pada data master atau data operasional yang masih membutuh
 | Table | Soft Delete |
 |---|---|
 | users | Yes |
-| departments | Yes |
 | documents | Yes |
 | workflow_definitions | Optional |
 | workflow_versions | No |
@@ -1607,7 +1484,6 @@ Partitioning bukan kebutuhan default. Implementasikan hanya jika volume dan pola
 |---|---|
 | Authentication | users, sessions, personal_access_tokens, password_reset_tokens |
 | Authorization | roles, permissions, role_has_permissions, model_has_roles, model_has_permissions |
-| Department | departments |
 | Workflow | workflow_definitions, workflow_versions, workflow_steps, workflow_instances, workflow_tasks, workflow_history |
 | Document | documents, document_versions, document_references |
 | Notification | notifications, notification_deliveries |
@@ -1631,13 +1507,6 @@ Daftar ini merupakan foundation schema, bukan seluruh database aplikasi enterpri
 - [ ] Setup Laravel Sanctum
 - [ ] Setup Spatie Permission
 - [ ] Setup Spatie Activitylog
-
-## Department
-
-- [ ] Create departments table
-- [ ] Add department_id to users
-- [ ] Implement department hierarchy
-- [ ] Implement department data scope
 
 ## Workflow
 
@@ -1704,6 +1573,6 @@ Database foundation ini dirancang sebagai reusable schema untuk berbagai aplikas
 
 Fokus utama adalah menjaga konsistensi struktur data, integritas relasi, kontrol akses, workflow, auditability, dan kemudahan pengembangan modul bisnis.
 
-Implementasi dilakukan secara bertahap dimulai dari Authentication, Authorization, Department, kemudian Workflow, Document Management, Notification, dan Integration.
+Implementasi dilakukan secara bertahap dimulai dari Authentication, Authorization, kemudian Workflow, Document Management, Notification, dan Integration.
 
 **Prinsip utama:** Foundation database harus stabil, tetapi tetap fleksibel untuk dikembangkan sesuai kebutuhan bisnis tanpa harus mengubah seluruh struktur inti sistem.

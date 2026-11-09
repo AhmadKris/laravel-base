@@ -5,7 +5,16 @@ import { NotFoundPage } from '@/app/pages/NotFoundPage';
 import { AppLayout } from '@/components/layouts/AppLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { HomePage } from '@/features/dashboard/pages/HomePage';
-import { ChangePasswordPage, ForgotPasswordPage, LoginPage, ResetPasswordPage } from './lazyPages';
+import {
+    ChangePasswordPage,
+    ForgotPasswordPage,
+    LoginPage,
+    ResetPasswordPage,
+    UserCreatePage,
+    UserDetailPage,
+    UserEditPage,
+    UserListPage,
+} from './lazyPages';
 import { RootRoute } from './RootRoute';
 
 export const routes: RouteObject[] = [
@@ -24,6 +33,42 @@ export const routes: RouteObject[] = [
                         path: 'change-password',
                         element: <ChangePasswordPage />,
                         handle: { title: 'Ubah password' },
+                    },
+                    {
+                        path: 'users',
+                        element: (
+                            <ProtectedRoute requiredPermission="user.view">
+                                <UserListPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Pengguna' },
+                    },
+                    {
+                        path: 'users/new',
+                        element: (
+                            <ProtectedRoute requiredPermission="user.create">
+                                <UserCreatePage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Tambah pengguna' },
+                    },
+                    {
+                        path: 'users/:userId',
+                        element: (
+                            <ProtectedRoute requiredPermission="user.view">
+                                <UserDetailPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Detail pengguna' },
+                    },
+                    {
+                        path: 'users/:userId/edit',
+                        element: (
+                            <ProtectedRoute requiredPermission="user.update">
+                                <UserEditPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Ubah pengguna' },
                     },
                 ],
             },

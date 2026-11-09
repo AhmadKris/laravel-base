@@ -25,7 +25,6 @@ export function getDashboardStats(): DashboardStat[] {
             path: '/users',
             filters: { status: 'active' },
         },
-        { label: 'Departemen', permission: 'department.view', path: '/departments', filters: {} },
         { label: 'Role', permission: 'role.view', path: '/roles', filters: {} },
         {
             label: `Aktivitas ${ACTIVITY_WINDOW_DAYS} hari terakhir`,

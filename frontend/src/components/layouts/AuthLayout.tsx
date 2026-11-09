@@ -14,7 +14,7 @@ export function AuthLayout() {
                 </div>
                 <div className="flex max-w-md flex-col gap-3">
                     <p className="text-3xl font-semibold tracking-tight">
-                        Pengguna, departemen, dan akses perusahaan dalam satu tempat.
+                        Pengguna, role, dan akses perusahaan dalam satu tempat.
                     </p>
                     <p className="text-sm text-brand-muted">
                         Akses hanya untuk akun yang diberikan administrator perusahaan.

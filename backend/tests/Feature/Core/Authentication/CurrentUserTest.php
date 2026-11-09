@@ -2,17 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Modules\Department\Models\Department;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('returns the profile, roles, permissions, and department', function () {
+it('returns the profile, roles, and permissions', function () {
     $this->seed(RolePermissionSeeder::class);
-    $department = Department::factory()->create(['name' => 'Finance']);
-    $user = User::factory()->create(['department_id' => $department->id]);
+    $user = User::factory()->create();
     $user->assignRole('Staff');
 
     $this->actingAs($user)
@@ -26,18 +24,16 @@ it('returns the profile, roles, permissions, and department', function () {
                 'name' => $user->name,
                 'email' => $user->email,
                 'roles' => ['Staff'],
-                'permissions' => ['user.view', 'department.view'],
-                'department' => ['id' => $department->uuid, 'name' => 'Finance'],
+                'permissions' => ['user.view'],
             ],
             'meta' => null,
         ]);
 });
 
-it('returns a null department for a user without one', function () {
+it('returns empty roles and permissions for a user without any', function () {
     $this->actingAs(User::factory()->create())
         ->getJson('/api/v1/auth/user')
         ->assertOk()
-        ->assertJsonPath('data.department', null)
         ->assertJsonPath('data.roles', [])
         ->assertJsonPath('data.permissions', []);
 });
