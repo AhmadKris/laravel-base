@@ -374,7 +374,7 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 | system_config.manage | A | - | - | - | - | - | - |
 | system_config.feature_flags | A | U | - | - | - | - | - |
 
-`*` Admin hanya dapat mengakses konfigurasi yang secara eksplisit diizinkan untuk Admin.
+`*` Admin hanya dapat mengakses konfigurasi yang secara eksplisit diizinkan untuk Admin, yaitu key berawalan `company.` dan `localization.` sesuai `backend/config/authorization.php`. Key lain mengembalikan HTTP 404. Role custom mengikuti batasan yang sama.
 
 ## 5.10 Audit Log
 

@@ -118,9 +118,9 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-801 | `GET /system-configurations` dan `GET /system-configurations/{key}` | S | T-204 | Nilai `is_sensitive` tidak pernah dikirim | Todo |
-| T-802 | `PATCH /system-configurations/{key}` | M | T-105, T-801 | Memakai `version`, nilai sensitif terenkripsi, tercatat di audit dan masuk `AuditCoverageTest` | Todo |
-| T-803 | `GET /system-configurations/public` dan `GET /system-configurations/feature-flags` | S | T-801 | Route terdaftar sebelum `{key}`, `public` hanya berisi `is_public` | Todo |
+| T-801 | `GET /system-configurations` dan `GET /system-configurations/{key}` | S | T-204 | Nilai `is_sensitive` tidak pernah dikirim | Done |
+| T-802 | `PATCH /system-configurations/{key}` | M | T-105, T-801 | Memakai `version`, nilai sensitif terenkripsi, tercatat di audit dan masuk `AuditCoverageTest` | Done |
+| T-803 | `GET /system-configurations/public` dan `GET /system-configurations/feature-flags` | S | T-801 | Route terdaftar sebelum `{key}`, `public` hanya berisi `is_public` | Done |
 
 ## Fase 9: Frontend Shell
 

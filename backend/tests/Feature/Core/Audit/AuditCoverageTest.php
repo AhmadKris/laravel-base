@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
 use App\Modules\Department\Models\Department;
+use App\Modules\SystemConfiguration\Models\SystemConfiguration;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -114,4 +115,11 @@ it('records each sensitive action exactly once without secrets', function (strin
         ->actingAs($test->superAdmin)
         ->putJson("/api/v1/roles/{$test->customRole->id}/permissions", ['permissions' => [], 'version' => 1])
         ->assertOk()],
+    'configuration update' => ['system.configuration_updated', function ($test) {
+        SystemConfiguration::factory()->create(['key' => 'company.name']);
+
+        return $test->actingAs($test->superAdmin)
+            ->patchJson('/api/v1/system-configurations/company.name', ['value' => 'PT Baru', 'version' => 1])
+            ->assertOk();
+    }],
 ]);
