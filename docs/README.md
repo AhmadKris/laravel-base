@@ -75,7 +75,7 @@ Jika dua dokumen berbeda, dokumen yang menjadi sumber kebenaran untuk topik ters
 | Keanggotaan user | Untuk saat ini maksimal satu departemen melalui `users.department_id` |
 | Role | Global per user, tanpa Spatie teams; departemen membatasi data |
 | Seed role Base v1 | Super Admin, Admin, Staff, Viewer |
-| Identifier API | `id` berisi UUID, kecuali `roles` dan `permissions` |
+| Identifier API | `id` berisi UUID, kecuali `roles`, `permissions`, dan `audit-logs` |
 | Format permission | `{resource}.{action}`, singular, snake_case |
 | Guard permission | `web` |
 | HTTP method update | PATCH; PUT hanya untuk mengganti seluruh daftar, seperti role atau permission |

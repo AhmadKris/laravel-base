@@ -107,7 +107,7 @@ users
 - name: Ahmad
 ```
 
-UUID digunakan untuk kebutuhan API, integrasi eksternal, dan referensi yang tidak perlu memperlihatkan ID internal. Field `id` pada API selalu berisi nilai kolom `uuid`, kecuali `roles` dan `permissions` yang memakai ID bawaan Spatie.
+UUID digunakan untuk kebutuhan API, integrasi eksternal, dan referensi yang tidak perlu memperlihatkan ID internal. Field `id` pada API selalu berisi nilai kolom `uuid`, kecuali `roles`, `permissions`, dan `activity_log` yang memakai ID bawaan paket.
 
 ## 2.4 Standard Data Types
 
