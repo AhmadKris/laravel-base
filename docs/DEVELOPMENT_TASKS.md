@@ -131,6 +131,13 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 | T-903 | Auth store, `usePermission`, `ProtectedRoute` | M | T-303, T-901 | Route mengikuti permission dari backend | Done |
 | T-904 | Layout aplikasi, menu sesuai permission, halaman awal, 403, 404 | M | T-903 | Responsif dan dapat dipakai dengan keyboard | Done |
 | T-905 | Komponen bersama: DataTable, pagination, FormField, ConfirmDialog, loading, empty, error, toast | L | T-005 | Dipakai oleh semua modul | Doing |
+| T-906 | Tema terang dan gelap, warna aksen dan status, penyelarasan layout | M | T-904, T-905 | Kontras token minimal 4,5:1 untuk teks dan 3:1 untuk kontrol di kedua tema, tema benar sebelum render pertama | Done |
+| T-907 | Arah visual A: latar berlapis, panel, identitas, Beranda berisi data dari API, login dua kolom | M | T-906, T-1001 | Kontras token memenuhi syarat di kedua tema, Beranda mengikuti permission | Done |
+| T-908 | Skeleton sesuai bentuk konten: tabel, daftar, form, halaman, kerangka aplikasi | S | T-905 | Loading state menyerupai konten dan menyebut objek yang dimuat | Done |
+| T-909 | Breadcrumb di header, diisi dari data rute | S | T-906 | Halaman detail menampilkan lokasi dan tautan ke induknya | Todo |
+| T-910 | Komponen modal umum (`Dialog`) untuk form singkat | S | T-905 | Fokus terkunci di dalam modal dan kembali ke pemicunya | Todo |
+| T-911 | Sidebar menciut otomatis di lebar tablet | S | T-906 | Tabel mempunyai ruang cukup di lebar 768 px | Todo |
+| T-912 | Aturan skala spasi dan tipografi di `DEVELOPMENT_GUIDELINE.md` | S | T-907 | Modul baru mengikuti aturan yang tertulis | Todo |
 
 ## Fase 10: Frontend Modul
 
@@ -144,6 +151,8 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 | T-1006 | Audit log: daftar, filter, detail | M | T-701, T-905 | Hanya baca | Todo |
 | T-1007 | Pengaturan sistem | M | T-803, T-905 | Konflik `version` ditangani, nilai sensitif tidak ditampilkan | Todo |
 | T-1008 | Terjemahkan email reset password ke Bahasa Indonesia | S | T-304 | Subjek dan isi email berbahasa Indonesia dan teruji | Todo |
+| T-1009 | Login dengan email atau username, Ingat saya 30 hari, halaman 404 di dalam layout | M | T-1001 | Email dan username tidak peka huruf besar-kecil, cookie Ingat saya batal saat logout, ganti password, dan penonaktifan | Done |
+| T-1010 | Kebijakan identifier autentikasi: normalisasi email dan username di semua jalur, constraint database | S | T-1009 | Nilai tidak ternormalisasi ditolak database, duplikat setelah normalisasi ditolak | Done |
 
 ## Fase 11: Verifikasi
 

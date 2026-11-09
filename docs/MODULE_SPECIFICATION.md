@@ -187,7 +187,7 @@ Mengelola proses autentikasi pengguna dan keamanan akses ke aplikasi.
 
 | Feature | Description |
 |---|---|
-| Login | Autentikasi menggunakan email dan password |
+| Login | Autentikasi menggunakan email atau username dan password, dengan opsi Ingat saya |
 | Logout | Mengakhiri sesi pengguna |
 | Forgot Password | Permintaan reset password |
 | Reset Password | Mengubah password menggunakan token valid |

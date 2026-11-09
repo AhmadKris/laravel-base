@@ -16,10 +16,10 @@ function asGuest() {
     );
 }
 
-async function submitLogin(email: string, password: string) {
+async function submitLogin(identifier: string, password: string) {
     const user = userEvent.setup();
 
-    await user.type(await screen.findByLabelText('Email'), email);
+    await user.type(await screen.findByLabelText('Email atau username'), identifier);
     await user.type(screen.getByLabelText('Password'), password);
     await user.click(screen.getByRole('button', { name: 'Masuk ke aplikasi' }));
 }
@@ -45,7 +45,56 @@ describe('login page', () => {
 
         expect(await screen.findByRole('heading', { name: 'Beranda' })).toBeVisible();
         expect(router.state.location.pathname).toBe('/');
-        expect(body).toEqual({ email: 'ani@example.com', password: 'rahasia' });
+        expect(body).toEqual({
+            identifier: 'ani@example.com',
+            password: 'rahasia',
+            remember: false,
+        });
+    });
+
+    it('accepts a username in the same field', async () => {
+        asGuest();
+        let body: unknown;
+        server.use(
+            http.post('*/login', async ({ request }) => {
+                body = await request.json();
+
+                return envelope(makeUser());
+            }),
+        );
+
+        renderApp('/login');
+        await submitLogin('  ani.lestari ', 'rahasia');
+
+        await screen.findByRole('heading', { name: 'Beranda' });
+        expect(body).toMatchObject({ identifier: 'ani.lestari' });
+    });
+
+    it('sends the remember choice, operable from the keyboard', async () => {
+        asGuest();
+        let body: unknown;
+        server.use(
+            http.post('*/login', async ({ request }) => {
+                body = await request.json();
+
+                return envelope(makeUser());
+            }),
+        );
+        const user = userEvent.setup();
+
+        renderApp('/login');
+        const remember = await screen.findByRole('checkbox', { name: 'Ingat saya' });
+        expect(remember).not.toBeChecked();
+        expect(remember).toHaveAccessibleDescription(/selama 30 hari/);
+
+        remember.focus();
+        await user.keyboard(' ');
+        expect(remember).toBeChecked();
+
+        await submitLogin('ani@example.com', 'rahasia');
+
+        await screen.findByRole('heading', { name: 'Beranda' });
+        expect(body).toMatchObject({ remember: true });
     });
 
     it('returns to the page a guest originally asked for', async () => {
@@ -105,7 +154,10 @@ describe('login page', () => {
         server.use(
             http.post('*/login', () =>
                 HttpResponse.json(
-                    { code: 'VALIDATION_FAILED', errors: { email: ['Email ditolak server.'] } },
+                    {
+                        code: 'VALIDATION_FAILED',
+                        errors: { identifier: ['Email ditolak server.'] },
+                    },
                     { status: 422 },
                 ),
             ),
@@ -115,8 +167,11 @@ describe('login page', () => {
         await submitLogin('ani@example.com', 'rahasia');
 
         expect(await screen.findByText('Email ditolak server.')).toBeVisible();
-        expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
-        expect(screen.getByLabelText('Email')).toHaveFocus();
+        expect(screen.getByLabelText('Email atau username')).toHaveAttribute(
+            'aria-invalid',
+            'true',
+        );
+        expect(screen.getByLabelText('Email atau username')).toHaveFocus();
     });
 
     it('explains when attempts are rate limited', async () => {
@@ -147,7 +202,7 @@ describe('login page', () => {
         renderApp('/login');
         await userEvent.click(await screen.findByRole('button', { name: 'Masuk ke aplikasi' }));
 
-        expect(await screen.findByText('Masukkan alamat email yang valid.')).toBeVisible();
+        expect(await screen.findByText('Email atau username wajib diisi.')).toBeVisible();
         expect(screen.getByText('Password wajib diisi.')).toBeVisible();
         expect(called).toBe(false);
     });

@@ -46,10 +46,11 @@ it('rejects roles outside the matrix before looking up the user', function (stri
 ]);
 
 it('lists all users with department and roles for global roles', function () {
+    $this->financeUser->forceFill(['name' => 'Qzxwy Ani'])->save();
     $this->financeUser->assignRole('Staff');
 
     $this->actingAs($this->admin)
-        ->getJson('/api/v1/users?search=ani')
+        ->getJson('/api/v1/users?search=qzxwy')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $this->financeUser->uuid)

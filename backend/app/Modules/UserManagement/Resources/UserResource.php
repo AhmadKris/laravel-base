@@ -24,6 +24,7 @@ final class UserResource extends JsonResource
             'id' => $this->uuid,
             'name' => $this->name,
             'email' => $this->email,
+            'username' => $this->username,
             'status' => ActiveStatus::fromBoolean($this->is_active)->value,
             'department' => $this->whenLoaded('department', fn (Department $department): array => [
                 'id' => $department->uuid,

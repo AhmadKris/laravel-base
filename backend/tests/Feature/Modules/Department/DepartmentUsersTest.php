@@ -31,7 +31,7 @@ it('lists the users of a department without sensitive fields', function () {
         ->assertExactJsonStructure([
             'success',
             'message',
-            'data' => [['id', 'name', 'email', 'status', 'created_at']],
+            'data' => [['id', 'name', 'email', 'username', 'status', 'created_at']],
             'meta' => ['pagination' => ['current_page', 'per_page', 'total', 'last_page', 'from', 'to']],
         ])
         ->assertJsonPath('data.0.id', $this->member->uuid);

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { FormAlert } from '@/components/shared/FormAlert';
 import { FormField } from '@/components/shared/FormField';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { applyFormError } from '@/lib/form-errors';
 import { forgotPasswordSchema, type ForgotPasswordValues } from '../schemas';
@@ -22,7 +23,10 @@ export function ForgotPasswordPage() {
 
     return (
         <>
-            <h1 className="text-lg font-semibold">Lupa password</h1>
+            <PageHeader
+                title="Lupa password"
+                description="Masukkan email akun Anda untuk menerima tautan reset."
+            />
             {requestLink.isSuccess ? (
                 <p role="status" className="text-sm">
                     Jika email tersebut terdaftar, tautan reset password telah dikirim. Tautan

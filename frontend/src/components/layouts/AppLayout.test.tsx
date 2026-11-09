@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -29,7 +29,7 @@ function renderLayout(permissions: string[], queryClient?: QueryClient) {
 }
 
 function menuLabels(): string[] {
-    const menu = screen.getByRole('list', { name: 'Menu utama' });
+    const menu = screen.getByRole('navigation', { name: 'Menu utama' });
 
     return within(menu)
         .getAllByRole('link')
@@ -86,6 +86,46 @@ it('logs out with the keyboard and returns to login', async () => {
     expect(await screen.findByText('login page')).toBeInTheDocument();
     expect(loggedOut).toBe(true);
     expect(useAuthStore.getState().status).toBe('signed-out');
+});
+
+it('remembers a collapsed sidebar', () => {
+    document.cookie = 'sidebar_state=false; path=/';
+    renderLayout([]);
+
+    expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute(
+        'data-state',
+        'collapsed',
+    );
+
+    document.cookie = 'sidebar_state=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+});
+
+it('groups administration items under a heading', () => {
+    renderLayout(['user.view']);
+
+    expect(screen.getByText('Administrasi')).toBeInTheDocument();
+});
+
+it('hides a heading with no visible items', () => {
+    renderLayout([]);
+
+    expect(screen.queryByText('Administrasi')).not.toBeInTheDocument();
+});
+
+it('closes the mobile menu after choosing a page', async () => {
+    const desktopWidth = window.innerWidth;
+    window.innerWidth = 375;
+    const user = userEvent.setup();
+    renderLayout(['user.view']);
+
+    await user.click(screen.getByRole('button', { name: 'Buka atau tutup menu' }));
+    await user.click(await screen.findByRole('link', { name: 'Beranda' }));
+
+    await waitFor(() =>
+        expect(screen.queryByRole('link', { name: 'Beranda' })).not.toBeInTheDocument(),
+    );
+
+    window.innerWidth = desktopWidth;
 });
 
 it('removes cached data when the user logs out', async () => {

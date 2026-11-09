@@ -14,11 +14,13 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password'])]
@@ -35,7 +37,15 @@ class User extends Authenticatable
     use Notifiable;
     use SoftDeletes;
 
+    // Excludes @ so a login identifier can never be both a username and an email.
+    public const string USERNAME_PATTERN = '/^[a-zA-Z0-9._-]+$/';
+
     protected string $guard_name = 'web';
+
+    public static function normalizeIdentifier(string $identifier): string
+    {
+        return Str::lower(Str::trim($identifier));
+    }
 
     /**
      * @return BelongsTo<Department, $this>
@@ -61,6 +71,22 @@ class User extends Authenticatable
                 $visible->orWhere('department_id', $viewer->department_id);
             }
         });
+    }
+
+    /**
+     * @return Attribute<string, string>
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::make(set: fn (string $value): string => self::normalizeIdentifier($value));
+    }
+
+    /**
+     * @return Attribute<string|null, string|null>
+     */
+    protected function username(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value): ?string => $value === null ? null : self::normalizeIdentifier($value));
     }
 
     /**

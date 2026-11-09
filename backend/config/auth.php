@@ -43,6 +43,8 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            // Minutes the "Ingat saya" cookie stays valid: 30 days.
+            'remember' => 43200,
         ],
     ],
 

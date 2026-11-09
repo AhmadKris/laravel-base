@@ -25,8 +25,9 @@ final class AuthController
     public function login(LoginRequest $request, LoginAction $action): JsonResponse
     {
         $user = $action->execute(
-            $request->validated('email'),
+            $request->validated('identifier'),
             $request->validated('password'),
+            (bool) $request->validated('remember', false),
             $request->session(),
         );
 

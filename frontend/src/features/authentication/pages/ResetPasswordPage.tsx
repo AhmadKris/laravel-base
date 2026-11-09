@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { FormAlert } from '@/components/shared/FormAlert';
-import { FormField } from '@/components/shared/FormField';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { PasswordField } from '@/components/shared/PasswordField';
 import { Button } from '@/components/ui/button';
 import { applyFormError } from '@/lib/form-errors';
 import { useAuthStore } from '@/stores/auth-store';
@@ -53,19 +54,17 @@ function ResetPasswordForm({ token, email }: ResetLink) {
         >
             <p className="text-sm text-muted-foreground">Untuk akun {email}</p>
             <FormAlert message={form.formState.errors.root?.server?.message} />
-            <FormField
+            <PasswordField
                 control={form.control}
                 name="password"
                 label="Password baru"
-                type="password"
                 autoComplete="new-password"
                 description={NEW_PASSWORD_HINT}
             />
-            <FormField
+            <PasswordField
                 control={form.control}
                 name="password_confirmation"
                 label="Ulangi password baru"
-                type="password"
                 autoComplete="new-password"
             />
             <Button type="submit" disabled={resetPassword.isPending}>
@@ -81,7 +80,7 @@ export function ResetPasswordPage() {
 
     return (
         <>
-            <h1 className="text-lg font-semibold">Buat password baru</h1>
+            <PageHeader title="Buat password baru" />
             {resetLink === null ? (
                 <p role="alert" className="text-sm text-destructive">
                     Tautan reset password tidak lengkap. Buka tautan dari email Anda atau minta

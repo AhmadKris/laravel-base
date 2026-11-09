@@ -3,8 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { FormAlert } from '@/components/shared/FormAlert';
-import { FormField } from '@/components/shared/FormField';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { PasswordField } from '@/components/shared/PasswordField';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { applyFormError } from '@/lib/form-errors';
 import { changePasswordSchema, type ChangePasswordValues, NEW_PASSWORD_HINT } from '../schemas';
 import { authService } from '../services/authService';
@@ -25,40 +27,42 @@ export function ChangePasswordPage() {
     });
 
     return (
-        <div className="flex max-w-sm flex-col gap-4">
-            <h1 className="text-lg font-semibold">Ubah password</h1>
-            <form
-                noValidate
-                className="grid gap-3"
-                onSubmit={form.handleSubmit((values) => changePassword.mutate(values))}
-            >
-                <FormAlert message={form.formState.errors.root?.server?.message} />
-                <FormField
-                    control={form.control}
-                    name="current_password"
-                    label="Password saat ini"
-                    type="password"
-                    autoComplete="current-password"
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    label="Password baru"
-                    type="password"
-                    autoComplete="new-password"
-                    description={NEW_PASSWORD_HINT}
-                />
-                <FormField
-                    control={form.control}
-                    name="password_confirmation"
-                    label="Ulangi password baru"
-                    type="password"
-                    autoComplete="new-password"
-                />
-                <Button type="submit" disabled={changePassword.isPending}>
-                    Simpan password
-                </Button>
-            </form>
+        <div className="flex max-w-md flex-col gap-5">
+            <PageHeader
+                title="Ubah password"
+                description="Setelah diganti, sesi di perangkat lain akan diakhiri."
+            />
+            <Card className="py-0">
+                <form
+                    noValidate
+                    className="grid gap-3 p-5"
+                    onSubmit={form.handleSubmit((values) => changePassword.mutate(values))}
+                >
+                    <FormAlert message={form.formState.errors.root?.server?.message} />
+                    <PasswordField
+                        control={form.control}
+                        name="current_password"
+                        label="Password saat ini"
+                        autoComplete="current-password"
+                    />
+                    <PasswordField
+                        control={form.control}
+                        name="password"
+                        label="Password baru"
+                        autoComplete="new-password"
+                        description={NEW_PASSWORD_HINT}
+                    />
+                    <PasswordField
+                        control={form.control}
+                        name="password_confirmation"
+                        label="Ulangi password baru"
+                        autoComplete="new-password"
+                    />
+                    <Button type="submit" disabled={changePassword.isPending}>
+                        Simpan password
+                    </Button>
+                </form>
+            </Card>
         </div>
     );
 }

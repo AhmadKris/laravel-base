@@ -47,10 +47,10 @@ it('records each sensitive action exactly once without secrets', function (strin
     }
 })->with([
     'successful login' => ['auth.login', fn ($test) => $test
-        ->postJson('/login', ['email' => $test->superAdmin->email, 'password' => AUDIT_SECRET])
+        ->postJson('/login', ['identifier' => $test->superAdmin->email, 'password' => AUDIT_SECRET])
         ->assertOk()],
     'failed login' => ['auth.login_failed', fn ($test) => $test
-        ->postJson('/login', ['email' => $test->superAdmin->email, 'password' => AUDIT_NEW_SECRET])
+        ->postJson('/login', ['identifier' => $test->superAdmin->email, 'password' => AUDIT_NEW_SECRET])
         ->assertUnauthorized()],
     'logout' => ['auth.logout', fn ($test) => $test
         ->actingAs($test->superAdmin)

@@ -38,6 +38,12 @@ return [
     'unique' => ':Attribute sudah digunakan.',
     'uuid' => ':Attribute tidak valid.',
 
+    'custom' => [
+        'username' => [
+            'regex' => 'Username hanya boleh berisi huruf, angka, titik, garis bawah, dan tanda hubung.',
+        ],
+    ],
+
     'attributes' => [
         'action' => 'aksi',
         'code' => 'kode',
@@ -50,6 +56,7 @@ return [
         'date_to' => 'tanggal akhir',
         'department_id' => 'departemen',
         'description' => 'deskripsi',
+        'identifier' => 'email atau username',
         'localization.currency' => 'mata uang',
         'localization.locale' => 'bahasa',
         'localization.timezone' => 'zona waktu',
@@ -60,6 +67,7 @@ return [
         'password_confirmation' => 'konfirmasi password',
         'per_page' => 'jumlah per halaman',
         'permissions' => 'permission',
+        'remember' => 'ingat saya',
         'roles' => 'role',
         'search' => 'pencarian',
         'sort_by' => 'kolom pengurutan',

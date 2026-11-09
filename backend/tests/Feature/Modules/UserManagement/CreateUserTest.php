@@ -118,3 +118,32 @@ it('prevents a department scoped actor from creating users elsewhere', function 
         ->postJson('/api/v1/users', newUserPayload(['department_id' => $own->uuid]))
         ->assertCreated();
 });
+
+it('stores an optional username in lowercase and returns it', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/v1/users', newUserPayload(['username' => 'Budi.Santoso']))
+        ->assertCreated()
+        ->assertJsonPath('data.username', 'budi.santoso');
+});
+
+it('creates a user without a username', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/v1/users', newUserPayload())
+        ->assertCreated()
+        ->assertJsonPath('data.username', null);
+});
+
+it('rejects an invalid or taken username', function (string $username) {
+    User::factory()->create(['username' => 'budi']);
+
+    $this->actingAs($this->admin)
+        ->postJson('/api/v1/users', newUserPayload(['username' => $username]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('username');
+})->with([
+    'taken in another case' => 'BUDI',
+    'contains at sign' => 'budi@tim',
+    'contains space' => 'budi santoso',
+    'too short' => 'ab',
+    'too long' => str_repeat('a', 51),
+]);

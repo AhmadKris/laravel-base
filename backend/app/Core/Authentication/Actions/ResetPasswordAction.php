@@ -25,7 +25,7 @@ final class ResetPasswordAction
     public function execute(string $email, string $token, string $password): void
     {
         $status = Password::reset(
-            ['email' => $email, 'token' => $token, 'password' => $password, 'is_active' => true],
+            ['email' => User::normalizeIdentifier($email), 'token' => $token, 'password' => $password, 'is_active' => true],
             function (User $user, string $password): void {
                 DB::transaction(function () use ($user, $password): void {
                     $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();

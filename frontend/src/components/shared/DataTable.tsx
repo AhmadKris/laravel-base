@@ -1,6 +1,7 @@
 import { flexRender, type RowData, useTable } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -14,8 +15,8 @@ import type { PaginationMeta } from '@/types/api-response';
 import { type DataTableColumn, dataTableFeatures } from './dataTableColumns';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
-import { LoadingState } from './LoadingState';
 import { PaginationControls } from './PaginationControls';
+import { TableSkeleton } from './skeletons';
 
 export interface DataTableSort {
     field: string;
@@ -78,88 +79,99 @@ export function DataTable<TRow extends RowData>({
     });
 
     if (isLoading) {
-        return <LoadingState label={loadingLabel} rows={5} />;
+        return (
+            <Card className="gap-0 py-0">
+                <TableSkeleton label={loadingLabel} columns={columns.length} />
+            </Card>
+        );
     }
 
     if (error) {
         return (
-            <ErrorState title={errorTitle} message={toApiError(error).message} onRetry={onRetry} />
+            <Card className="gap-0 py-0">
+                <ErrorState
+                    title={errorTitle}
+                    message={toApiError(error).message}
+                    onRetry={onRetry}
+                />
+            </Card>
         );
     }
 
     if (rows === undefined || rows.length === 0) {
-        return <EmptyState title={emptyTitle} description={emptyDescription} />;
+        return (
+            <Card className="gap-0 py-0">
+                <EmptyState title={emptyTitle} description={emptyDescription} />
+            </Card>
+        );
     }
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                    const activeDirection =
-                                        sort?.field === header.column.id
-                                            ? sort?.direction
-                                            : undefined;
-                                    const SortIcon =
-                                        activeDirection === undefined
-                                            ? ArrowUpDown
-                                            : SORT_ICONS[activeDirection];
-                                    const headerContent = flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext(),
-                                    );
+        <Card className="gap-0 py-0">
+            <Table containerClassName="max-h-[70svh] overflow-y-auto">
+                <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => {
+                                const activeDirection =
+                                    sort?.field === header.column.id ? sort?.direction : undefined;
+                                const SortIcon =
+                                    activeDirection === undefined
+                                        ? ArrowUpDown
+                                        : SORT_ICONS[activeDirection];
+                                const headerContent = flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext(),
+                                );
 
-                                    return (
-                                        <TableHead
-                                            key={header.id}
-                                            aria-sort={
-                                                activeDirection === undefined
-                                                    ? undefined
-                                                    : ARIA_SORT[activeDirection]
-                                            }
-                                        >
-                                            {header.column.getCanSort() &&
-                                            onSortChange !== undefined ? (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        onSortChange(
-                                                            nextSort(header.column.id, sort),
-                                                        )
-                                                    }
-                                                >
-                                                    {headerContent}
-                                                    <SortIcon aria-hidden="true" />
-                                                </Button>
-                                            ) : (
-                                                headerContent
-                                            )}
-                                        </TableHead>
-                                    );
-                                })}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                                {row.getAllCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+                                return (
+                                    <TableHead
+                                        key={header.id}
+                                        className="sticky top-0 z-10 bg-card px-4 shadow-[inset_0_-1px_0_var(--border)]"
+                                        aria-sort={
+                                            activeDirection === undefined
+                                                ? undefined
+                                                : ARIA_SORT[activeDirection]
+                                        }
+                                    >
+                                        {header.column.getCanSort() &&
+                                        onSortChange !== undefined ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    onSortChange(nextSort(header.column.id, sort))
+                                                }
+                                            >
+                                                {headerContent}
+                                                <SortIcon aria-hidden="true" />
+                                            </Button>
+                                        ) : (
+                                            headerContent
+                                        )}
+                                    </TableHead>
+                                );
+                            })}
+                        </TableRow>
+                    ))}
+                </TableHeader>
+                <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                            {row.getAllCells().map((cell) => (
+                                <TableCell key={cell.id} className="px-4">
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
             {pagination !== undefined && onPageChange !== undefined && (
-                <PaginationControls pagination={pagination} onPageChange={onPageChange} />
+                <div className="border-t px-4 py-3">
+                    <PaginationControls pagination={pagination} onPageChange={onPageChange} />
+                </div>
             )}
-        </div>
+        </Card>
     );
 }

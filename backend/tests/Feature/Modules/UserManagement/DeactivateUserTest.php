@@ -130,3 +130,11 @@ it('hides users outside the scope', function () {
 
     expect($outsider->refresh()->is_active)->toBeTrue();
 });
+
+it('invalidates the remember cookie of the deactivated user', function () {
+    $this->target->forceFill(['remember_token' => 'token-before-deactivation'])->save();
+
+    $this->actingAs($this->admin)->deleteJson("/api/v1/users/{$this->target->uuid}")->assertNoContent();
+
+    expect($this->target->refresh()->getRememberToken())->not->toBe('token-before-deactivation');
+});
