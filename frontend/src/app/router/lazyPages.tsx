@@ -23,3 +23,27 @@ export const ChangePasswordPage = lazy(() =>
         default: module.ChangePasswordPage,
     })),
 );
+
+export const UserListPage = lazy(() =>
+    import('@/features/users/pages/UserListPage').then((module) => ({
+        default: module.UserListPage,
+    })),
+);
+
+export const UserDetailPage = lazy(() =>
+    import('@/features/users/pages/UserDetailPage').then((module) => ({
+        default: module.UserDetailPage,
+    })),
+);
+
+export const UserCreatePage = lazy(() =>
+    import('@/features/users/pages/UserFormPages').then((module) => ({
+        default: module.UserCreatePage,
+    })),
+);
+
+export const UserEditPage = lazy(() =>
+    import('@/features/users/pages/UserFormPages').then((module) => ({
+        default: module.UserEditPage,
+    })),
+);

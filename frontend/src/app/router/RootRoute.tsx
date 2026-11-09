@@ -12,7 +12,7 @@ export function RootRoute() {
     const previousPathname = useRef(pathname);
 
     useEffect(() => {
-        document.title = title === undefined ? APP_NAME : `${title} · ${APP_NAME}`;
+        document.title = title === undefined ? APP_NAME : `${title} - ${APP_NAME}`;
     }, [title]);
 
     // A client-side navigation does not reset focus, so screen readers would stay on the old link.

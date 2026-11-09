@@ -27,7 +27,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Controller hanya menerima request dan mengembalikan response.
 - Satu Action untuk satu use case. Service hanya untuk logika yang dipakai ulang.
 - Repository, Contract, dan DTO hanya dibuat jika ada kebutuhan nyata saat itu.
-- Antarmodul berkomunikasi lewat contract atau event. Jangan memakai controller atau model internal modul lain. Pengecualian: `User` dan `Department` adalah model bersama yang boleh direferensikan langsung.
+- Antarmodul berkomunikasi lewat contract atau event. Jangan memakai controller atau model internal modul lain. Pengecualian: `User` adalah model bersama yang boleh direferensikan langsung.
 - Gunakan transaksi untuk perubahan yang harus konsisten. Jangan memanggil HTTP, email, atau proses lambat di dalamnya.
 - Event yang memicu proses lanjutan dikirim setelah commit.
 - Job harus aman dijalankan ulang, payload minimal, dan tanpa secret.
@@ -38,7 +38,8 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Semua perubahan skema lewat migration. Migration yang sudah diterapkan di environment bersama tidak diedit.
 - `id` BIGINT untuk internal, `uuid` untuk API. Model yang diekspos mengembalikan `uuid` dari `getRouteKeyName()`.
 - Foreign key dan delete behavior harus eksplisit. Data bisnis memakai `restrictOnDelete`.
-- Index dibuat berdasarkan query nyata. Cegah N+1 dan gunakan pagination untuk koleksi.
+- Index dibuat berdasarkan query nyata. Gunakan pagination untuk koleksi.
+- Query N+1 dilarang. Relasi yang dipakai pada koleksi wajib di-eager load, dan setiap endpoint daftar memiliki test bahwa jumlah query tidak bertambah mengikuti jumlah baris.
 - Nilai uang memakai `DECIMAL` dan BCMath, tidak pernah `float`.
 - Timestamp disimpan dalam UTC.
 
@@ -55,7 +56,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Deny by default. Setiap endpoint terlindungi memeriksa permission dan Policy di backend.
 - Format permission `{resource}.{action}`, guard `web`.
 - Query data melalui scope yang konsisten, misalnya `visibleTo($user)`. Resource di luar scope mengembalikan 404.
-- Departemen, ownership, dan role diambil dari server, bukan dari request.
+- Ownership dan role diambil dari server, bukan dari request.
 - Cegah privilege escalation pada setiap perubahan role, permission, dan field internal.
 - SPA memakai cookie session Sanctum dengan CSRF. Token tidak disimpan di `localStorage`.
 - Password, token, session, dan secret tidak boleh masuk log, response, payload job, atau variabel `VITE_*`.
@@ -79,8 +80,14 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Setiap halaman data memiliki loading, empty, dan error state, serta responsif.
 - Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak.
 - Form memiliki label, pesan error per field, dan tombol yang nonaktif saat submit.
+- Data table memiliki pengurutan asc/desc pada kolom yang didukung API, filter jika datanya memungkinkan, dan dropdown jumlah data per halaman dengan pilihan 10, 20, 50, dan 100.
+- Klik pada baris data table membuka halaman detail. Tautan di dalam baris tetap ada untuk keyboard, dan tombol aksi di baris tidak ikut memicu klik baris.
+- Setiap resource yang dapat dibuat memiliki halaman form sendiri. Setelah berhasil dibuat, arahkan ke halaman detailnya.
+- Halaman form dan detail memakai `CenteredPage`, sehingga berada di tengah dengan lebar yang sama.
+- Form memakai `FormCard`: satu kolom, semua field sama lebar, aksi di kanan bawah dengan urutan Batal lalu Simpan.
+- Relasi yang dapat diatur, seperti role pengguna, diisi di form yang sama dan disimpan dalam satu transaksi, bukan di halaman atau kartu terpisah.
 - Semua fungsi dapat dipakai dengan keyboard.
-- Teks UI dalam Bahasa Indonesia, spesifik: "Simpan departemen", bukan "Submit".
+- Teks UI dalam Bahasa Indonesia, spesifik: "Simpan pengguna", bukan "Submit".
 
 ## Testing
 
@@ -133,6 +140,7 @@ Setiap baris harus punya alasan untuk ada. Hal-hal berikut dilarang.
 - Gradien dekoratif, glassmorphism, card di dalam card, bayangan berlebihan, dan animasi tanpa fungsi.
 - Emoji sebagai ikon, hero section pada halaman aplikasi, serta data atau teks contoh yang tertinggal.
 - Teks generik seperti "Selamat datang kembali!" atau "Terjadi kesalahan".
+- Karakter tipografi khas teks AI di frontend: em dash, en dash, tanda kutip melengkung, karakter elipsis, titik tengah, dan panah karakter. Gunakan tanda baca ASCII, kata seperti "sampai", atau komponen ikon.
 
 **Tulisan** (komentar, commit, PR, dokumen, laporan)
 

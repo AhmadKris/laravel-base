@@ -147,7 +147,7 @@ Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya 
 |---|---|---|---|---|---|
 | T-1001 | Halaman login, lupa password, reset password | M | T-304, T-903 | Pesan error mengikuti backend | Done |
 | T-1002 | Halaman ubah password | S | T-305, T-904 | Error validasi tampil per field | Done |
-| T-1004 | User: daftar, filter, detail, form, role, deaktivasi | L | T-605, T-905 | Aksi mengikuti permission | Todo |
+| T-1004 | User: daftar, filter, detail, form, role, deaktivasi | L | T-605, T-905 | Aksi mengikuti permission | Done |
 | T-1005 | Role: daftar, form, pengaturan permission | L | T-404, T-905 | Konflik `version` meminta user memuat ulang data | Todo |
 | T-1006 | Audit log: daftar, filter, detail | M | T-701, T-905 | Hanya baca | Todo |
 | T-1007 | Pengaturan sistem | M | T-803, T-905 | Konflik `version` ditangani, nilai sensitif tidak ditampilkan | Todo |

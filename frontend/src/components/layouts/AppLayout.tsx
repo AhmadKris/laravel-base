@@ -39,7 +39,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                     <MainNavigation />
                 </SidebarContent>
             </Sidebar>
-            <SidebarInset>
+            <SidebarInset className="min-w-0">
                 <header className="flex h-14 items-center justify-between border-b bg-card px-3 md:px-4">
                     <SidebarTrigger aria-label="Buka atau tutup menu" />
                     <UserMenu />
