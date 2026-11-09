@@ -42,7 +42,7 @@ final class CreateSuperAdminCommand extends Command
         ], [
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'confirmed', Password::min(12)->uncompromised()],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
         if ($validator->fails()) {

@@ -13,8 +13,14 @@ final class RateLimits
 {
     public static function register(): void
     {
-        RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute(5)
-            ->by(Str::lower($request->string('email')->toString()).'|'.$request->ip()));
+        $emailAndIp = fn (Request $request): string => Str::lower($request->string('email')->toString()).'|'.$request->ip();
+
+        RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute(5)->by($emailAndIp($request)));
+
+        RateLimiter::for('password-reset', fn (Request $request): Limit => Limit::perMinute(5)->by($emailAndIp($request)));
+
+        RateLimiter::for('password-change', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by((string) $request->user()?->getAuthIdentifier()));
 
         RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)
             ->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));

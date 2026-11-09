@@ -492,6 +492,22 @@ Response:
 
 Response harus mengikuti scope dan informasi yang boleh dilihat oleh user tersebut.
 
+## 7.3 Login & Password
+
+| Endpoint | Body | Response |
+|---|---|---|
+| POST /login | `email`, `password` | 200 berisi data user seperti bagian 7.2; 401 `AUTH_INVALID_CREDENTIALS` |
+| POST /logout | - | 204 |
+| POST /auth/forgot-password | `email` | Selalu 200, baik email terdaftar maupun tidak |
+| POST /auth/reset-password | `email`, `token`, `password`, `password_confirmation` | 200; 422 `AUTH_PASSWORD_RESET_INVALID` |
+| POST /auth/change-password | `current_password`, `password`, `password_confirmation` | 200; 422 per field |
+
+- Email salah, password salah, akun nonaktif, dan akun terhapus menghasilkan error login yang sama.
+- Password baru minimal 12 karakter dan tidak boleh terdapat pada data kebocoran.
+- Link reset berbentuk `/reset-password#token={token}&email={email}`. Token berada di URL fragment agar tidak tercatat di log server, berlaku 60 menit, dan hanya dapat dipakai sekali.
+- Reset password mengakhiri semua session user. Ubah password mengakhiri session lain dan meregenerasi session yang sedang dipakai.
+- Login, permintaan reset, dan ubah password dibatasi 5 percobaan per menit.
+
 ---
 
 # 8. Core Module API Specification
@@ -1094,6 +1110,8 @@ Contoh:
 ```text
 AUTH_UNAUTHENTICATED
 AUTH_FORBIDDEN
+AUTH_INVALID_CREDENTIALS
+AUTH_PASSWORD_RESET_INVALID
 INVALID_REQUEST
 RESOURCE_NOT_FOUND
 RESOURCE_CONFLICT
