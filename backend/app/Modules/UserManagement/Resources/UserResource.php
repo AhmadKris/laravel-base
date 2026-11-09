@@ -29,6 +29,7 @@ final class UserResource extends JsonResource
                 'id' => $department->uuid,
                 'name' => $department->name,
             ]),
+            /** @var list<string> */
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
             'created_at' => $this->created_at,
         ];
