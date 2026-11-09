@@ -18,6 +18,7 @@ function createSuperAdmin(mixed $test, string $email = 'root@example.com', strin
     return $test->artisan('app:create-super-admin')
         ->expectsQuestion('Name', 'Root Admin')
         ->expectsQuestion('Email', $email)
+        ->expectsQuestion('Username (optional)', null)
         ->expectsQuestion('Password', $password)
         ->expectsQuestion('Confirm password', $confirmation ?? $password);
 }
@@ -91,6 +92,36 @@ it('rejects a password found in a data breach', function () {
     $this->breachedSuffixes = substr(strtoupper(sha1(VALID_PASSWORD)), 5).':42';
 
     createSuperAdmin($this)->assertFailed()->run();
+
+    expect(User::query()->count())->toBe(0);
+});
+
+it('stores an optional username in lowercase', function () {
+    $this->seed(RolePermissionSeeder::class);
+
+    $this->artisan('app:create-super-admin')
+        ->expectsQuestion('Name', 'Root Admin')
+        ->expectsQuestion('Email', 'root@example.com')
+        ->expectsQuestion('Username (optional)', 'Root.Admin')
+        ->expectsQuestion('Password', VALID_PASSWORD)
+        ->expectsQuestion('Confirm password', VALID_PASSWORD)
+        ->assertSuccessful()
+        ->run();
+
+    expect(User::query()->sole()->username)->toBe('root.admin');
+});
+
+it('rejects a username that could be mistaken for an email', function () {
+    $this->seed(RolePermissionSeeder::class);
+
+    $this->artisan('app:create-super-admin')
+        ->expectsQuestion('Name', 'Root Admin')
+        ->expectsQuestion('Email', 'root@example.com')
+        ->expectsQuestion('Username (optional)', 'root@admin')
+        ->expectsQuestion('Password', VALID_PASSWORD)
+        ->expectsQuestion('Confirm password', VALID_PASSWORD)
+        ->assertFailed()
+        ->run();
 
     expect(User::query()->count())->toBe(0);
 });

@@ -17,12 +17,15 @@ final class LoginAction
     /**
      * @throws InvalidCredentialsException
      */
-    public function execute(string $email, string $password, Session $session): User
+    public function execute(string $identifier, string $password, bool $remember, Session $session): User
     {
         $guard = Auth::guard('web');
 
-        if (! $guard->attempt(['email' => $email, 'password' => $password, 'is_active' => true])) {
-            $this->auditLogger->record('auth.login_failed', properties: ['email' => $email]);
+        $normalized = User::normalizeIdentifier($identifier);
+        $identifierColumn = str_contains($normalized, '@') ? 'email' : 'username';
+
+        if (! $guard->attempt([$identifierColumn => $normalized, 'password' => $password, 'is_active' => true], $remember)) {
+            $this->auditLogger->record('auth.login_failed', properties: ['identifier' => $identifier]);
 
             throw new InvalidCredentialsException;
         }

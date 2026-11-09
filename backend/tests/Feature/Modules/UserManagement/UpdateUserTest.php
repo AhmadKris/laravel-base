@@ -158,3 +158,13 @@ it('lets a super admin edit an admin', function () {
 it('lets users with permission edit their own profile', function () {
     patchUser($this, $this->admin, $this->admin, ['name' => 'Edited'])->assertOk();
 });
+
+it('can keep its own username and rejects one owned by another user', function () {
+    $this->target->forceFill(['username' => 'target.user'])->save();
+    User::factory()->create(['username' => 'other.user']);
+
+    patchUser($this, $this->admin, $this->target, ['username' => 'TARGET.USER'])->assertOk();
+    patchUser($this, $this->admin, $this->target, ['username' => 'other.user'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('username');
+});

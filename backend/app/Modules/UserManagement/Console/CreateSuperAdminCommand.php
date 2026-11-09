@@ -9,6 +9,7 @@ use App\Modules\UserManagement\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 
@@ -36,12 +37,14 @@ final class CreateSuperAdminCommand extends Command
 
         $validator = Validator::make([
             'name' => $this->ask('Name'),
-            'email' => $this->ask('Email'),
+            'email' => $this->askIdentifier('Email'),
+            'username' => $this->askIdentifier('Username (optional)'),
             'password' => $this->secret('Password'),
             'password_confirmation' => $this->secret('Confirm password'),
         ], [
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'username' => ['nullable', 'string', 'min:3', 'max:50', 'regex:'.User::USERNAME_PATTERN, 'unique:users,username'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
@@ -66,5 +69,12 @@ final class CreateSuperAdminCommand extends Command
         $this->info('Super Admin account created.');
 
         return self::SUCCESS;
+    }
+
+    private function askIdentifier(string $question): ?string
+    {
+        $answer = $this->ask($question);
+
+        return is_string($answer) && Str::trim($answer) !== '' ? User::normalizeIdentifier($answer) : null;
     }
 }

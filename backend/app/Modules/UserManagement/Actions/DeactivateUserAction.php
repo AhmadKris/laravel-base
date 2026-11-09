@@ -11,6 +11,7 @@ use App\Modules\UserManagement\Exceptions\LastSuperAdminException;
 use App\Modules\UserManagement\Exceptions\UserSelfDeactivationException;
 use App\Modules\UserManagement\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 final class DeactivateUserAction
 {
@@ -43,7 +44,8 @@ final class DeactivateUserAction
                 throw new LastSuperAdminException;
             }
 
-            $user->forceFill(['is_active' => false])->save();
+            // Without a new token, a remember cookie would sign the deactivated user back in.
+            $user->forceFill(['is_active' => false, 'remember_token' => Str::random(60)])->save();
 
             $this->sessionService->endAll($user);
             $this->auditLogger->record('user.deactivated', $user, actor: $actor);

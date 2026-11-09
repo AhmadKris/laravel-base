@@ -419,7 +419,8 @@ erDiagram
 | uuid | CHAR(36) | UNIQUE | External identifier |
 | department_id | BIGINT UNSIGNED | FK, NULL | Departemen user |
 | name | VARCHAR(150) | NOT NULL | User name |
-| email | VARCHAR(255) | UNIQUE | Login email |
+| email | VARCHAR(255) | UNIQUE, CHECK | Login email, ternormalisasi |
+| username | VARCHAR(50) | UNIQUE, CHECK, NULL | Login username, ternormalisasi |
 | password | VARCHAR(255) | NOT NULL | Hashed password |
 | email_verified_at | TIMESTAMP | NULL | Verification timestamp |
 | is_active | BOOLEAN | DEFAULT TRUE | Account status |
@@ -429,6 +430,8 @@ erDiagram
 | deleted_at | TIMESTAMP | NULL | Soft delete |
 
 Migration `users` bawaan Laravel harus ditambah kolom `uuid`, `is_active`, `last_login_at`, dan `deleted_at`.
+
+`email` dan `username` hanya menerima nilai ternormalisasi, yaitu huruf kecil tanpa spasi di awal dan akhir. Constraint `users_email_normalized` dan `users_username_normalized` memakai perbandingan biner karena kolomnya memakai collation yang tidak membedakan huruf besar dan kecil.
 
 Unique `email` juga berlaku untuk user yang di-soft delete. Mengaktifkan kembali akun dilakukan dengan restore, bukan membuat user baru dengan email yang sama.
 

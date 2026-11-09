@@ -21,6 +21,7 @@ final class UpdateUserRequest extends UserRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:150'],
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'username' => $this->usernameRules($user->id),
             'status' => ['sometimes', Rule::enum(ActiveStatus::class)],
             'department_id' => ['sometimes', 'nullable', 'uuid', $this->existingDepartment()],
         ];

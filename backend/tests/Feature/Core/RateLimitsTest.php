@@ -10,10 +10,10 @@ beforeEach(function () {
 
 it('limits repeated login attempts for one account', function () {
     foreach (range(1, 5) as $attempt) {
-        $this->postJson('/api/v1/login-sample', ['email' => 'user@example.com'])->assertOk();
+        $this->postJson('/api/v1/login-sample', ['identifier' => 'user@example.com'])->assertOk();
     }
 
-    $this->postJson('/api/v1/login-sample', ['email' => 'user@example.com'])
+    $this->postJson('/api/v1/login-sample', ['identifier' => 'user@example.com'])
         ->assertTooManyRequests()
         ->assertJsonPath('code', 'TOO_MANY_REQUESTS')
         ->assertHeader('Retry-After');
@@ -21,18 +21,18 @@ it('limits repeated login attempts for one account', function () {
 
 it('treats email casing as the same account', function () {
     foreach (range(1, 5) as $attempt) {
-        $this->postJson('/api/v1/login-sample', ['email' => 'user@example.com'])->assertOk();
+        $this->postJson('/api/v1/login-sample', ['identifier' => 'user@example.com'])->assertOk();
     }
 
-    $this->postJson('/api/v1/login-sample', ['email' => 'USER@example.com'])->assertTooManyRequests();
+    $this->postJson('/api/v1/login-sample', ['identifier' => 'USER@example.com'])->assertTooManyRequests();
 });
 
 it('counts attempts per account', function () {
     foreach (range(1, 5) as $attempt) {
-        $this->postJson('/api/v1/login-sample', ['email' => 'first@example.com'])->assertOk();
+        $this->postJson('/api/v1/login-sample', ['identifier' => 'first@example.com'])->assertOk();
     }
 
-    $this->postJson('/api/v1/login-sample', ['email' => 'second@example.com'])->assertOk();
+    $this->postJson('/api/v1/login-sample', ['identifier' => 'second@example.com'])->assertOk();
 });
 
 it('applies the standard limit to api routes', function () {

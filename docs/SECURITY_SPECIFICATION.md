@@ -276,6 +276,7 @@ Session security harus menerapkan:
 | SameSite | Sesuai kebutuhan deployment dan CSRF |
 | Session Regeneration | Setelah login dan perubahan privilege |
 | Session Expiry | Mengikuti kebijakan inactivity dan absolute timeout |
+| Remember Me | Opsional per login, berlaku 30 hari, token dirotasi saat logout, ubah password, reset password, dan penonaktifan akun |
 | Logout | Invalidasi session |
 | Password Reset | Kebijakan invalidasi session aktif |
 | Privileged Session | Timeout lebih ketat jika diperlukan |

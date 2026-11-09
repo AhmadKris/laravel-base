@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\UserManagement\Requests;
 
 use App\Modules\Department\Models\Department;
+use App\Modules\UserManagement\Models\User;
 use App\Shared\Enums\ActiveStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,6 +30,22 @@ abstract class UserRequest extends FormRequest
         }
 
         return $attributes;
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    protected function usernameRules(?int $ignoredUserId = null): array
+    {
+        return [
+            'sometimes',
+            'nullable',
+            'string',
+            'min:3',
+            'max:50',
+            'regex:'.User::USERNAME_PATTERN,
+            Rule::unique('users', 'username')->ignore($ignoredUserId),
+        ];
     }
 
     protected function existingDepartment(): Exists

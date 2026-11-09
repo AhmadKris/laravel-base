@@ -458,6 +458,7 @@ export interface components {
             name: string;
             /** Format: email */
             email: string;
+            username?: string | null;
             password: string;
             status?: components['schemas']['ActiveStatus'];
             /** Format: uuid */
@@ -497,6 +498,7 @@ export interface components {
             name?: string;
             /** Format: email */
             email?: string;
+            username?: string | null;
             status?: components['schemas']['ActiveStatus'];
             /** Format: uuid */
             department_id?: string | null;
@@ -506,6 +508,7 @@ export interface components {
             id: string;
             name: string;
             email: string;
+            username: string;
             /** @enum {string} */
             status: 'active' | 'inactive';
             department?: {

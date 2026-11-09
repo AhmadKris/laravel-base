@@ -496,13 +496,16 @@ Response harus mengikuti scope dan informasi yang boleh dilihat oleh user terseb
 
 | Endpoint | Body | Response |
 |---|---|---|
-| POST /login | `email`, `password` | 200 berisi data user seperti bagian 7.2; 401 `AUTH_INVALID_CREDENTIALS` |
+| POST /login | `identifier` (email atau username), `password`, `remember` (opsional, boolean) | 200 berisi data user seperti bagian 7.2; 401 `AUTH_INVALID_CREDENTIALS` |
 | POST /logout | - | 204 |
 | POST /auth/forgot-password | `email` | Selalu 200, baik email terdaftar maupun tidak |
 | POST /auth/reset-password | `email`, `token`, `password`, `password_confirmation` | 200; 422 `AUTH_PASSWORD_RESET_INVALID` |
 | POST /auth/change-password | `current_password`, `password`, `password_confirmation` | 200; 422 per field |
 
-- Email salah, password salah, akun nonaktif, dan akun terhapus menghasilkan error login yang sama.
+- Email atau username salah, password salah, akun nonaktif, dan akun terhapus menghasilkan error login yang sama.
+- `identifier` yang mengandung `@` dicocokkan sebagai email, selain itu sebagai username.
+- Email dan username dinormalisasi dengan membuang spasi di awal dan akhir lalu mengubahnya ke huruf kecil, pada pembuatan akun, perubahan akun, login, dan reset password. Keunikan berlaku setelah normalisasi. Password tidak dinormalisasi dan membedakan huruf besar dan kecil.
+- `remember: true` membuat sesi dapat dipulihkan selama 30 hari lewat cookie HttpOnly. Token dirotasi saat logout, ubah password, reset password, dan penonaktifan akun.
 - Password baru minimal 12 karakter dan tidak boleh terdapat pada data kebocoran.
 - Link reset berbentuk `/reset-password#token={token}&email={email}`. Token berada di URL fragment agar tidak tercatat di log server, berlaku 60 menit, dan hanya dapat dipakai sekali.
 - Reset password mengakhiri semua session user. Ubah password mengakhiri session lain dan meregenerasi session yang sedang dipakai.
@@ -556,6 +559,7 @@ Validation:
 |---|---|
 | name | Required, string, max 150 |
 | email | Required, valid email, unique |
+| username | Optional, 3 sampai 50 karakter huruf, angka, titik, garis bawah, atau tanda hubung, unique, disimpan dalam huruf kecil |
 | password | Required, password policy |
 | status | Allowed enum |
 | department_id | Nullable, valid department identifier |
@@ -577,7 +581,7 @@ Request:
 }
 ```
 
-Field yang dapat diubah: `name`, `email`, `status`, dan `department_id`. Password tidak dapat diubah melalui endpoint ini.
+Field yang dapat diubah: `name`, `email`, `username`, `status`, dan `department_id`. Password tidak dapat diubah melalui endpoint ini.
 
 ### Aturan Pengelolaan User
 

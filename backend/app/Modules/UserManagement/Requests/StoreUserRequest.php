@@ -18,6 +18,7 @@ final class StoreUserRequest extends UserRequest
         return [
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
+            'username' => $this->usernameRules(),
             'password' => ['required', 'string', 'max:1024', Password::defaults()],
             'status' => ['sometimes', Rule::enum(ActiveStatus::class)],
             'department_id' => ['sometimes', 'nullable', 'uuid', $this->existingDepartment()],

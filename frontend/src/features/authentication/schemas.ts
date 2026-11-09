@@ -14,8 +14,9 @@ const passwordsMatch = {
 };
 
 export const loginSchema = z.object({
-    email: emailField,
+    identifier: z.string().trim().min(1, 'Email atau username wajib diisi.'),
     password: z.string().min(1, 'Password wajib diisi.'),
+    remember: z.boolean(),
 });
 
 export const forgotPasswordSchema = z.object({ email: emailField });

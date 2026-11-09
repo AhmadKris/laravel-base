@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
+use Symfony\Component\HttpFoundation\Cookie;
 
 uses(RefreshDatabase::class);
 
@@ -23,7 +24,7 @@ function loginUser(array $attributes = []): User
 
 function loginPayload(array $overrides = []): array
 {
-    return ['email' => 'user@example.com', 'password' => LOGIN_PASSWORD, ...$overrides];
+    return ['identifier' => 'user@example.com', 'password' => LOGIN_PASSWORD, ...$overrides];
 }
 
 it('logs in an active user and returns the profile', function () {
@@ -88,7 +89,10 @@ it('returns the same error for every failed login', function (Closure $arrange, 
     expect(Auth::guard('web')->check())->toBeFalse();
 })->with([
     'wrong password' => [fn () => loginUser(), loginPayload(['password' => 'wrong-password-value'])],
-    'unknown email' => [fn () => loginUser(), loginPayload(['email' => 'nobody@example.com'])],
+    'unknown email' => [fn () => loginUser(), loginPayload(['identifier' => 'nobody@example.com'])],
+    'unknown username' => [fn () => loginUser(), loginPayload(['identifier' => 'nobody'])],
+    'inactive user by username' => [fn () => loginUser(['username' => 'user.satu', 'is_active' => false]), loginPayload(['identifier' => 'user.satu'])],
+    'email text against a username' => [fn () => loginUser(['username' => 'user.satu']), loginPayload(['identifier' => 'user.satu@nowhere.test'])],
     'inactive user' => [fn () => loginUser(['is_active' => false]), loginPayload()],
     'soft deleted user' => [fn () => loginUser()->delete(), loginPayload()],
 ]);
@@ -100,7 +104,7 @@ it('records a failed login without the password', function () {
 
     $activity = Activity::query()->where('event', 'auth.login_failed')->sole();
 
-    expect($activity->properties['email'])->toBe('user@example.com')
+    expect($activity->properties['identifier'])->toBe('user@example.com')
         ->and($activity->properties->toJson())->not->toContain('wrong-password-value');
 });
 
@@ -110,10 +114,11 @@ it('validates the login payload', function (array $payload, string $field) {
         ->assertJsonPath('code', 'VALIDATION_FAILED')
         ->assertJsonValidationErrors($field);
 })->with([
-    'missing email' => [['password' => 'secret-value'], 'email'],
-    'invalid email' => [['email' => 'not-an-email', 'password' => 'secret-value'], 'email'],
-    'missing password' => [['email' => 'user@example.com'], 'password'],
-    'oversized password' => [['email' => 'user@example.com', 'password' => str_repeat('a', 1025)], 'password'],
+    'missing identifier' => [['password' => 'secret-value'], 'identifier'],
+    'oversized identifier' => [['identifier' => str_repeat('a', 256), 'password' => 'secret-value'], 'identifier'],
+    'missing password' => [['identifier' => 'user@example.com'], 'password'],
+    'oversized password' => [['identifier' => 'user@example.com', 'password' => str_repeat('a', 1025)], 'password'],
+    'invalid remember' => [['identifier' => 'user@example.com', 'password' => 'secret-value', 'remember' => 'maybe'], 'remember'],
 ]);
 
 it('limits repeated login attempts', function () {
@@ -130,6 +135,79 @@ it('limits repeated login attempts', function () {
 
 it('explains missing credentials in Indonesian', function () {
     $this->postJson('/login', [])
-        ->assertJsonPath('errors.email.0', 'Email wajib diisi.')
+        ->assertJsonPath('errors.identifier.0', 'Email atau username wajib diisi.')
         ->assertJsonPath('errors.password.0', 'Password wajib diisi.');
+});
+
+it('logs in with a username', function () {
+    $user = loginUser(['username' => 'user.satu']);
+
+    $this->postJson('/login', loginPayload(['identifier' => 'user.satu']))
+        ->assertOk()
+        ->assertJsonPath('data.id', $user->uuid);
+});
+
+it('ignores letter case in the email and username', function (string $identifier) {
+    loginUser(['username' => 'user.satu']);
+
+    $this->postJson('/login', loginPayload(['identifier' => $identifier]))->assertOk();
+})->with(['uppercase email' => 'USER@EXAMPLE.COM', 'mixed case username' => 'User.Satu']);
+
+it('keeps the password case sensitive', function () {
+    loginUser();
+
+    $this->postJson('/login', loginPayload(['password' => strtoupper(LOGIN_PASSWORD)]))->assertUnauthorized();
+});
+
+it('limits attempts per identifier regardless of letter case', function () {
+    loginUser(['username' => 'user.satu']);
+
+    foreach (range(1, 5) as $attempt) {
+        $this->postJson('/login', loginPayload(['identifier' => 'user.satu', 'password' => 'wrong-password-value']))->assertUnauthorized();
+    }
+
+    $this->postJson('/login', loginPayload(['identifier' => 'USER.SATU']))->assertTooManyRequests();
+    $this->postJson('/login', loginPayload())->assertOk();
+});
+
+function rememberCookieFrom(mixed $response): ?Cookie
+{
+    return collect($response->headers->getCookies())
+        ->first(fn (Cookie $cookie): bool => str_starts_with($cookie->getName(), 'remember_web_'));
+}
+
+it('sets a remember cookie for 30 days when asked', function () {
+    loginUser();
+
+    $cookie = rememberCookieFrom($this->postJson('/login', loginPayload(['remember' => true]))->assertOk());
+
+    expect($cookie)->not->toBeNull()
+        ->and($cookie->getExpiresTime())->toBeGreaterThan(now()->addDays(29)->timestamp)
+        ->and($cookie->getExpiresTime())->toBeLessThan(now()->addDays(31)->timestamp);
+});
+
+it('sets no remember cookie unless asked', function () {
+    loginUser();
+
+    expect(rememberCookieFrom($this->postJson('/login', loginPayload())->assertOk()))->toBeNull();
+});
+
+function requestWithRememberCookie(mixed $test, User $user, string $token): mixed
+{
+    return $test->withCredentials()
+        ->withHeader('Origin', 'http://localhost:5173')
+        ->withCookie(Auth::guard('web')->getRecallerName(), "{$user->id}|{$token}|{$user->password}")
+        ->getJson('/api/v1/auth/user');
+}
+
+it('restores the session from a valid remember cookie', function () {
+    $user = loginUser(['remember_token' => 'current-remember-token']);
+
+    requestWithRememberCookie($this, $user, 'current-remember-token')->assertOk();
+});
+
+it('rejects a remember cookie whose token was rotated', function () {
+    $user = loginUser(['remember_token' => 'rotated-remember-token']);
+
+    requestWithRememberCookie($this, $user, 'previous-remember-token')->assertUnauthorized();
 });

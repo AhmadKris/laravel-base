@@ -151,6 +151,8 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 | T-1006 | Audit log: daftar, filter, detail | M | T-701, T-905 | Hanya baca | Todo |
 | T-1007 | Pengaturan sistem | M | T-803, T-905 | Konflik `version` ditangani, nilai sensitif tidak ditampilkan | Todo |
 | T-1008 | Terjemahkan email reset password ke Bahasa Indonesia | S | T-304 | Subjek dan isi email berbahasa Indonesia dan teruji | Todo |
+| T-1009 | Login dengan email atau username, Ingat saya 30 hari, halaman 404 di dalam layout | M | T-1001 | Email dan username tidak peka huruf besar-kecil, cookie Ingat saya batal saat logout, ganti password, dan penonaktifan | Done |
+| T-1010 | Kebijakan identifier autentikasi: normalisasi email dan username di semua jalur, constraint database | S | T-1009 | Nilai tidak ternormalisasi ditolak database, duplikat setelah normalisasi ditolak | Done |
 
 ## Fase 11: Verifikasi
 
