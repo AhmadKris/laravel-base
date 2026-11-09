@@ -8,6 +8,11 @@ use App\Modules\UserManagement\Models\User;
 
 final class RoleAssignmentService
 {
+    public function canManage(User $actor, User $target): bool
+    {
+        return $target->getRoleNames()->every(fn (string $role): bool => $this->canAssign($actor, $role));
+    }
+
     public function canAssign(User $actor, string $role): bool
     {
         /** @var array<string, list<string>> $policy */

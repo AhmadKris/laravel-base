@@ -101,11 +101,11 @@ Permission Base v1: `user.view`, `user.create`, `user.update`, `user.delete`, `u
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-601 | `GET /users` dan `GET /users/{id}` dengan filter dan search | M | T-103, T-401 | User di luar scope mendapat 404 | Todo |
-| T-602 | `POST /users` | M | T-601 | Email unik, password tidak pernah dikembalikan, tercatat di audit | Todo |
-| T-603 | `PATCH /users/{id}` termasuk `department_id` dan `status` | M | T-601 | Perubahan tercatat, user tidak dapat memindahkan departemennya sendiri tanpa permission | Todo |
-| T-604 | `DELETE /users/{id}` sebagai deaktivasi | M | T-601 | Session user berakhir, tidak dapat menonaktifkan diri sendiri atau Super Admin terakhir | Todo |
-| T-605 | `GET /users/{id}/roles` dan `PUT /users/{id}/roles` | M | T-405, T-601 | Privilege escalation ditolak, tercatat di audit | Todo |
+| T-601 | `GET /users` dan `GET /users/{id}` dengan filter dan search | M | T-103, T-401 | User di luar scope mendapat 404 | Done |
+| T-602 | `POST /users` | M | T-601 | Email unik, password tidak pernah dikembalikan, tercatat di audit | Done |
+| T-603 | `PATCH /users/{id}` termasuk `department_id` dan `status` | M | T-601 | Perubahan tercatat, user tidak dapat memindahkan departemennya sendiri tanpa permission | Done |
+| T-604 | `DELETE /users/{id}` sebagai deaktivasi | M | T-601 | Session user berakhir, tidak dapat menonaktifkan diri sendiri atau Super Admin terakhir | Done |
+| T-605 | `GET /users/{id}/roles` dan `PUT /users/{id}/roles` | M | T-405, T-601 | Privilege escalation ditolak, tercatat di audit | Done |
 
 ## Fase 7: Audit Log
 
