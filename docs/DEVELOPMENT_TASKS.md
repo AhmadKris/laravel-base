@@ -36,22 +36,22 @@ Fase 9 boleh dimulai setelah fase 3 selesai, dan task fase 10 mengikuti endpoint
 | T-004 | Struktur `app/Core`, `app/Modules`, `app/Shared` dan pemuatan route per modul dengan prefix `/api/v1` | M | T-002 | Route di `Modules/*/Routes/api.php` terdaftar otomatis | Done |
 | T-005 | Pasang React, TypeScript strict, Vite, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand, React Hook Form, Zod, Axios, ESLint, Prettier, Vitest, Testing Library, MSW, Playwright | M | T-001 | Lint, type-check, test, dan build berjalan | Done |
 | T-006 | Proxy Vite untuk `/api`, `/sanctum`, `/login`, dan `/logout` agar development meniru satu domain | S | T-002, T-005 | Frontend lokal dapat memanggil Laravel tanpa CORS | Done |
-| T-007 | CI: Pint, PHPStan, test backend dengan MySQL, lint, type-check, test frontend, build, `composer audit`, `npm audit` | M | T-003, T-005 | Pipeline berjalan pada setiap PR | Blocked (workflow siap, perlu remote GitHub) |
+| T-007 | CI: Pint, PHPStan, test backend dengan MySQL, lint, type-check, test frontend, build, `composer audit`, `npm audit` | M | T-003, T-005 | Pipeline berjalan pada setiap PR | Done |
 
 ## Fase 1: Fondasi Backend
 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
-| T-101 | Response layer untuk format `success`, `message`, `data`, `errors`, `meta` | S | T-004 | Response tunggal, koleksi, dan pagination sesuai kontrak | Todo |
-| T-102 | Exception handler ke 400, 401, 403, 404, 409, 422, 429, 500 dengan `code` dan request ID | M | T-101 | Production tidak menampilkan stack trace atau SQL | Todo |
-| T-103 | Pagination (default 20, maksimum 100) serta filter dan sorting berbasis allowlist | S | T-101 | Kolom di luar allowlist ditolak | Todo |
-| T-104 | Trait UUID: generate `uuid`, route key memakai `uuid` | S | T-004 | Model dapat diakses lewat UUID dan tidak lewat ID internal | Todo |
-| T-105 | Dukungan optimistic locking dengan code `RESOURCE_VERSION_CONFLICT` | S | T-102 | `version` lama menghasilkan 409 tanpa mengubah data | Todo |
-| T-106 | Konfigurasi Sanctum SPA, session database, cookie aman, Argon2id | S | T-003 | Hash password memakai Argon2id, cookie HttpOnly | Todo |
-| T-107 | Rate limiter login dan API standar | S | T-004 | Percobaan login berlebih mendapat 429 | Todo |
-| T-108 | Pencatat audit terpusat di `app/Core/Audit` dengan pembersihan field sensitif | M | T-003 | Password, token, dan session tidak pernah tersimpan | Todo |
-| T-109 | Endpoint `GET /api/v1/health` | S | T-101 | Hanya mengembalikan status minimum | Todo |
-| T-110 | OpenAPI dengan Scramble | S | T-101 | Dokumentasi tergenerate dari route yang ada | Todo |
+| T-101 | Response layer untuk format `success`, `message`, `data`, `errors`, `meta` | S | T-004 | Response tunggal, koleksi, dan pagination sesuai kontrak | Done |
+| T-102 | Exception handler ke 400, 401, 403, 404, 409, 422, 429, 500 dengan `code` dan request ID | M | T-101 | Production tidak menampilkan stack trace atau SQL | Done |
+| T-103 | Pagination (default 20, maksimum 100) serta filter dan sorting berbasis allowlist | S | T-101 | Kolom di luar allowlist ditolak | Done |
+| T-104 | Trait UUID: generate `uuid`, route key memakai `uuid` | S | T-004 | Model dapat diakses lewat UUID dan tidak lewat ID internal | Done |
+| T-105 | Dukungan optimistic locking dengan code `RESOURCE_VERSION_CONFLICT` | S | T-102 | `version` lama menghasilkan 409 tanpa mengubah data | Done |
+| T-106 | Konfigurasi Sanctum SPA, session database, cookie aman, Argon2id | S | T-003 | Hash password memakai Argon2id, cookie HttpOnly | Done |
+| T-107 | Rate limiter login dan API standar | S | T-004 | Percobaan login berlebih mendapat 429 | Done |
+| T-108 | Pencatat audit terpusat di `app/Core/Audit` dengan pembersihan field sensitif | M | T-003 | Password, token, dan session tidak pernah tersimpan | Done |
+| T-109 | Endpoint `GET /api/v1/health` | S | T-101 | Hanya mengembalikan status minimum | Done |
+| T-110 | OpenAPI dengan Scramble | S | T-101 | Dokumentasi tergenerate dari route yang ada | Done |
 
 ## Fase 2: Data
 

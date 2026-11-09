@@ -1094,7 +1094,15 @@ Contoh:
 ```text
 AUTH_UNAUTHENTICATED
 AUTH_FORBIDDEN
+INVALID_REQUEST
 RESOURCE_NOT_FOUND
+RESOURCE_CONFLICT
+METHOD_NOT_ALLOWED
+PAYLOAD_TOO_LARGE
+UNSUPPORTED_MEDIA_TYPE
+CSRF_TOKEN_MISMATCH
+TOO_MANY_REQUESTS
+SERVICE_UNAVAILABLE
 VALIDATION_FAILED
 WORKFLOW_INVALID_STATE
 WORKFLOW_ALREADY_PROCESSED
@@ -1121,6 +1129,8 @@ Contoh response:
 ```
 
 Jangan membuat client bergantung pada message yang dapat berubah. Gunakan `code` untuk menangani kondisi aplikasi.
+
+Setiap response membawa header `X-Request-ID` yang sama dengan `request_id` pada log internal.
 
 ---
 
