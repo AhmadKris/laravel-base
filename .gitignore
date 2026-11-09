@@ -1,0 +1,31 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+vendor/
+node_modules/
+
+# Build and test output
+dist/
+coverage/
+playwright-report/
+test-results/
+.phpunit.cache/
+.phpunit.result.cache
+
+# Logs
+*.log
+
+# TLS certificates
+docker/certs/
+
+# Editor and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json
