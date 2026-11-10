@@ -281,11 +281,13 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpng-dev \
     libjpeg62-turbo-dev \
+    libwebp-dev \
     libfreetype6-dev \
     libicu-dev \
     && docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
+        --with-webp \
     && docker-php-ext-install \
         pdo_mysql \
         intl \

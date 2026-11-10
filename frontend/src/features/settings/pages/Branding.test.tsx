@@ -151,7 +151,7 @@ describe('logo and favicon settings', () => {
         expect(await screen.findByRole('heading', { name: 'Logo dan favicon' })).toBeVisible();
         expect(
             screen.getByText(
-                'PNG, JPG, atau WebP. Maksimal 2 MB dan 2048 x 2048 piksel. PNG transparan menyatu dengan semua latar.',
+                'PNG, JPG, atau WebP sampai 2 MB. Ukurannya disesuaikan otomatis. PNG transparan menyatu dengan semua latar.',
             ),
         ).toBeVisible();
         expect(within(fieldOf('Logo')).getByText('Bawaan')).toBeVisible();
@@ -196,7 +196,7 @@ describe('logo and favicon settings', () => {
             await screen.findByLabelText('Logo'),
             image('logo.png', 2 * 1024 * 1024),
         );
-        await userEvent.upload(screen.getByLabelText('Favicon'), image('favicon.png', 1024 * 1024));
+        await userEvent.upload(screen.getByLabelText('Favicon'), image('favicon.jpg', 1024 * 1024));
 
         expect(screen.getByRole('button', { name: 'Simpan logo' })).toBeEnabled();
         expect(screen.getByRole('button', { name: 'Simpan favicon' })).toBeEnabled();
@@ -209,6 +209,11 @@ describe('logo and favicon settings', () => {
 
         renderApp('/settings');
         await user.upload(await screen.findByLabelText('Logo'), image('logo.svg'));
+        await user.upload(screen.getByLabelText('Favicon'), image('favicon.gif'));
+
+        expect(
+            screen.getByText('Favicon harus berupa file PNG, JPG, WebP, atau ICO.'),
+        ).toBeVisible();
 
         expect(screen.getByText('Logo harus berupa file PNG, JPG, atau WebP.')).toBeVisible();
         expect(screen.getByRole('button', { name: 'Simpan logo' })).toBeDisabled();
@@ -229,7 +234,11 @@ describe('logo and favicon settings', () => {
                         success: false,
                         message: '',
                         code: 'VALIDATION_FAILED',
-                        errors: { file: ['Favicon harus persegi, 16 sampai 512 piksel.'] },
+                        errors: {
+                            file: [
+                                'Favicon tidak dapat dibaca. Simpan ulang gambarnya lalu unggah kembali.',
+                            ],
+                        },
                     },
                     { status: 422 },
                 ),
@@ -241,7 +250,9 @@ describe('logo and favicon settings', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Simpan favicon' }));
 
         expect(
-            await screen.findByText('Favicon harus persegi, 16 sampai 512 piksel.'),
+            await screen.findByText(
+                'Favicon tidak dapat dibaca. Simpan ulang gambarnya lalu unggah kembali.',
+            ),
         ).toBeVisible();
         expect(screen.getByLabelText('Favicon')).toHaveAttribute('aria-invalid', 'true');
     });

@@ -41,7 +41,7 @@ enum BrandingAsset: string
     {
         return match ($this) {
             self::Logo, self::LogoDark => ['png', 'jpg', 'jpeg', 'webp'],
-            self::Favicon => ['png', 'ico'],
+            self::Favicon => ['png', 'jpg', 'jpeg', 'webp', 'ico'],
         };
     }
 
@@ -53,12 +53,25 @@ enum BrandingAsset: string
         };
     }
 
-    public function dimensionsRule(): string
+    /**
+     * The box an upload is scaled down to fit, so any size can be uploaded without preparing it first.
+     *
+     * @return array{int, int} width and height in pixels
+     */
+    public function fitWithin(): array
     {
         return match ($this) {
-            self::Logo, self::LogoDark => 'dimensions:max_width=2048,max_height=2048',
-            self::Favicon => 'dimensions:ratio=1,min_width=16,max_width=512',
+            self::Logo, self::LogoDark => [1200, 400],
+            self::Favicon => [256, 256],
         };
+    }
+
+    /**
+     * Browsers show favicons in a square, so other shapes get transparent space instead of being stretched.
+     */
+    public function padsToSquare(): bool
+    {
+        return $this === self::Favicon;
     }
 
     /**
@@ -67,7 +80,7 @@ enum BrandingAsset: string
     public function messages(): array
     {
         $label = $this->label();
-        $formats = $this === self::Favicon ? 'PNG atau ICO' : 'PNG, JPG, atau WebP';
+        $formats = $this === self::Favicon ? 'PNG, JPG, WebP, atau ICO' : 'PNG, JPG, atau WebP';
 
         return [
             'file.required' => 'Pilih file '.lcfirst($label).'.',
@@ -75,9 +88,6 @@ enum BrandingAsset: string
             'file.extensions' => "{$label} harus berupa file {$formats}.",
             'file.mimes' => "{$label} harus berupa file {$formats}.",
             'file.max' => $label.' maksimal '.($this->maxKilobytes() / 1024).' MB.',
-            'file.dimensions' => $this === self::Favicon
-                ? 'Favicon harus persegi, 16 sampai 512 piksel.'
-                : "{$label} maksimal 2048 x 2048 piksel.",
         ];
     }
 
