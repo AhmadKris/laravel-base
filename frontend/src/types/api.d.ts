@@ -458,9 +458,10 @@ export interface components {
         };
         /**
          * NotificationCategory
+         * @description Only categories that a notification is sent for. A module adds its category when it starts sending one.
          * @enum {string}
          */
-        NotificationCategory: 'security' | 'user' | 'system' | 'workflow' | 'document';
+        NotificationCategory: 'security' | 'user';
         /** NotificationResource */
         NotificationResource: {
             id: string;

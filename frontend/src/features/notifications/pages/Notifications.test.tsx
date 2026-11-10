@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/server';
 import { makeUser, renderApp } from '@/test/utils';
 import type { Notification } from '@/types/api-response';
@@ -188,22 +188,27 @@ describe('notification bell popover', () => {
 });
 
 describe('notifications inbox page', () => {
-    it('displays notifications, filters by status and category, searches, and sorts', async () => {
+    const twoNotifications = () => [
+        makeNotification(),
+        makeNotification({
+            id: '01932f5e-0000-7000-8000-000000000011',
+            type: 'user.roles_updated',
+            category: 'user',
+            title: 'Role akun diperbarui',
+            message: 'Role saat ini: Staff.',
+            action_url: '/',
+            is_read: true,
+            read_at: '2026-11-10T03:30:00Z',
+        }),
+    ];
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('displays notifications with their read status', async () => {
         asUser([]);
-        serveNotifications([
-            makeNotification(),
-            makeNotification({
-                id: '01932f5e-0000-7000-8000-000000000011',
-                type: 'user.roles_updated',
-                category: 'user',
-                title: 'Role akun diperbarui',
-                message: 'Role saat ini: Staff.',
-                action_url: '/',
-                is_read: true,
-                read_at: '2026-11-10T03:30:00Z',
-            }),
-        ]);
-        const user = userEvent.setup();
+        serveNotifications(twoNotifications());
 
         renderApp('/notifications');
 
@@ -211,9 +216,27 @@ describe('notifications inbox page', () => {
         expect(screen.getByText('Role akun diperbarui')).toBeVisible();
         expect(screen.getByText('Belum dibaca')).toBeVisible();
         expect(screen.getByText('Sudah dibaca')).toBeVisible();
+    });
 
+    it('sends the search to the API', async () => {
+        asUser([]);
+        serveNotifications(twoNotifications());
+        const user = userEvent.setup();
+
+        renderApp('/notifications');
+        await screen.findByText('Password akun diubah');
         await user.type(screen.getByRole('searchbox', { name: 'Cari notifikasi' }), 'role');
+
         await waitFor(() => expect(listRequests.at(-1)?.get('search')).toBe('role'));
+    });
+
+    it('filters by read status and category', async () => {
+        asUser([]);
+        serveNotifications(twoNotifications());
+        const user = userEvent.setup();
+
+        renderApp('/notifications');
+        await screen.findByText('Password akun diubah');
 
         await user.click(screen.getByRole('combobox', { name: 'Filter status baca' }));
         await user.click(await screen.findByRole('option', { name: 'Belum dibaca' }));
@@ -222,24 +245,65 @@ describe('notifications inbox page', () => {
         await user.click(screen.getByRole('combobox', { name: 'Filter kategori' }));
         await user.click(await screen.findByRole('option', { name: 'Keamanan' }));
         await waitFor(() => expect(listRequests.at(-1)?.get('category')).toBe('security'));
+    });
 
+    it('offers only the categories a notification is sent for', async () => {
+        asUser([]);
+        serveNotifications(twoNotifications());
+        const user = userEvent.setup();
+
+        renderApp('/notifications');
+        await screen.findByText('Password akun diubah');
+        await user.click(screen.getByRole('combobox', { name: 'Filter kategori' }));
+
+        const options = await screen.findAllByRole('option');
+        expect(options.map((option) => option.textContent)).toEqual([
+            'Semua kategori',
+            'Keamanan',
+            'Akun',
+        ]);
+    });
+
+    it('sorts by time', async () => {
+        asUser([]);
+        serveNotifications(twoNotifications());
+        const user = userEvent.setup();
+
+        renderApp('/notifications');
+        await screen.findByText('Password akun diubah');
         await user.click(screen.getByRole('button', { name: 'Waktu' }));
-        await waitFor(() => expect(listRequests.at(-1)?.get('sort_by')).toBe('created_at'));
 
+        await waitFor(() => expect(listRequests.at(-1)?.get('sort_by')).toBe('created_at'));
+    });
+
+    it('sends a date preset as whole days in the company time zone', async () => {
         vi.useFakeTimers({ toFake: ['Date'] });
         vi.setSystemTime(new Date('2026-11-10T03:00:00Z'));
+        asUser([]);
+        serveNotifications(twoNotifications());
+        const user = userEvent.setup();
 
+        renderApp('/notifications');
+        await screen.findByText('Password akun diubah');
         await user.click(screen.getByRole('button', { name: /Rentang waktu:/ }));
         await user.click(await screen.findByRole('button', { name: 'Hari ini' }));
+
         await waitFor(() => {
             const latest = listRequests.at(-1);
             expect(latest?.get('date_from')).toBe('2026-11-10T00:00:00+07:00');
             expect(latest?.get('date_to')).toBe('2026-11-10T23:59:59+07:00');
         });
+    });
 
-        vi.useRealTimers();
+    it('clears every filter at once', async () => {
+        asUser([]);
+        serveNotifications(twoNotifications());
+        const user = userEvent.setup();
 
+        renderApp('/notifications?search=role&status=unread&category=security&period=today');
+        await screen.findByText('Password akun diubah');
         await user.click(screen.getByRole('button', { name: 'Hapus filter' }));
+
         await waitFor(() => {
             const latest = listRequests.at(-1);
             expect(latest?.get('search')).toBeNull();
@@ -248,6 +312,7 @@ describe('notifications inbox page', () => {
             expect(latest?.get('date_from')).toBeNull();
             expect(latest?.get('date_to')).toBeNull();
         });
+        expect(screen.getByRole('searchbox', { name: 'Cari notifikasi' })).toHaveValue('');
     });
 
     it('marks a row as read via the row button without navigating', async () => {

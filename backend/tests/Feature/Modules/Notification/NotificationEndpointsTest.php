@@ -10,6 +10,7 @@ use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\SendQueuedNotifications;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Queue;
@@ -147,6 +148,7 @@ it('validates notification list filters and sorting', function (string $query, s
 })->with([
     'invalid status' => ['status=archived', 'status'],
     'invalid category' => ['category=unknown', 'category'],
+    'category no notification is sent for' => ['category=workflow', 'category'],
     'disallowed sort field' => ['sort_by=data', 'sort_by'],
     'invalid per page' => ['per_page=101', 'per_page'],
     'invalid date' => ['date_from=01-11-2026', 'date_from'],
@@ -334,4 +336,21 @@ it('queues notifications and skips duplicate ids on retry', function () {
     Notification::factory()->forUser($user)->create(['id' => $notification->id]);
 
     expect($notification->shouldSend($user, 'database'))->toBeFalse();
+});
+
+it('searches notifications when the server treats double quotes as identifiers', function () {
+    $user = User::factory()->create();
+    $match = Notification::factory()->forUser($user)->create([
+        'data' => ['category' => 'security', 'title' => 'Password akun diubah', 'message' => 'Isi pesan', 'action_url' => null],
+    ]);
+    Notification::factory()->forUser($user)->create([
+        'data' => ['category' => 'security', 'title' => 'Lain', 'message' => 'Isi lain', 'action_url' => null],
+    ]);
+    DB::statement("SET SESSION sql_mode = CONCAT(@@SESSION.sql_mode, ',ANSI_QUOTES')");
+
+    $this->actingAs($user)
+        ->getJson('/api/v1/notifications?search=password')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $match->id);
 });

@@ -52,8 +52,9 @@ final class NotificationListRequest extends ListRequest
     {
         $lowercasePattern = Str::lower($pattern);
 
+        // The JSON path is bound rather than quoted, so it still works when the server enables ANSI_QUOTES.
         return $notifications->where(fn (Builder $matches) => $matches
-            ->whereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(data, "$.title"))) LIKE ?', [$lowercasePattern])
-            ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(data, "$.message"))) LIKE ?', [$lowercasePattern]));
+            ->whereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(data, ?))) LIKE ?', ['$.title', $lowercasePattern])
+            ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(data, ?))) LIKE ?', ['$.message', $lowercasePattern]));
     }
 }
