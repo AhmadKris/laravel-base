@@ -84,7 +84,9 @@ describe('reset password page', () => {
         expect(await screen.findByText('Untuk akun ani+tim@example.com')).toBeVisible();
         await submitNewPassword(NEW_PASSWORD, NEW_PASSWORD);
 
-        expect(await screen.findByRole('heading', { name: 'Masuk' })).toBeVisible();
+        expect(
+            await screen.findByRole('heading', { name: 'Masuk ke Enterprise System' }),
+        ).toBeVisible();
         expect(router.state.location.pathname).toBe('/login');
         expect(await screen.findByText(/Password berhasil diganti/)).toBeVisible();
         expect(body).toEqual({
@@ -102,7 +104,9 @@ describe('reset password page', () => {
         const router = renderApp('/reset-password#token=abc123&email=ani@example.com');
         await submitNewPassword(NEW_PASSWORD, NEW_PASSWORD);
 
-        expect(await screen.findByRole('heading', { name: 'Masuk' })).toBeVisible();
+        expect(
+            await screen.findByRole('heading', { name: 'Masuk ke Enterprise System' }),
+        ).toBeVisible();
         expect(router.state.location.pathname).toBe('/login');
     });
 

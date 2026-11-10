@@ -76,6 +76,7 @@ const TEXT_PAIRS = [
     ['card-foreground', 'card'],
     ['brand-foreground', 'brand'],
     ['brand-muted', 'brand'],
+    ['brand-accent', 'brand'],
     ['primary', 'background'],
     ['primary-foreground', 'primary'],
     ['destructive', 'background'],

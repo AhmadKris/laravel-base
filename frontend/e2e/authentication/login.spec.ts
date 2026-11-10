@@ -5,7 +5,7 @@ test('a guest is sent to the login page', async ({ page }) => {
     await page.goto('/users');
 
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByRole('heading', { name: 'Masuk' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Masuk ke / })).toBeVisible();
 });
 
 test('a user logs in, reaches the home page, and logs out', async ({ page }) => {
@@ -21,7 +21,7 @@ test('a user logs in, reaches the home page, and logs out', async ({ page }) => 
     await page.getByRole('button', { name: /Menu akun/ }).click();
     await page.getByRole('menuitem', { name: 'Keluar' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Masuk' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Masuk ke / })).toBeVisible();
     await page.goto('/users');
     await expect(page).toHaveURL(/\/login$/);
 });

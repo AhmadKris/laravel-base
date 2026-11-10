@@ -248,7 +248,7 @@ describe('after signing out', () => {
         const router = renderApp('/change-password');
         await userEvent.click(await screen.findByRole('button', { name: /Menu akun/ }));
         await userEvent.click(await screen.findByRole('menuitem', { name: 'Keluar' }));
-        await screen.findByRole('heading', { name: 'Masuk' });
+        await screen.findByRole('heading', { name: 'Masuk ke Enterprise System' });
         await submitLogin('budi@example.com', 'rahasia');
 
         expect(await screen.findByRole('heading', { name: 'Beranda' })).toBeVisible();

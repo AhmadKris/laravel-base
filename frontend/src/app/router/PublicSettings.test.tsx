@@ -66,7 +66,12 @@ describe('company name', () => {
 
         renderApp('/login');
 
-        expect(await screen.findAllByText('PT Maju Jaya')).not.toHaveLength(0);
+        expect(await screen.findByRole('heading', { name: 'Masuk ke PT Maju Jaya' })).toBeVisible();
+        expect(
+            screen.getAllByText(
+                `© ${new Date().getFullYear()} PT Maju Jaya. Hak cipta dilindungi.`,
+            ),
+        ).not.toHaveLength(0);
     });
 
     it('keeps the built-in name when the settings cannot be loaded', async () => {

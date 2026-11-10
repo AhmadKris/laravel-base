@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import { useState } from 'react';
 import type { FieldValues } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -22,13 +22,17 @@ export function PasswordField<TValues extends FieldValues>({
             {...fieldProps}
             renderControl={(field, attributes) => (
                 <div className="relative">
+                    <LockKeyhole
+                        aria-hidden="true"
+                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    />
                     <Input
                         {...field}
                         {...attributes}
                         value={field.value ?? ''}
                         type={isVisible ? 'text' : 'password'}
                         autoComplete={autoComplete}
-                        className="pr-9"
+                        className="pr-9 pl-9"
                     />
                     <Button
                         type="button"

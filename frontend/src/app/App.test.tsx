@@ -28,6 +28,8 @@ it('sends a guest from a protected page to the login page', async () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('heading', { name: 'Masuk' })).toBeVisible();
+    expect(
+        await screen.findByRole('heading', { name: 'Masuk ke Enterprise System' }),
+    ).toBeVisible();
     expect(window.location.pathname).toBe('/login');
 });
