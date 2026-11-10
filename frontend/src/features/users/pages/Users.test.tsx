@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from '@/test/server';
@@ -677,6 +677,32 @@ describe('user form', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Simpan pengguna' }));
 
         await waitFor(() => expect(body.roles).toEqual(['Viewer']));
+    });
+
+    it('shows the saved data right away instead of the previous version', async () => {
+        asUser();
+        const user = makeTarget();
+        let reads = 0;
+        server.use(
+            http.get('*/api/v1/users/user-1', async () => {
+                reads += 1;
+
+                if (reads > 1) {
+                    await delay('infinite');
+                }
+
+                return one(user);
+            }),
+            http.patch('*/api/v1/users/user-1', () => one({ ...user, name: 'Nama Tersimpan' })),
+        );
+
+        renderApp('/users/user-1/edit');
+        const name = await screen.findByLabelText('Nama');
+        await userEvent.clear(name);
+        await userEvent.type(name, 'Nama Tersimpan');
+        await userEvent.click(screen.getByRole('button', { name: 'Simpan pengguna' }));
+
+        expect(await screen.findByRole('heading', { name: 'Nama Tersimpan' })).toBeVisible();
     });
 
     it('omits roles when they did not change', async () => {

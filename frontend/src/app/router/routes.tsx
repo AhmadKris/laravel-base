@@ -10,6 +10,10 @@ import {
     ForgotPasswordPage,
     LoginPage,
     ResetPasswordPage,
+    RoleCreatePage,
+    RoleDetailPage,
+    RoleEditPage,
+    RoleListPage,
     UserCreatePage,
     UserDetailPage,
     UserEditPage,
@@ -69,6 +73,42 @@ export const routes: RouteObject[] = [
                             </ProtectedRoute>
                         ),
                         handle: { title: 'Ubah pengguna' },
+                    },
+                    {
+                        path: 'roles',
+                        element: (
+                            <ProtectedRoute requiredPermission="role.view">
+                                <RoleListPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Role' },
+                    },
+                    {
+                        path: 'roles/new',
+                        element: (
+                            <ProtectedRoute requiredPermission="role.create">
+                                <RoleCreatePage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Tambah role' },
+                    },
+                    {
+                        path: 'roles/:roleId',
+                        element: (
+                            <ProtectedRoute requiredPermission="role.view">
+                                <RoleDetailPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Detail role' },
+                    },
+                    {
+                        path: 'roles/:roleId/edit',
+                        element: (
+                            <ProtectedRoute requiredPermission="role.update">
+                                <RoleEditPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Ubah role' },
                     },
                 ],
             },

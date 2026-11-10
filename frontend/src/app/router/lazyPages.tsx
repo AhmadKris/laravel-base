@@ -47,3 +47,27 @@ export const UserEditPage = lazy(() =>
         default: module.UserEditPage,
     })),
 );
+
+export const RoleListPage = lazy(() =>
+    import('@/features/roles/pages/RoleListPage').then((module) => ({
+        default: module.RoleListPage,
+    })),
+);
+
+export const RoleDetailPage = lazy(() =>
+    import('@/features/roles/pages/RoleDetailPage').then((module) => ({
+        default: module.RoleDetailPage,
+    })),
+);
+
+export const RoleCreatePage = lazy(() =>
+    import('@/features/roles/pages/RoleFormPages').then((module) => ({
+        default: module.RoleCreatePage,
+    })),
+);
+
+export const RoleEditPage = lazy(() =>
+    import('@/features/roles/pages/RoleFormPages').then((module) => ({
+        default: module.RoleEditPage,
+    })),
+);

@@ -1,9 +1,8 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
-import { DataTable, type DataTableSort } from '@/components/shared/DataTable';
-import { PER_PAGE_OPTIONS } from '@/components/shared/dataTableColumns';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { DataTable } from '@/components/shared/DataTable';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,69 +14,28 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { usePermission } from '@/hooks/usePermission';
+import { useLastPageCorrection, useTableParams } from '@/hooks/useTableParams';
 import { useAuthStore } from '@/stores/auth-store';
 import type { User } from '@/types/api-response';
 import { userColumns } from '../components/userColumns';
 import { UserStatusDialog } from '../components/UserStatusDialog';
-import { userKeys, type UserListFilters, userService } from '../services/userService';
+import { userKeys, userService } from '../services/userService';
 
 const ALL_STATUSES = 'all';
-const SEARCH_DELAY_MS = 300;
-
-type ParamChanges = Record<string, string | undefined>;
-
-function readFilters(params: URLSearchParams): UserListFilters {
-    const perPage = Number(params.get('per_page'));
-
-    return {
-        page: Math.max(Number(params.get('page')) || 1, 1),
-        per_page: PER_PAGE_OPTIONS.includes(perPage) ? perPage : undefined,
-        search: params.get('search') ?? undefined,
-        status: params.get('status') ?? undefined,
-        sort_by: params.get('sort_by') ?? undefined,
-        sort_direction: params.get('sort_direction') ?? undefined,
-    };
-}
-
-function readSort(filters: UserListFilters): DataTableSort | undefined {
-    return filters.sort_by === undefined
-        ? undefined
-        : {
-              field: filters.sort_by,
-              direction: filters.sort_direction === 'desc' ? 'desc' : 'asc',
-          };
-}
-
 export function UserListPage() {
-    const [params, setParams] = useSearchParams();
+    const {
+        params,
+        filters: tableFilters,
+        searchInput,
+        changeSearch,
+        updateParams,
+        tableProps,
+    } = useTableParams();
     const { can } = usePermission();
     const navigate = useNavigate();
     const currentUserId = useAuthStore((state) => state.user?.id);
-    const [searchInput, setSearchInput] = useState(params.get('search') ?? '');
     const [statusTarget, setStatusTarget] = useState<User | null>(null);
-    const searchTimer = useRef<number | undefined>(undefined);
-    const filters = readFilters(params);
-
-    const updateParams = (changes: ParamChanges) => {
-        setParams(
-            (current) => {
-                const next = new URLSearchParams(current);
-
-                Object.entries(changes).forEach(([key, value]) => {
-                    if (value === undefined || value === '') {
-                        next.delete(key);
-                    } else {
-                        next.set(key, value);
-                    }
-                });
-
-                return next;
-            },
-            { replace: true },
-        );
-    };
-
-    useEffect(() => () => window.clearTimeout(searchTimer.current), []);
+    const filters = { ...tableFilters, status: params.get('status') ?? undefined };
 
     const users = useQuery({
         queryKey: userKeys.list(filters),
@@ -86,23 +44,13 @@ export function UserListPage() {
     });
 
     const pagination = users.data?.meta.pagination;
-    const isPastLastPage = users.data?.data.length === 0 && filters.page > 1;
-    const lastPage = pagination?.last_page ?? 1;
-
-    useEffect(() => {
-        if (isPastLastPage && !users.isPlaceholderData) {
-            setParams(
-                (current) => {
-                    const next = new URLSearchParams(current);
-
-                    next.set('page', String(lastPage));
-
-                    return next;
-                },
-                { replace: true },
-            );
-        }
-    }, [isPastLastPage, users.isPlaceholderData, lastPage, setParams]);
+    useLastPageCorrection(
+        filters.page,
+        users.data?.data.length === 0,
+        pagination?.last_page ?? 1,
+        users.isPlaceholderData,
+        updateParams,
+    );
 
     const canUpdate = can('user.update');
     const canDelete = can('user.delete');
@@ -136,16 +84,7 @@ export function UserListPage() {
                     placeholder="Cari nama atau email"
                     className="w-full sm:max-w-xs"
                     value={searchInput}
-                    onChange={(event) => {
-                        const value = event.target.value;
-
-                        setSearchInput(value);
-                        window.clearTimeout(searchTimer.current);
-                        searchTimer.current = window.setTimeout(
-                            () => updateParams({ search: value.trim(), page: undefined }),
-                            SEARCH_DELAY_MS,
-                        );
-                    }}
+                    onChange={(event) => changeSearch(event.target.value)}
                 />
                 <Select
                     value={filters.status ?? ALL_STATUSES}
@@ -167,6 +106,7 @@ export function UserListPage() {
                 </Select>
             </div>
             <DataTable
+                {...tableProps}
                 columns={columns}
                 rows={users.data?.data}
                 getRowId={(user) => user.id}
@@ -182,15 +122,7 @@ export function UserListPage() {
                         : 'Pengguna yang ditambahkan akan tampil di sini.'
                 }
                 pagination={pagination}
-                onPageChange={(page) => updateParams({ page: String(page) })}
-                onPerPageChange={(perPage) =>
-                    updateParams({ per_page: String(perPage), page: undefined })
-                }
                 onRowClick={(user) => void navigate(`/users/${user.id}`)}
-                sort={readSort(filters)}
-                onSortChange={({ field, direction }) =>
-                    updateParams({ sort_by: field, sort_direction: direction, page: undefined })
-                }
             />
             <UserStatusDialog user={statusTarget} onClose={() => setStatusTarget(null)} />
         </section>

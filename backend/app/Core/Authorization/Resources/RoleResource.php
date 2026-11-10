@@ -23,6 +23,8 @@ final class RoleResource extends JsonResource
             'name' => $this->name,
             'is_protected' => $this->isProtected(),
             'users_count' => $this->whenCounted('users'),
+            /** @var list<string> */
+            'permissions' => $this->whenLoaded('permissions', fn () => $this->permissions->pluck('name')->sort()->values()),
             'version' => $this->version,
             'created_at' => $this->created_at,
         ];

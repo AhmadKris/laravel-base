@@ -15,9 +15,19 @@ final class AssignRolePermissionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'permissions' => ['present', 'array'],
-            'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
+            ...self::permissionRules('present'),
             'version' => ['required', 'integer', 'min:1'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function permissionRules(string $presence): array
+    {
+        return [
+            'permissions' => [$presence, 'array'],
+            'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ];
     }
 }

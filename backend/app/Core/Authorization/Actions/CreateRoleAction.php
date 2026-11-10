@@ -11,15 +11,25 @@ use Illuminate\Support\Facades\DB;
 
 final class CreateRoleAction
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly AssignRolePermissionsAction $assignPermissions,
+    ) {}
 
-    public function execute(string $name, User $actor): Role
+    /**
+     * @param  list<string>|null  $permissions
+     */
+    public function execute(string $name, ?array $permissions, User $actor): Role
     {
-        return DB::transaction(function () use ($name, $actor): Role {
+        return DB::transaction(function () use ($name, $permissions, $actor): Role {
             /** @var Role $role */
             $role = Role::create(['name' => $name, 'guard_name' => 'web']);
 
             $this->auditLogger->record('role.created', $role, ['name' => $name], $actor);
+
+            if ($permissions !== null) {
+                $this->assignPermissions->execute($role, $permissions, $role->refresh()->version, $actor);
+            }
 
             return $role;
         });
