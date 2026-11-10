@@ -3,9 +3,10 @@ import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { DataTable } from '@/components/shared/DataTable';
+import { FilterBar } from '@/components/shared/FilterBar';
+import { SearchInput } from '@/components/shared/SearchInput';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -77,33 +78,33 @@ export function UserListPage() {
                     )
                 }
             />
-            <div className="flex flex-wrap gap-2">
-                <Input
-                    type="search"
-                    aria-label="Cari nama atau email pengguna"
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <SearchInput
+                    label="Cari nama atau email pengguna"
                     placeholder="Cari nama atau email"
-                    className="w-full sm:max-w-xs"
                     value={searchInput}
-                    onChange={(event) => changeSearch(event.target.value)}
+                    onChange={changeSearch}
                 />
-                <Select
-                    value={filters.status ?? ALL_STATUSES}
-                    onValueChange={(value) =>
-                        updateParams({
-                            status: value === ALL_STATUSES ? undefined : value,
-                            page: undefined,
-                        })
-                    }
-                >
-                    <SelectTrigger aria-label="Filter status" className="w-40">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={ALL_STATUSES}>Semua status</SelectItem>
-                        <SelectItem value="active">Aktif</SelectItem>
-                        <SelectItem value="inactive">Nonaktif</SelectItem>
-                    </SelectContent>
-                </Select>
+                <FilterBar activeCount={filters.status === undefined ? 0 : 1}>
+                    <Select
+                        value={filters.status ?? ALL_STATUSES}
+                        onValueChange={(value) =>
+                            updateParams({
+                                status: value === ALL_STATUSES ? undefined : value,
+                                page: undefined,
+                            })
+                        }
+                    >
+                        <SelectTrigger aria-label="Filter status" className="w-full sm:w-40">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={ALL_STATUSES}>Semua status</SelectItem>
+                            <SelectItem value="active">Aktif</SelectItem>
+                            <SelectItem value="inactive">Nonaktif</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </FilterBar>
             </div>
             <DataTable
                 {...tableProps}

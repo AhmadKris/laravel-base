@@ -325,3 +325,14 @@ it('requires the assign permission to change permissions here', function () {
 
     expect($role->refresh()->name)->toBe('Auditor');
 });
+
+it('treats wildcard characters in the search as text', function () {
+    Role::create(['name' => 'Tim_A', 'guard_name' => 'web']);
+    Role::create(['name' => 'TimBA', 'guard_name' => 'web']);
+
+    $this->actingAs($this->superAdmin)->getJson('/api/v1/roles?search=tim_a')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Tim_A');
+    $this->actingAs($this->superAdmin)->getJson('/api/v1/roles?search=%25')
+        ->assertJsonCount(0, 'data');
+});

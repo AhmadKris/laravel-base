@@ -136,7 +136,7 @@ Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya 
 | T-906 | Tema terang dan gelap, warna aksen dan status, penyelarasan layout | M | T-904, T-905 | Kontras token minimal 4,5:1 untuk teks dan 3:1 untuk kontrol di kedua tema, tema benar sebelum render pertama | Done |
 | T-907 | Arah visual A: latar berlapis, panel, identitas, Beranda berisi data dari API, login dua kolom | M | T-906, T-1001 | Kontras token memenuhi syarat di kedua tema, Beranda mengikuti permission | Done |
 | T-908 | Skeleton sesuai bentuk konten: tabel, daftar, form, halaman, kerangka aplikasi | S | T-905 | Loading state menyerupai konten dan menyebut objek yang dimuat | Done |
-| T-909 | Breadcrumb di header, diisi dari data rute | S | T-906 | Halaman detail menampilkan lokasi dan tautan ke induknya | Todo |
+| T-909 | Breadcrumb di header, diisi dari data rute | S | T-906 | Halaman detail menampilkan lokasi dan tautan ke induknya | Done |
 | T-910 | Komponen modal umum (`Dialog`) untuk form singkat | S | T-905 | Fokus terkunci di dalam modal dan kembali ke pemicunya | Todo |
 | T-911 | Sidebar menciut otomatis di lebar tablet | S | T-906 | Tabel mempunyai ruang cukup di lebar 768 px | Todo |
 | T-912 | Aturan skala spasi dan tipografi di `DEVELOPMENT_GUIDELINE.md` | S | T-907 | Modul baru mengikuti aturan yang tertulis | Todo |

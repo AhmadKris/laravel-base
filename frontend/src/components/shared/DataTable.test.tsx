@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/lib/api-error';
 import type { PaginationMeta } from '@/types/api-response';
 import { DataTable } from './DataTable';
@@ -227,5 +227,50 @@ describe('row click', () => {
 
         expect(onRowClick).not.toHaveBeenCalled();
         vi.restoreAllMocks();
+    });
+});
+
+describe('on a phone', () => {
+    const desktopWidth = window.innerWidth;
+
+    beforeEach(() => {
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: 375 });
+    });
+
+    afterEach(() => {
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: desktopWidth });
+    });
+
+    it('shows each row as a card with labelled values instead of a table', () => {
+        renderTable();
+
+        expect(screen.queryByRole('table')).not.toBeInTheDocument();
+        const card = screen.getByRole('listitem');
+        expect(within(card).getByText('Ani')).toBeVisible();
+        expect(within(card).getByText('Kode')).toBeVisible();
+        expect(within(card).getByText('A1')).toBeVisible();
+    });
+
+    it('opens the row from its card', async () => {
+        const onRowClick = vi.fn();
+        renderTable({ onRowClick });
+
+        await userEvent.click(screen.getByText('A1'));
+
+        expect(onRowClick).toHaveBeenCalledWith({ id: 'A1', name: 'Ani' });
+    });
+
+    it('offers the sortable columns in a list', async () => {
+        const onSortChange = vi.fn();
+        renderTable({ onSortChange, sort: { field: 'name', direction: 'asc' } });
+
+        const select = screen.getByRole('combobox', { name: 'Urutkan data' });
+        expect(select).toHaveTextContent('Nama, naik');
+
+        await userEvent.click(select);
+        await userEvent.click(await screen.findByRole('option', { name: 'Nama, turun' }));
+
+        expect(onSortChange).toHaveBeenCalledWith({ field: 'name', direction: 'desc' });
+        expect(screen.queryByRole('option', { name: /Kode/ })).not.toBeInTheDocument();
     });
 });

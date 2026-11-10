@@ -22,8 +22,8 @@ final class ConfigurationListRequest extends ListRequest
     public function applyFilters(Builder $query): Builder
     {
         return $this->applySorting($query)
-            ->when($this->validated('search'), fn (Builder $configurations, string $search) => $configurations
-                ->where('key', 'like', "%{$search}%"))
+            ->when($this->searchPattern(), fn (Builder $configurations, string $pattern) => $configurations
+                ->where('key', 'like', $pattern))
             ->orderBy('key');
     }
 }

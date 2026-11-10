@@ -22,7 +22,7 @@ export const auditLogColumns: DataTableColumn<AuditLog>[] = [
         cell: ({ row }) => (
             <div className="flex min-w-0 flex-col">
                 <Link to={`/audit-logs/${row.original.id}`} className="font-medium hover:underline">
-                    {eventTitle(row.original.event)}
+                    {eventTitle(row.original.event_label)}
                 </Link>
                 <span className="font-mono text-xs text-muted-foreground">
                     {row.original.event}

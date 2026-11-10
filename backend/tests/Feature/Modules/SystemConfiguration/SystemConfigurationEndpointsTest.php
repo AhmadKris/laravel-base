@@ -268,3 +268,12 @@ it('lists feature flags for permitted roles', function () {
             ['key' => 'feature.reports', 'enabled' => true],
         ]);
 });
+
+it('treats wildcard characters in the search as text', function () {
+    $this->actingAs($this->superAdmin)->getJson('/api/v1/system-configurations?search=%25')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+    $this->actingAs($this->superAdmin)->getJson('/api/v1/system-configurations?search=session_')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.key', 'security.session_policy');
+});

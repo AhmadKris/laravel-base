@@ -31,8 +31,8 @@ final class RoleController
 
         $roles = $request->applySorting(Role::query()->withCount('users'))
             ->when(
-                $request->validated('search'),
-                fn (Builder $query, string $search) => $query->where('name', 'like', "%{$search}%"),
+                $request->searchPattern(),
+                fn (Builder $query, string $pattern) => $query->where('name', 'like', $pattern),
             )
             ->orderBy('id')
             ->paginate($request->perPage());

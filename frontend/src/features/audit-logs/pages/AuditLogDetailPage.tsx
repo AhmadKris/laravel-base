@@ -124,7 +124,7 @@ export function AuditLogDetailPage() {
         <CenteredPage>
             <BackLink to="/audit-logs" label="Daftar audit log" />
             <PageHeader
-                title={eventTitle(log.event)}
+                title={eventTitle(log.event_label)}
                 description={log.created_at ? formatDateTime(log.created_at) : undefined}
             />
             <Card className="px-5 py-5">
@@ -151,7 +151,7 @@ export function AuditLogDetailPage() {
                                     {log.actor.email}
                                 </span>
                                 <Link
-                                    to={`/audit-logs?user_id=${log.actor.id}`}
+                                    to={`/audit-logs?user_id=${log.actor.id}&period=all`}
                                     className="text-xs text-primary hover:underline"
                                 >
                                     Lihat semua aktivitas pengguna ini

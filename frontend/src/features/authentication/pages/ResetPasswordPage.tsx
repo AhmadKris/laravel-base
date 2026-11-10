@@ -67,7 +67,7 @@ function ResetPasswordForm({ token, email }: ResetLink) {
                 label="Ulangi password baru"
                 autoComplete="new-password"
             />
-            <Button type="submit" disabled={resetPassword.isPending}>
+            <Button type="submit" loading={resetPassword.isPending}>
                 Simpan password baru
             </Button>
         </form>

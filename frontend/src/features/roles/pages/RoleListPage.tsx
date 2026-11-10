@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { DataTable } from '@/components/shared/DataTable';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { usePermission } from '@/hooks/usePermission';
 import { useLastPageCorrection, useTableParams } from '@/hooks/useTableParams';
 import type { Role } from '@/types/api-response';
@@ -60,13 +60,11 @@ export function RoleListPage() {
                     )
                 }
             />
-            <Input
-                type="search"
-                aria-label="Cari nama role"
+            <SearchInput
+                label="Cari nama role"
                 placeholder="Cari nama role"
-                className="w-full sm:max-w-xs"
                 value={searchInput}
-                onChange={(event) => changeSearch(event.target.value)}
+                onChange={changeSearch}
             />
             <DataTable
                 {...tableProps}

@@ -79,11 +79,18 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Antarmuka adalah alat kerja: padat informasi, tenang, dan konsisten antarmodul.
 - Gunakan komponen dan token shadcn/ui. Komponen baru dibuat hanya jika belum ada yang sesuai.
 - Setiap halaman data memiliki loading, empty, dan error state, serta responsif.
+- Halaman yang gagal dirender ditangkap `RouteErrorPage` di dalam layout, sehingga sidebar dan header tetap bisa dipakai. Route baru di dalam layout ditempatkan di bawah route tanpa path yang memiliki `errorElement`.
 - Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak. Gunakan `ConfirmDialog`, yang tetap terbuka dan tidak dapat ditutup selama permintaan berjalan.
+- Header aplikasi tetap di atas saat halaman di-scroll. Footer statis di bawah konten berisi hak cipta perusahaan. Jangan membuat container scroll bersarang yang membuat header ikut ter-scroll.
 - Toast hanya untuk umpan balik singkat dan muncul di kanan atas. Error yang perlu diperbaiki pengguna ditampilkan di dekat field atau form, bukan hanya di toast.
+- Toast memakai varian `success`, `info`, `warning`, atau `error`, masing-masing dengan ikon tetap. Maksimal satu aksi per toast. Error dari `notifyError` bertahan 8 detik, dan error server menyertakan kode permintaan. Informasi di toast harus tetap bisa ditemukan di halaman setelah toast hilang.
 - Halaman pengaturan dibagi per bagian. Setiap bagian memiliki tombol simpan sendiri yang nonaktif selama belum ada perubahan.
-- Form memiliki label, pesan error per field, dan tombol yang nonaktif saat submit.
-- Data table memiliki pengurutan asc/desc pada kolom yang didukung API, filter jika datanya memungkinkan, dan dropdown jumlah data per halaman dengan pilihan 10, 20, 50, dan 100.
+- Form memiliki label, pesan error per field, dan tombol submit dengan `loading` selama permintaan berjalan.
+- Form yang dapat menyimpan memakai `useUnsavedChangesGuard`, sehingga pengguna ditanya sebelum meninggalkan perubahan yang belum disimpan. Panggil `allowNavigation()` sebelum redirect setelah berhasil menyimpan.
+- Data table memiliki pengurutan asc/desc pada kolom yang didukung API, filter jika datanya memungkinkan, dan dropdown jumlah data per halaman dengan pilihan 10, 20, 50, dan 100. Bawaannya 10.
+- Filter tanggal memakai `DateRangeFilter`: satu field dengan preset Hari ini, 7 hari terakhir, 30 hari terakhir, Bulan ini, dan Semua waktu, lalu rentang lain lewat `Calendar` (react-day-picker): klik pertama memulai rentang, klik kedua menutupnya, dan hari setelah hari ini tidak dapat dipilih. Hari dihitung dalam zona waktu perusahaan dan dikirim ke API dengan offset.
+- Halaman daftar memakai `SearchInput` untuk pencarian dan `FilterBar` untuk filter lain. Di ponsel, filter masuk ke sheet dari bawah, sedangkan pencarian tetap terlihat. `DataTable` menampilkan baris sebagai kartu di ponsel: kolom pertama menjadi judul, kolom `actions` di sampingnya, dan kolom lain sebagai label dan nilai.
+- Header menampilkan breadcrumb dari `handle` route. Route detail dan form mengisi `parents` dengan halaman di atasnya.
 - Klik pada baris data table membuka halaman detail. Tautan di dalam baris tetap ada untuk keyboard, dan tombol aksi di baris tidak ikut memicu klik baris.
 - Setiap resource yang dapat dibuat memiliki halaman form sendiri. Setelah berhasil dibuat, arahkan ke halaman detailnya.
 - Halaman form dan detail memakai `CenteredPage`, sehingga berada di tengah dengan lebar yang sama.

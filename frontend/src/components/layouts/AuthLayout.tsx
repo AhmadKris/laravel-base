@@ -2,9 +2,9 @@ import { Building2, type LucideIcon, ScrollText, ShieldCheck } from 'lucide-reac
 import { Suspense } from 'react';
 import { Outlet } from 'react-router';
 import { AppBrand } from '@/components/shared/AppBrand';
+import { Copyright } from '@/components/shared/Copyright';
 import { FormSkeleton } from '@/components/shared/skeletons';
 import { Card } from '@/components/ui/card';
-import { usePublicSettings } from '@/hooks/usePublicSettings';
 
 interface Highlight {
     icon: LucideIcon;
@@ -30,16 +30,6 @@ const HIGHLIGHTS: Highlight[] = [
         description: 'Data perusahaan, logo, dan zona waktu dikelola administrator.',
     },
 ];
-
-function Copyright({ className }: { className: string }) {
-    const { companyName } = usePublicSettings();
-
-    return (
-        <p className={className}>
-            &copy; {new Date().getFullYear()} {companyName}. Hak cipta dilindungi.
-        </p>
-    );
-}
 
 export function AuthLayout() {
     return (

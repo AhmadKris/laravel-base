@@ -49,6 +49,17 @@ abstract class ListRequest extends FormRequest
     }
 
     /**
+     * The search as a LIKE pattern that matches it anywhere, or null without a search. % and _
+     * are escaped, so a user searching for "100%" does not get every row.
+     */
+    public function searchPattern(): ?string
+    {
+        $search = $this->validated('search');
+
+        return is_string($search) && $search !== '' ? '%'.addcslashes($search, '%_\\').'%' : null;
+    }
+
+    /**
      * @template TModel of Model
      *
      * @param  Builder<TModel>  $query

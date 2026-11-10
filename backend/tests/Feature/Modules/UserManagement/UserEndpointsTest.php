@@ -94,3 +94,16 @@ it('does not resolve a user by internal id or after soft delete', function () {
 
     $this->actingAs($this->admin)->getJson("/api/v1/users/{$this->financeUser->uuid}")->assertNotFound();
 });
+
+it('treats wildcard characters in the search as text', function () {
+    $underscore = User::factory()->create(['name' => 'Qz_x Satu']);
+    User::factory()->create(['name' => 'Qzax Dua']);
+    $percent = User::factory()->create(['name' => 'Diskon 100%']);
+
+    $this->actingAs($this->admin)->getJson('/api/v1/users?search=qz_x')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $underscore->uuid);
+    $this->actingAs($this->admin)->getJson('/api/v1/users?search=%25')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $percent->uuid);
+});

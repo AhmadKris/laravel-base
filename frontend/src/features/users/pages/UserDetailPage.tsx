@@ -77,7 +77,9 @@ export function UserDetailPage() {
                     <>
                         {can('audit.view') && (
                             <Button asChild variant="ghost">
-                                <Link to={`/audit-logs?user_id=${user.id}`}>Lihat aktivitas</Link>
+                                <Link to={`/audit-logs?user_id=${user.id}&period=all`}>
+                                    Lihat aktivitas
+                                </Link>
                             </Button>
                         )}
                         {can('user.update') && (

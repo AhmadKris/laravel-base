@@ -199,14 +199,14 @@ describe('user list', () => {
         expect(router.state.location.search).toBe('?per_page=50');
     });
 
-    it('ignores a page size that is not offered', async () => {
+    it('asks for 10 rows unless another offered size is chosen', async () => {
         asUser();
         const requests = recordListRequests([makeTarget()]);
 
         renderApp('/users?per_page=500');
         await screen.findByRole('link', { name: 'Budi Santoso' });
 
-        expect(requests.at(-1)?.has('per_page')).toBe(false);
+        expect(requests.at(-1)?.get('per_page')).toBe('10');
     });
 
     it('opens the detail page when a row is clicked', async () => {
@@ -534,6 +534,54 @@ describe('user form', () => {
             username: null,
             password: 'password-awal-yang-panjang',
         });
+    });
+
+    it('asks before leaving a form with unsaved changes', async () => {
+        asUser();
+        serveList([makeTarget()]);
+
+        const router = renderApp('/users/new');
+        await userEvent.type(await screen.findByLabelText('Nama'), 'Dewi');
+        await userEvent.click(
+            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
+                name: 'Pengguna',
+            }),
+        );
+
+        const dialog = await screen.findByRole('alertdialog', { name: 'Tinggalkan halaman ini?' });
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Batal' }));
+
+        expect(router.state.location.pathname).toBe('/users/new');
+        expect(screen.getByLabelText('Nama')).toHaveValue('Dewi');
+
+        await userEvent.click(
+            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
+                name: 'Pengguna',
+            }),
+        );
+        await userEvent.click(
+            within(
+                await screen.findByRole('alertdialog', { name: 'Tinggalkan halaman ini?' }),
+            ).getByRole('button', { name: 'Tinggalkan halaman' }),
+        );
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/users'));
+    });
+
+    it('leaves an untouched form without asking', async () => {
+        asUser();
+        serveList([makeTarget()]);
+
+        const router = renderApp('/users/new');
+        await screen.findByLabelText('Nama');
+        await userEvent.click(
+            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
+                name: 'Pengguna',
+            }),
+        );
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/users'));
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
 
     it('validates required fields, username, and password before calling the server', async () => {

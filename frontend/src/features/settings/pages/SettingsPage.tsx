@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import { CenteredPage } from '@/components/shared/CenteredPage';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
@@ -6,6 +7,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { PageSkeleton } from '@/components/shared/skeletons';
 import { Card } from '@/components/ui/card';
 import { usePermission } from '@/hooks/usePermission';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { toApiError } from '@/lib/api-error';
 import { BrandingSection } from '../components/BrandingSection';
 import { LogoPreview } from '../components/LogoPreview';
@@ -24,6 +26,27 @@ export function SettingsPage() {
         // A refetch with a newer version refills the form, which would discard unsaved edits.
         refetchOnWindowFocus: false,
     });
+
+    // Each section keeps its own form, so their unsaved changes are collected here for one guard.
+    const [dirtyParts, setDirtyParts] = useState<ReadonlySet<string>>(() => new Set());
+    const markDirty = useCallback((part: string, dirty: boolean) => {
+        setDirtyParts((current) => {
+            if (current.has(part) === dirty) {
+                return current;
+            }
+
+            const next = new Set(current);
+
+            if (dirty) {
+                next.add(part);
+            } else {
+                next.delete(part);
+            }
+
+            return next;
+        });
+    }, []);
+    const guard = useUnsavedChangesGuard(dirtyParts.size > 0);
 
     const header = (
         <PageHeader
@@ -58,7 +81,9 @@ export function SettingsPage() {
     const { sections, others, hasBranding } = arrangeSettings(query.data);
     // Logo and favicon belong to the company data, so they follow its section.
     const brandingIndex = sections[0]?.section.id === 'company' ? 1 : 0;
-    const branding = hasBranding ? <BrandingSection canUpdate={canUpdate} /> : null;
+    const branding = hasBranding ? (
+        <BrandingSection canUpdate={canUpdate} onDirtyChange={markDirty} />
+    ) : null;
 
     return (
         <CenteredPage>
@@ -74,6 +99,7 @@ export function SettingsPage() {
             {sections.slice(0, brandingIndex).map(renderSection)}
             {branding}
             {sections.slice(brandingIndex).map(renderSection)}
+            {guard.dialog}
             {others.length > 0 && <OtherSettings items={others} />}
         </CenteredPage>
     );
@@ -85,6 +111,7 @@ export function SettingsPage() {
                 key={`${section.id}:${items.map((item) => item.version).join(',')}`}
                 section={section}
                 items={items}
+                onDirtyChange={(dirty) => markDirty(section.id, dirty)}
                 preview={
                     section.id === 'logo-display'
                         ? (values) => <LogoPreview values={values} />

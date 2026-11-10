@@ -110,7 +110,7 @@ export function LoginPage() {
                         bersama.
                     </p>
                 </div>
-                <Button type="submit" disabled={login.isPending}>
+                <Button type="submit" loading={login.isPending}>
                     Masuk ke aplikasi
                     <ArrowRight aria-hidden="true" />
                 </Button>

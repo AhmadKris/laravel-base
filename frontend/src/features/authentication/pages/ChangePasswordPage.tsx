@@ -36,7 +36,7 @@ export function ChangePasswordPage() {
             <FormCard
                 onSubmit={form.handleSubmit((values) => changePassword.mutate(values))}
                 actions={
-                    <Button type="submit" disabled={changePassword.isPending}>
+                    <Button type="submit" loading={changePassword.isPending}>
                         Simpan password
                     </Button>
                 }
