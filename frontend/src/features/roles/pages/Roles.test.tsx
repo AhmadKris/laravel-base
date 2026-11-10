@@ -149,8 +149,14 @@ describe('role list', () => {
 
         renderApp('/roles?search=zzz');
 
-        expect(await screen.findByText('Tidak ada role yang cocok')).toBeVisible();
-        expect(screen.getByRole('button', { name: 'Reset pencarian' })).toBeVisible();
+        const emptyTitle = await screen.findByText('Tidak ada role yang cocok');
+        expect(emptyTitle).toBeVisible();
+        expect(screen.getAllByRole('button', { name: 'Hapus filter' })).toHaveLength(2);
+        expect(
+            within(emptyTitle.parentElement as HTMLElement).getByRole('button', {
+                name: 'Hapus filter',
+            }),
+        ).toBeVisible();
     });
 
     it('explains a loading failure', async () => {

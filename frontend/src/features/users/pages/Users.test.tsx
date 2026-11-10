@@ -281,10 +281,15 @@ describe('user list', () => {
 
         renderApp('/users?search=zzz');
 
-        expect(await screen.findByText('Tidak ada pengguna yang cocok')).toBeVisible();
+        const emptyTitle = await screen.findByText('Tidak ada pengguna yang cocok');
+        expect(emptyTitle).toBeVisible();
         expect(screen.getByRole('searchbox')).toHaveValue('zzz');
 
-        await userEvent.click(screen.getByRole('button', { name: 'Reset filter' }));
+        await userEvent.click(
+            within(emptyTitle.parentElement as HTMLElement).getByRole('button', {
+                name: 'Hapus filter',
+            }),
+        );
 
         await waitFor(() => expect(requests.at(-1)?.has('search')).toBe(false));
         expect(screen.getByRole('searchbox')).toHaveValue('');

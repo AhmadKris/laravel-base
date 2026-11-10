@@ -73,7 +73,7 @@ export function RoleListPage() {
                 />
                 {hasSearch && (
                     <Button type="button" variant="ghost" onClick={clearSearch}>
-                        Hapus pencarian
+                        Hapus filter
                     </Button>
                 )}
             </div>
@@ -96,7 +96,7 @@ export function RoleListPage() {
                 emptyAction={
                     hasSearch ? (
                         <Button type="button" variant="outline" size="sm" onClick={clearSearch}>
-                            Reset pencarian
+                            Hapus filter
                         </Button>
                     ) : can('role.create') ? (
                         <Button asChild size="sm">

@@ -288,7 +288,7 @@ describe('audit log list', () => {
         renderApp('/audit-logs?module=auth&period=30d&search=login');
 
         expect(await screen.findByText('Tidak ada aktivitas yang cocok')).toBeVisible();
-        await userEvent.click(screen.getByRole('button', { name: 'Hapus semua filter' }));
+        await userEvent.click(screen.getAllByRole('button', { name: 'Hapus filter' })[0]);
 
         await waitFor(() => {
             const params = lastRequest();
@@ -299,9 +299,7 @@ describe('audit log list', () => {
             ]);
         });
         expect(await screen.findByText('Belum ada aktivitas hari ini')).toBeVisible();
-        expect(
-            screen.queryByRole('button', { name: 'Hapus semua filter' }),
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Hapus filter' })).not.toBeInTheDocument();
     });
 
     it('opens the detail when a row is clicked', async () => {
