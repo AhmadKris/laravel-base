@@ -12,6 +12,7 @@ import {
     ChangePasswordPage,
     ForgotPasswordPage,
     LoginPage,
+    NotificationsPage,
     ResetPasswordPage,
     RoleCreatePage,
     RoleDetailPage,
@@ -47,6 +48,11 @@ export const routes: RouteObject[] = [
                                 path: 'change-password',
                                 element: <ChangePasswordPage />,
                                 handle: { title: 'Ubah password' },
+                            },
+                            {
+                                path: 'notifications',
+                                element: <NotificationsPage />,
+                                handle: { title: 'Notifikasi' },
                             },
                             {
                                 path: 'users',

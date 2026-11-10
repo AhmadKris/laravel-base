@@ -827,15 +827,15 @@ Menyediakan layanan notifikasi terpusat untuk seluruh modul aplikasi.
 ### Backend Components
 
 - NotificationController
-- NotificationService
-- NotificationDispatcher
-- NotificationChannel
-- NotificationEventListener
+- MarkNotificationAsReadAction
+- MarkAllNotificationsAsReadAction
+- NotificationPolicy
+- NotificationServiceProvider
 
 ### Database
 
 - notifications (tabel bawaan Laravel Database Notifications)
-- notification_deliveries
+- notification_deliveries (ditunda sampai channel eksternal/email membutuhkan pelacakan per delivery)
 
 ### API Endpoints
 
@@ -845,8 +845,8 @@ Menyediakan layanan notifikasi terpusat untuk seluruh modul aplikasi.
 | GET | /api/v1/notifications/unread-count | Unread count |
 | PATCH | /api/v1/notifications/{id}/read | Mark as read |
 | POST | /api/v1/notifications/read-all | Mark all as read |
-| GET | /api/v1/notification-preferences | User preferences |
-| PUT | /api/v1/notification-preferences | Update preferences |
+
+Endpoint `/api/v1/notification-preferences` ditunda sampai ada channel lain selain in-app.
 
 ### Business Rules
 
@@ -1565,6 +1565,7 @@ Procurement memiliki tabel bisnis sendiri. Approval tetap menggunakan Workflow M
 | 3 | Authorization | Role and permission |
 | 4 | System Configuration | Application settings |
 | 5 | Audit Log | Centralized activity history |
+| 6 | In-App Notification | Notification inbox, unread count, mark as read, async event listener |
 
 ## Phase 2 – Business Process Foundation
 
@@ -1572,7 +1573,7 @@ Dibangun saat modul bisnis pertama membutuhkannya.
 
 | No. | Module | Deliverable |
 |---|---|---|
-| 1 | Notification | In-app and email |
+| 1 | Notification Extensions | Email channel, delivery tracking, user preferences |
 | 2 | Document | Upload, private storage, download authorization |
 | 3 | Workflow | Sequential approval, definition via seeder |
 

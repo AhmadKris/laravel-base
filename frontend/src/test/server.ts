@@ -24,4 +24,29 @@ export const server = setupServer(
             meta: null,
         }),
     ),
+    http.get('*/api/v1/notifications/unread-count', () =>
+        HttpResponse.json({
+            success: true,
+            message: '',
+            data: { unread_count: 0 },
+            meta: null,
+        }),
+    ),
+    http.get('*/api/v1/notifications', () =>
+        HttpResponse.json({
+            success: true,
+            message: '',
+            data: [],
+            meta: {
+                pagination: {
+                    current_page: 1,
+                    per_page: 20,
+                    total: 0,
+                    last_page: 1,
+                    from: null,
+                    to: null,
+                },
+            },
+        }),
+    ),
 );

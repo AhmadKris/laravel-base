@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Core\Audit\AuditLogger;
 use App\Core\Authorization\Models\Role;
+use App\Modules\Notification\Models\Notification;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,5 +49,8 @@ it('runs the same number of queries regardless of how many rows are listed', fun
         foreach (User::factory()->count($count)->create() as $subject) {
             app(AuditLogger::class)->record('user.updated', $subject, [], $subject);
         }
+    }],
+    'notifications' => ['/api/v1/notifications', function (User $actor, int $count): void {
+        Notification::factory()->count($count)->forUser($actor)->create();
     }],
 ]);

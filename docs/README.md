@@ -8,8 +8,8 @@ Dokumen spesifikasi berisi rancangan lengkap. Tabel di bawah menentukan bagian y
 
 | Tahap | Modul | Kapan |
 |---|---|---|
-| **Base v1** | Authentication, User Management, Role & Permission, Audit Log, System Configuration, `/health` | Sekarang |
-| **Tahap 2** | Notification, Document, Workflow | Saat modul bisnis pertama membutuhkannya |
+| **Base v1** | Authentication, User Management, Role & Permission, Audit Log, System Configuration, In-App Notification, `/health` | Sekarang |
+| **Tahap 2** | Notification (email, delivery tracking, preferences), Document, Workflow | Saat modul bisnis pertama membutuhkannya |
 | **Tahap 3** | Master Data, Reporting, Integration, Monitoring lanjutan | Berdasarkan kebutuhan nyata |
 
 ## Standar Base v1

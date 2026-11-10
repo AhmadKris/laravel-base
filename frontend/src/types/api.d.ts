@@ -148,6 +148,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/v1/notifications': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['notification.index'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/notifications/unread-count': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['notification.unreadCount'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/notifications/read-all': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations['notification.markAllAsRead'];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/notifications/{notification}/read': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations['notification.markAsRead'];
+        trace?: never;
+    };
     '/v1/permissions': {
         parameters: {
             query?: never;
@@ -391,6 +455,26 @@ export interface components {
         ForgotPasswordRequest: {
             /** Format: email */
             email: string;
+        };
+        /**
+         * NotificationCategory
+         * @description Only categories that a notification is sent for. A module adds its category when it starts sending one.
+         * @enum {string}
+         */
+        NotificationCategory: 'security' | 'user';
+        /** NotificationResource */
+        NotificationResource: {
+            id: string;
+            type: string;
+            category: string;
+            title: string;
+            message: string;
+            action_url: string | null;
+            is_read: boolean;
+            /** Format: date-time */
+            read_at: string | null;
+            /** Format: date-time */
+            created_at: string | null;
         };
         /** PermissionResource */
         PermissionResource: {
@@ -867,6 +951,148 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    'notification.index': {
+        parameters: {
+            query?: {
+                page?: number;
+                per_page?: number;
+                search?: string | null;
+                sort_by?: 'created_at' | 'read_at';
+                sort_direction?: 'asc' | 'desc';
+                status?: 'unread' | 'read';
+                category?: components['schemas']['NotificationCategory'];
+                date_from?: string;
+                date_to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Notifications retrieved successfully';
+                        data: string;
+                        meta: {
+                            pagination: {
+                                current_page: number;
+                                per_page: number;
+                                total: number;
+                                last_page: number;
+                                from: number | null;
+                                to: number | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            403: components['responses']['AuthorizationException'];
+            422: components['responses']['ValidationException'];
+        };
+    };
+    'notification.unreadCount': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Unread notification count retrieved successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  unread_count: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            403: components['responses']['AuthorizationException'];
+        };
+    };
+    'notification.markAllAsRead': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'All notifications marked as read';
+                        data:
+                            | unknown[]
+                            | {
+                                  /** @constant */
+                                  unread_count: 0;
+                                  marked_count: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            403: components['responses']['AuthorizationException'];
+        };
+    };
+    'notification.markAsRead': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The notification ID */
+                notification: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Notification marked as read';
+                        data: unknown[] | components['schemas']['NotificationResource'];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            403: components['responses']['AuthorizationException'];
+            404: components['responses']['ModelNotFoundException'];
         };
     };
     'permission.index': {

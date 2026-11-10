@@ -28,7 +28,7 @@ final class CreateUserAction
             $this->auditLogger->record('user.created', $user, ['email' => $user->email], $actor);
 
             if ($roles !== null) {
-                $this->assignRoles->execute($user, $roles, $actor);
+                $this->assignRoles->execute($user, $roles, $actor, notify: false);
             }
 
             return $user;

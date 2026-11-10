@@ -15,6 +15,7 @@ import {
 import { useIsTablet } from '@/hooks/use-mobile';
 import { readSidebarState, saveSidebarState } from '@/lib/sidebar-state';
 import { MainNavigation } from './MainNavigation';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { UserMenu } from './UserMenu';
 
 interface AppLayoutProps {
@@ -72,7 +73,10 @@ export function AppLayout({ children }: AppLayoutProps) {
                         <SidebarTrigger aria-label="Buka atau tutup menu" />
                         <HeaderBreadcrumb />
                     </div>
-                    <UserMenu />
+                    <div className="flex items-center gap-2">
+                        <NotificationBell />
+                        <UserMenu />
+                    </div>
                 </header>
                 <div id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6">
                     <Suspense fallback={<PageSkeleton label="Memuat halaman" />}>

@@ -27,6 +27,8 @@ export type AuditLog = Omit<Schemas['AuditLogResource'], 'subject' | 'properties
 };
 
 export type AuditModule = Schemas['AuditModule'];
+export type Notification = Schemas['NotificationResource'];
+export type NotificationCategory = Schemas['NotificationCategory'];
 
 export type SystemConfiguration = Omit<Schemas['SystemConfigurationResource'], 'value'> & {
     value: ConfigurationValue;

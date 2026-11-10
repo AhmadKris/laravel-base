@@ -36,6 +36,14 @@ it('defines the columns specified for each table', function (string $table, arra
         'version' => 'int unsigned',
     ]],
     'roles' => ['roles', ['version' => 'int unsigned']],
+    'notifications' => ['notifications', [
+        'id' => 'char(36)',
+        'type' => 'varchar(255)',
+        'notifiable_type' => 'varchar(255)',
+        'notifiable_id' => 'bigint unsigned',
+        'data' => 'json',
+        'read_at' => 'timestamp',
+    ]],
 ]);
 
 it('generates a uuid and activates new users by default', function () {
