@@ -15,6 +15,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
         <Sonner
             theme={theme}
             className="toaster group"
+            position="top-right"
+            // Below the 3.5rem app header, so the user menu stays reachable.
+            offset={{ top: '4.25rem', right: '1rem' }}
+            mobileOffset={{ top: '4.25rem' }}
+            closeButton
+            containerAriaLabel="Notifikasi"
             icons={{
                 success: <CircleCheckIcon className="size-4" />,
                 info: <InfoIcon className="size-4" />,
@@ -31,6 +37,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
                 } as React.CSSProperties
             }
             toastOptions={{
+                closeButtonAriaLabel: 'Tutup notifikasi',
                 classNames: {
                     toast: 'cn-toast',
                 },

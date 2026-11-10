@@ -100,6 +100,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/v1/branding': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['branding.index'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/branding/{asset}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['branding.show'];
+        put?: never;
+        post: operations['branding.store'];
+        delete: operations['branding.destroy'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/v1/health': {
         parameters: {
             query?: never;
@@ -340,6 +372,11 @@ export interface components {
             roles: string[];
             permissions: string[];
         };
+        /**
+         * BrandingAsset
+         * @enum {string}
+         */
+        BrandingAsset: 'logo' | 'logo-dark' | 'favicon';
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             current_password: string;
@@ -393,7 +430,7 @@ export interface components {
         /** SystemConfigurationResource */
         SystemConfigurationResource: {
             key: string;
-            value: unknown[] | null;
+            value: unknown;
             is_public: boolean;
             is_sensitive: boolean;
             description: string | null;
@@ -403,7 +440,7 @@ export interface components {
         };
         /** UpdateConfigurationRequest */
         UpdateConfigurationRequest: {
-            value: boolean;
+            value: string;
             version: number;
         };
         /** UpdateRoleRequest */
@@ -420,6 +457,11 @@ export interface components {
             username?: string | null;
             status?: components['schemas']['ActiveStatus'];
             roles?: string[];
+        };
+        /** UploadBrandingRequest */
+        UploadBrandingRequest: {
+            /** Format: binary */
+            file: string;
         };
         /** UserResource */
         UserResource: {
@@ -686,6 +728,117 @@ export interface operations {
             };
             401: components['responses']['AuthenticationException'];
             422: components['responses']['ValidationException'];
+        };
+    };
+    'branding.index': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Branding retrieved successfully';
+                        data: unknown[] | string;
+                        meta: null;
+                    };
+                };
+            };
+        };
+    };
+    'branding.show': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The asset ID */
+                asset: components['schemas']['BrandingAsset'];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    'Transfer-Encoding': 'chunked';
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/octet-stream': string;
+                };
+            };
+            404: components['responses']['ModelNotFoundException'];
+        };
+    };
+    'branding.store': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The asset ID */
+                asset: components['schemas']['BrandingAsset'];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'multipart/form-data': components['schemas']['UploadBrandingRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Branding updated successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  version: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            404: components['responses']['ModelNotFoundException'];
+            422: components['responses']['ValidationException'];
+        };
+    };
+    'branding.destroy': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The asset ID */
+                asset: components['schemas']['BrandingAsset'];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components['responses']['AuthenticationException'];
+            404: components['responses']['ModelNotFoundException'];
         };
     };
     'monitoring.health': {

@@ -1,9 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router';
 import { AppLayout } from '@/components/layouts/AppLayout';
-import { AppLogo } from '@/components/shared/AppLogo';
+import { AppBrand } from '@/components/shared/AppBrand';
 import { AppShellSkeleton } from '@/components/shared/skeletons';
 import { Button } from '@/components/ui/button';
-import { APP_NAME } from '@/lib/app-name';
 import { useAuthStore } from '@/stores/auth-store';
 
 interface NotFoundContentProps {
@@ -64,8 +63,7 @@ export function NotFoundPage() {
             className="flex min-h-svh flex-col items-center justify-center gap-8 p-4 outline-none"
         >
             <div className="flex items-center gap-2.5">
-                <AppLogo className="bg-primary text-primary-foreground" />
-                <span className="font-semibold">{APP_NAME}</span>
+                <AppBrand markClassName="bg-primary text-primary-foreground" />
             </div>
             <NotFoundContent homePath="/login" homeLabel="Ke halaman masuk" />
         </main>

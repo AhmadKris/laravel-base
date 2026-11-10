@@ -83,7 +83,7 @@ it('can be seeded repeatedly without duplicates', function () {
 
     expect(Permission::query()->count())->toBe(15)
         ->and(Role::query()->count())->toBe(4)
-        ->and(SystemConfiguration::query()->count())->toBe(7);
+        ->and(SystemConfiguration::query()->count())->toBe(13);
 });
 
 it('keeps configuration values changed in the application', function () {

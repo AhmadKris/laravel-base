@@ -1,6 +1,6 @@
 import { type ReactNode, Suspense } from 'react';
 import { Outlet } from 'react-router';
-import { AppLogo } from '@/components/shared/AppLogo';
+import { AppBrand } from '@/components/shared/AppBrand';
 import { PageSkeleton } from '@/components/shared/skeletons';
 import {
     Sidebar,
@@ -10,7 +10,6 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { APP_NAME } from '@/lib/app-name';
 import { MainNavigation } from './MainNavigation';
 import { UserMenu } from './UserMenu';
 
@@ -30,10 +29,11 @@ export function AppLayout({ children }: AppLayoutProps) {
             </a>
             <Sidebar collapsible="icon">
                 <SidebarHeader className="h-14 flex-row items-center gap-2.5 px-3 text-sm font-semibold">
-                    <AppLogo className="bg-primary text-primary-foreground" />
-                    <span className="truncate group-data-[collapsible=icon]:hidden">
-                        {APP_NAME}
-                    </span>
+                    <AppBrand
+                        markClassName="bg-primary text-primary-foreground"
+                        nameClassName="group-data-[collapsible=icon]:hidden"
+                        logoClassName="group-data-[collapsible=icon]:max-w-8"
+                    />
                 </SidebarHeader>
                 <SidebarContent>
                     <MainNavigation />

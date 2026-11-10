@@ -735,6 +735,17 @@ File yang diproses oleh sistem harus dibatasi untuk menghindari:
 
 Untuk Excel, PDF, dan dokumen lainnya, gunakan library yang terpelihara dan batasi ukuran serta kompleksitas pemrosesan.
 
+## 10.5 Branding Publik
+
+Logo perusahaan, logo untuk latar gelap, dan favicon adalah satu-satunya file yang boleh diakses tanpa login, karena dibutuhkan halaman login dan tab browser. Kebijakan ini tidak berlaku untuk file lain.
+
+- File disimpan di private storage dengan nama acak, bukan di public web root, dan disajikan lewat `GET /api/v1/branding/{logo|logo-dark|favicon}`.
+- Path hanya ditulis oleh endpoint upload. `PATCH /system-configurations/company.logo`, `company.logo_dark`, dan `company.favicon` ditolak, dan path yang bentuknya tidak sesuai hasil upload tidak pernah disajikan.
+- Logo dan logo latar gelap menerima PNG, JPG, atau WebP sampai 2 MB dan 2048 x 2048 piksel. Favicon menerima PNG atau ICO sampai 1 MB, persegi, 16 sampai 512 piksel. SVG ditolak karena dapat memuat script.
+- Ekstensi dan tipe yang dideteksi dari isi file harus sama-sama diizinkan.
+- Response memakai `Content-Type` dari ekstensi yang tersimpan, `X-Content-Type-Options: nosniff`, dan `Content-Security-Policy: default-src 'none'; sandbox`.
+- Upload dan penghapusan membutuhkan `system_config.update`, dibatasi 20 permintaan per menit per pengguna, dan tercatat di audit log.
+
 ---
 
 # 11. Redis & Queue Security

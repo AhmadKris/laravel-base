@@ -713,6 +713,8 @@ document.version_created
 document.deleted
 
 system.configuration_updated
+system.branding_updated
+system.branding_removed
 ```
 
 ---

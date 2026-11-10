@@ -55,6 +55,18 @@ it('focuses a button when opened and closes with the keyboard', async () => {
 it('blocks both actions while the request is running', () => {
     renderDialog({ isPending: true });
 
-    expect(screen.getByRole('button', { name: 'Hapus pengguna' })).toBeDisabled();
+    const confirm = screen.getByRole('button', { name: 'Hapus pengguna' });
+    expect(confirm).toBeDisabled();
+    expect(confirm).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('button', { name: 'Batal' })).toBeDisabled();
+});
+
+it('stays open on Escape while the request is running', async () => {
+    const user = userEvent.setup();
+    const { onOpenChange } = renderDialog({ isPending: true });
+
+    await user.keyboard('{Escape}');
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog')).toBeVisible();
 });

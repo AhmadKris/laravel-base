@@ -71,3 +71,9 @@ export const RoleEditPage = lazy(() =>
         default: module.RoleEditPage,
     })),
 );
+
+export const SettingsPage = lazy(() =>
+    import('@/features/settings/pages/SettingsPage').then((module) => ({
+        default: module.SettingsPage,
+    })),
+);

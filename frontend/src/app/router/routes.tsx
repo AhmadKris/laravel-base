@@ -14,6 +14,7 @@ import {
     RoleDetailPage,
     RoleEditPage,
     RoleListPage,
+    SettingsPage,
     UserCreatePage,
     UserDetailPage,
     UserEditPage,
@@ -109,6 +110,15 @@ export const routes: RouteObject[] = [
                             </ProtectedRoute>
                         ),
                         handle: { title: 'Ubah role' },
+                    },
+                    {
+                        path: 'settings',
+                        element: (
+                            <ProtectedRoute requiredPermission="system_config.view">
+                                <SettingsPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Pengaturan sistem' },
                     },
                 ],
             },

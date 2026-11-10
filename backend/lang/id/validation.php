@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'array' => ':Attribute harus berupa daftar.',
     'boolean' => ':Attribute harus bernilai benar atau salah.',
+    'configuration_value_too_large' => ':Attribute terlalu besar.',
     'confirmed' => 'Konfirmasi :attribute tidak sama.',
     'current_password' => 'Password saat ini salah.',
     'date_format' => ':Attribute harus sesuai format :format.',
@@ -39,6 +40,9 @@ return [
     'uuid' => ':Attribute tidak valid.',
 
     'custom' => [
+        'value' => [
+            'missing' => ':Attribute hanya dapat diubah dengan mengunggah file.',
+        ],
         'username' => [
             'regex' => 'Username hanya boleh berisi huruf, angka, titik, garis bawah, dan tanda hubung.',
         ],
@@ -49,6 +53,12 @@ return [
         'code' => 'kode',
         'company.address' => 'alamat perusahaan',
         'company.email' => 'email perusahaan',
+        'company.favicon' => 'favicon',
+        'company.logo' => 'logo perusahaan',
+        'company.logo_background' => 'latar logo',
+        'company.logo_dark' => 'logo latar gelap',
+        'company.logo_show_name' => 'tampilan nama',
+        'company.logo_size' => 'ukuran logo',
         'company.name' => 'nama perusahaan',
         'company.phone' => 'telepon perusahaan',
         'current_password' => 'password saat ini',

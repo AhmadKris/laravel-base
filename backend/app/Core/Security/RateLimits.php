@@ -22,6 +22,9 @@ final class RateLimits
         RateLimiter::for('password-change', fn (Request $request): Limit => Limit::perMinute(5)
             ->by((string) $request->user()?->getAuthIdentifier()));
 
+        RateLimiter::for('uploads', fn (Request $request): Limit => Limit::perMinute(20)
+            ->by((string) $request->user()?->getAuthIdentifier()));
+
         RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)
             ->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
