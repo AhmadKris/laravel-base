@@ -354,6 +354,8 @@ export interface components {
             subject: {
                 type: string;
                 id: unknown;
+                /** @description A readable name for the list; null once the subject no longer exists. */
+                label: unknown;
             } | null;
             properties: Record<string, never> | null;
             /** Format: date-time */

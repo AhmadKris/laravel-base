@@ -5,31 +5,12 @@ import { ListSkeleton } from '@/components/shared/skeletons';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toApiError } from '@/lib/api-error';
+import { describeEvent } from '@/lib/audit-events';
 import { formatDateTime } from '@/lib/format';
 import type { AuditLog } from '@/types/api-response';
 import { dashboardService } from '../services/dashboardService';
 
 const UNKNOWN_ACTOR = 'Akun tidak dikenal';
-const UNKNOWN_EVENT = 'melakukan perubahan';
-
-const EVENT_LABELS: Record<string, string> = {
-    'auth.login': 'masuk ke aplikasi',
-    'auth.login_failed': 'gagal masuk',
-    'auth.logout': 'keluar dari aplikasi',
-    'auth.password_changed': 'mengubah password',
-    'auth.password_reset': 'mereset password',
-    'permission.assigned': 'memberikan permission',
-    'permission.revoked': 'mencabut permission',
-    'role.created': 'membuat role',
-    'role.updated': 'memperbarui role',
-    'role.deleted': 'menghapus role',
-    'system.configuration_updated': 'memperbarui pengaturan sistem',
-    'user.created': 'menambahkan pengguna',
-    'user.updated': 'memperbarui data pengguna',
-    'user.deactivated': 'menonaktifkan pengguna',
-    'user.role_assigned': 'memberikan role kepada pengguna',
-    'user.role_removed': 'mencabut role pengguna',
-};
 
 function ActivityRow({ activity }: { activity: AuditLog }) {
     const actorName = activity.actor?.name ?? UNKNOWN_ACTOR;
@@ -39,8 +20,7 @@ function ActivityRow({ activity }: { activity: AuditLog }) {
             <UserAvatar name={actorName} />
             <div className="flex min-w-0 flex-col">
                 <span className="text-sm">
-                    <span className="font-medium">{actorName}</span>{' '}
-                    {EVENT_LABELS[activity.event ?? ''] ?? UNKNOWN_EVENT}
+                    <span className="font-medium">{actorName}</span> {describeEvent(activity.event)}
                 </span>
                 {activity.created_at !== null && (
                     <span className="text-xs text-muted-foreground">

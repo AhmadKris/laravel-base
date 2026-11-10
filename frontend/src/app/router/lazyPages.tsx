@@ -77,3 +77,15 @@ export const SettingsPage = lazy(() =>
         default: module.SettingsPage,
     })),
 );
+
+export const AuditLogListPage = lazy(() =>
+    import('@/features/audit-logs/pages/AuditLogListPage').then((module) => ({
+        default: module.AuditLogListPage,
+    })),
+);
+
+export const AuditLogDetailPage = lazy(() =>
+    import('@/features/audit-logs/pages/AuditLogDetailPage').then((module) => ({
+        default: module.AuditLogDetailPage,
+    })),
+);

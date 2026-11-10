@@ -6,6 +6,8 @@ import { AppLayout } from '@/components/layouts/AppLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { HomePage } from '@/features/dashboard/pages/HomePage';
 import {
+    AuditLogDetailPage,
+    AuditLogListPage,
     ChangePasswordPage,
     ForgotPasswordPage,
     LoginPage,
@@ -110,6 +112,24 @@ export const routes: RouteObject[] = [
                             </ProtectedRoute>
                         ),
                         handle: { title: 'Ubah role' },
+                    },
+                    {
+                        path: 'audit-logs',
+                        element: (
+                            <ProtectedRoute requiredPermission="audit.view">
+                                <AuditLogListPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Audit Log' },
+                    },
+                    {
+                        path: 'audit-logs/:auditLogId',
+                        element: (
+                            <ProtectedRoute requiredPermission="audit.view">
+                                <AuditLogDetailPage />
+                            </ProtectedRoute>
+                        ),
+                        handle: { title: 'Detail aktivitas' },
                     },
                     {
                         path: 'settings',

@@ -34,6 +34,8 @@ final class AuditLogResource extends JsonResource
             'subject' => $this->subject_type === null ? null : [
                 'type' => Str::snake(class_basename($this->subject_type)),
                 'id' => $this->subject?->getRouteKey(),
+                // A readable name for the list; null once the subject no longer exists.
+                'label' => $this->subject?->getAttribute('name') ?? $this->subject?->getAttribute('key'),
             ],
             'properties' => $this->properties,
             'created_at' => $this->created_at,
