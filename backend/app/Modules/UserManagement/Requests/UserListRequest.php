@@ -31,10 +31,10 @@ final class UserListRequest extends ListRequest
     public function applyFilters(Builder $query): Builder
     {
         return $this->applySorting($query)
-            ->when($this->validated('search'), fn (Builder $users, string $search) => $users
+            ->when($this->searchPattern(), fn (Builder $users, string $pattern) => $users
                 ->where(fn (Builder $matches) => $matches
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")))
+                    ->where('name', 'like', $pattern)
+                    ->orWhere('email', 'like', $pattern)))
             ->when($this->validated('status'), fn (Builder $users, string $status) => $users
                 ->where('is_active', ActiveStatus::from($status)->toBoolean()))
             ->orderBy('name')

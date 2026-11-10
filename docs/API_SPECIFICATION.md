@@ -379,7 +379,7 @@ Filter yang didukung harus didefinisikan per endpoint. Jangan menerima nama kolo
 GET /api/v1/users?search=ahmad
 ```
 
-Search hanya mencakup field yang diizinkan.
+Search hanya mencakup field yang diizinkan dan mencocokkan bagian teks. `%` dan `_` dicari sebagai teks biasa, bukan wildcard. Gunakan `ListRequest::searchPattern()` untuk membentuk pola `LIKE`.
 
 ## 6.4 Sorting
 
@@ -971,10 +971,10 @@ Audit log bersifat read-only melalui API operasional. Tidak menyediakan endpoint
 | `user_id` | UUID user yang melakukan aksi |
 | `module` | `auth`, `user`, `role`, `permission`, atau `system` |
 | `action` | Nama event lengkap, misalnya `user.created` |
-| `date_from`, `date_to` | Format `YYYY-MM-DD` dalam UTC, inklusif |
-| `search` | Pencarian pada nama event |
+| `date_from`, `date_to` | Inklusif. `YYYY-MM-DD` berarti satu hari penuh dalam UTC. Waktu ISO 8601 dengan offset, misalnya `2026-11-10T00:00:00+07:00`, dipakai untuk hari dalam zona waktu perusahaan. |
+| `search` | Bagian dari kode event, `event_label`, atau nama atau email actor. Tidak membedakan huruf besar dan kecil. |
 
-Setiap record berisi `id`, `event`, `actor`, `subject`, `properties`, dan `created_at`. `subject` berisi `type`, `id`, dan `label` (nama atau key objek, `null` jika objek sudah tidak ada). Actor dan subject yang sudah di-soft delete tetap ditampilkan. Record yang dapat dilihat mengikuti data scope di `AUTHORIZATION_MATRIX.md` bagian 5.9. `POST /audit-logs/export` tidak termasuk Base v1.
+Setiap record berisi `id`, `event`, `event_label`, `actor`, `subject`, `properties`, dan `created_at`. `event_label` adalah aksi dalam Bahasa Indonesia yang ditulis untuk mengikuti nama actor, misalnya `masuk ke aplikasi`, dan bernilai `null` untuk event yang tidak dikenal. Labelnya berasal dari enum `AuditEvent`, sehingga setiap event baru wajib ditambahkan ke enum tersebut. `subject` berisi `type`, `id`, dan `label` (nama atau key objek, `null` jika objek sudah tidak ada). Actor dan subject yang sudah di-soft delete tetap ditampilkan. Record yang dapat dilihat mengikuti data scope di `AUTHORIZATION_MATRIX.md` bagian 5.9. `POST /audit-logs/export` tidak termasuk Base v1.
 
 ---
 

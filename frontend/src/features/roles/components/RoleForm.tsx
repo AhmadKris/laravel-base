@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { usePermission } from '@/hooks/usePermission';
 import { ApiError } from '@/lib/api-error';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { applyFormError } from '@/lib/form-errors';
 import type { Role } from '@/types/api-response';
 import { groupPermissions } from '../permissionGroups';
@@ -57,6 +58,7 @@ export function RoleForm({ role }: RoleFormProps) {
         resolver: zodResolver(roleSchema),
         defaultValues: { name: role?.name ?? '', permissions: role?.permissions ?? [] },
     });
+    const guard = useUnsavedChangesGuard(form.formState.isDirty);
 
     const permissionOptions = useQuery({
         queryKey: roleKeys.permissions,
@@ -70,6 +72,7 @@ export function RoleForm({ role }: RoleFormProps) {
             queryClient.setQueryData(roleKeys.detail(String(saved.id)), saved);
             void queryClient.invalidateQueries({ queryKey: roleKeys.all });
             toast.success(`Role ${saved.name} telah disimpan.`);
+            guard.allowNavigation();
             void navigate(`/roles/${saved.id}`, { replace: true });
         },
         onError: (error) => applyFormError(error, form.setError),
@@ -90,109 +93,116 @@ export function RoleForm({ role }: RoleFormProps) {
     const groups = groupPermissions((permissionOptions.data ?? []).map(({ name }) => name));
 
     return (
-        <FormCard
-            onSubmit={form.handleSubmit((values) => save.mutate(values))}
-            actions={
-                <>
-                    <Button asChild variant="outline">
-                        <Link to={role ? `/roles/${role.id}` : '/roles'}>Batal</Link>
-                    </Button>
-                    <Button type="submit" disabled={save.isPending}>
-                        Simpan role
-                    </Button>
-                </>
-            }
-        >
-            <FormAlert message={form.formState.errors.root?.server?.message} />
-            {hasVersionConflict && (
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="justify-self-start"
-                    onClick={reloadRole}
-                >
-                    Muat ulang data role
-                </Button>
-            )}
-            <FormField
-                control={form.control}
-                name="name"
-                label="Nama"
-                autoComplete="off"
-                disabled={role?.is_protected}
-                description={
-                    role?.is_protected ? 'Nama role bawaan tidak dapat diubah.' : undefined
+        <>
+            <FormCard
+                onSubmit={form.handleSubmit((values) => save.mutate(values))}
+                actions={
+                    <>
+                        <Button asChild variant="outline">
+                            <Link to={role ? `/roles/${role.id}` : '/roles'}>Batal</Link>
+                        </Button>
+                        <Button type="submit" loading={save.isPending}>
+                            Simpan role
+                        </Button>
+                    </>
                 }
-            />
-            {canEditPermissions && (
-                <Controller
+            >
+                <FormAlert message={form.formState.errors.root?.server?.message} />
+                {hasVersionConflict && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="justify-self-start"
+                        onClick={reloadRole}
+                    >
+                        Muat ulang data role
+                    </Button>
+                )}
+                <FormField
                     control={form.control}
-                    name="permissions"
-                    render={({ field, fieldState }) => (
-                        <fieldset className="grid gap-3">
-                            <legend className="mb-1.5 text-sm leading-none font-medium">
-                                Permission
-                            </legend>
-                            {permissionOptions.isPending && (
-                                <ListSkeleton label="Memuat daftar permission" rows={3} />
-                            )}
-                            {permissionOptions.isError && (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-destructive">
-                                        Daftar permission tidak dapat dimuat.
-                                    </span>
-                                    <Button
-                                        type="button"
-                                        variant="link"
-                                        size="sm"
-                                        className="h-auto p-0"
-                                        onClick={() => void permissionOptions.refetch()}
-                                    >
-                                        Coba lagi
-                                    </Button>
-                                </div>
-                            )}
-                            {groups.map((group) => (
-                                <div key={group.label} className="grid gap-2">
-                                    <p className="text-xs font-medium text-muted-foreground">
-                                        {group.label}
-                                    </p>
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                        {group.permissions.map((name) => {
-                                            const id = `role-permission-${name}`;
-
-                                            return (
-                                                <div key={name} className="flex items-center gap-2">
-                                                    <Checkbox
-                                                        id={id}
-                                                        checked={field.value.includes(name)}
-                                                        onBlur={field.onBlur}
-                                                        onCheckedChange={(checked) =>
-                                                            field.onChange(
-                                                                checked === true
-                                                                    ? [...field.value, name]
-                                                                    : field.value.filter(
-                                                                          (item) => item !== name,
-                                                                      ),
-                                                            )
-                                                        }
-                                                    />
-                                                    <Label htmlFor={id}>{name}</Label>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
-                            {fieldState.error?.message !== undefined && (
-                                <p className="text-xs text-destructive">
-                                    {fieldState.error.message}
-                                </p>
-                            )}
-                        </fieldset>
-                    )}
+                    name="name"
+                    label="Nama"
+                    autoComplete="off"
+                    disabled={role?.is_protected}
+                    description={
+                        role?.is_protected ? 'Nama role bawaan tidak dapat diubah.' : undefined
+                    }
                 />
-            )}
-        </FormCard>
+                {canEditPermissions && (
+                    <Controller
+                        control={form.control}
+                        name="permissions"
+                        render={({ field, fieldState }) => (
+                            <fieldset className="grid gap-3">
+                                <legend className="mb-1.5 text-sm leading-none font-medium">
+                                    Permission
+                                </legend>
+                                {permissionOptions.isPending && (
+                                    <ListSkeleton label="Memuat daftar permission" rows={3} />
+                                )}
+                                {permissionOptions.isError && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-destructive">
+                                            Daftar permission tidak dapat dimuat.
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="link"
+                                            size="sm"
+                                            className="h-auto p-0"
+                                            onClick={() => void permissionOptions.refetch()}
+                                        >
+                                            Coba lagi
+                                        </Button>
+                                    </div>
+                                )}
+                                {groups.map((group) => (
+                                    <div key={group.label} className="grid gap-2">
+                                        <p className="text-xs font-medium text-muted-foreground">
+                                            {group.label}
+                                        </p>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            {group.permissions.map((name) => {
+                                                const id = `role-permission-${name}`;
+
+                                                return (
+                                                    <div
+                                                        key={name}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        <Checkbox
+                                                            id={id}
+                                                            checked={field.value.includes(name)}
+                                                            onBlur={field.onBlur}
+                                                            onCheckedChange={(checked) =>
+                                                                field.onChange(
+                                                                    checked === true
+                                                                        ? [...field.value, name]
+                                                                        : field.value.filter(
+                                                                              (item) =>
+                                                                                  item !== name,
+                                                                          ),
+                                                                )
+                                                            }
+                                                        />
+                                                        <Label htmlFor={id}>{name}</Label>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                                {fieldState.error?.message !== undefined && (
+                                    <p className="text-xs text-destructive">
+                                        {fieldState.error.message}
+                                    </p>
+                                )}
+                            </fieldset>
+                        )}
+                    />
+                )}
+            </FormCard>
+            {guard.dialog}
+        </>
     );
 }

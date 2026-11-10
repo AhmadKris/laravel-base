@@ -73,9 +73,11 @@ function checkFile(rule: AssetRule, file: File): string | undefined {
 
 interface BrandingSectionProps {
     canUpdate: boolean;
+    /** Reports a chosen file that is not saved yet. */
+    onDirtyChange: (key: string, dirty: boolean) => void;
 }
 
-export function BrandingSection({ canUpdate }: BrandingSectionProps) {
+export function BrandingSection({ canUpdate, onDirtyChange }: BrandingSectionProps) {
     const { logoUrl, logoDarkUrl, faviconUrl } = useBranding();
     const urls: Record<BrandingAsset, string | undefined> = {
         logo: logoUrl,
@@ -98,6 +100,7 @@ export function BrandingSection({ canUpdate }: BrandingSectionProps) {
                         rule={rule}
                         currentUrl={urls[rule.asset]}
                         canUpdate={canUpdate}
+                        onDirtyChange={(dirty) => onDirtyChange(`branding:${rule.asset}`, dirty)}
                     />
                 ))}
             </div>
@@ -109,13 +112,16 @@ interface BrandingFieldProps {
     rule: AssetRule;
     currentUrl: string | undefined;
     canUpdate: boolean;
+    onDirtyChange: (dirty: boolean) => void;
 }
 
-function BrandingField({ rule, currentUrl, canUpdate }: BrandingFieldProps) {
+function BrandingField({ rule, currentUrl, canUpdate, onDirtyChange }: BrandingFieldProps) {
     const queryClient = useQueryClient();
     const inputRef = useRef<HTMLInputElement>(null);
     const id = useId();
     const [selection, setSelection] = useState<{ file: File; previewUrl: string } | null>(null);
+
+    useEffect(() => onDirtyChange(selection !== null), [selection, onDirtyChange]);
     const [error, setError] = useState<string | undefined>(undefined);
     const [isRemoving, setIsRemoving] = useState(false);
     const selected = selection?.file ?? null;
@@ -258,9 +264,8 @@ function BrandingField({ rule, currentUrl, canUpdate }: BrandingFieldProps) {
                                 </Button>
                                 <Button
                                     type="button"
-                                    disabled={
-                                        upload.isPending || checkFile(rule, selected) !== undefined
-                                    }
+                                    disabled={checkFile(rule, selected) !== undefined}
+                                    loading={upload.isPending}
                                     onClick={() => upload.mutate(selected)}
                                 >
                                     Simpan {rule.label.toLowerCase()}

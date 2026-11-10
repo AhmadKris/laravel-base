@@ -3,10 +3,7 @@ import { Outlet, useLocation, useMatches } from 'react-router';
 import { useFaviconSync } from '@/hooks/useBranding';
 import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { setDisplayTimeZone } from '@/lib/format';
-
-interface RouteHandle {
-    title: string;
-}
+import type { RouteHandle } from './routeHandle';
 
 export function RootRoute() {
     const { pathname } = useLocation();

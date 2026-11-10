@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from 'cn';
+import { Loader2 } from 'lucide-react';
 import { Slot } from 'radix-ui';
 
 const buttonVariants = cva(
@@ -44,10 +45,15 @@ function Button({
     variant = 'default',
     size = 'default',
     asChild = false,
+    loading = false,
+    disabled,
+    children,
     ...props
 }: React.ComponentProps<'button'> &
     VariantProps<typeof buttonVariants> & {
         asChild?: boolean;
+        /** Disables the button and shows a spinner while the request it started is running. */
+        loading?: boolean;
     }) {
     const Comp = asChild ? Slot.Root : 'button';
 
@@ -57,8 +63,20 @@ function Button({
             data-variant={variant}
             data-size={size}
             className={cn(buttonVariants({ variant, size, className }))}
+            disabled={disabled === true || loading}
+            aria-busy={loading || undefined}
             {...props}
-        />
+        >
+            {/* Slot needs its single child untouched, so the spinner is only added to a real button. */}
+            {asChild ? (
+                children
+            ) : (
+                <>
+                    {loading && <Loader2 aria-hidden="true" className="animate-spin" />}
+                    {children}
+                </>
+            )}
+        </Comp>
     );
 }
 

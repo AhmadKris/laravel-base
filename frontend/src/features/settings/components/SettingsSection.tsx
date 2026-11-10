@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -41,6 +41,8 @@ interface SettingsSectionProps {
     items: SystemConfiguration[];
     /** Shows the unsaved values, so a change can be judged before saving. */
     preview?: (values: Partial<SectionValues>) => ReactNode;
+    /** Reports unsaved changes, so the page can warn before it is left. */
+    onDirtyChange: (dirty: boolean) => void;
 }
 
 function initialValues(section: SettingSection, items: SystemConfiguration[]): SectionValues {
@@ -68,7 +70,7 @@ function withCurrentOption(options: SelectOption[], value: SettingFormValue): Se
         : options;
 }
 
-export function SettingsSection({ section, items, preview }: SettingsSectionProps) {
+export function SettingsSection({ section, items, preview, onDirtyChange }: SettingsSectionProps) {
     const queryClient = useQueryClient();
     const headingId = `settings-${section.id}`;
     // Saved keys move to their next version even when a later key in the same save fails.
@@ -140,6 +142,8 @@ export function SettingsSection({ section, items, preview }: SettingsSectionProp
 
     const { isDirty } = form.formState;
 
+    useEffect(() => onDirtyChange(isDirty), [isDirty, onDirtyChange]);
+
     return (
         <FormCard
             onSubmit={form.handleSubmit((values) => save.mutate(values))}
@@ -156,7 +160,7 @@ export function SettingsSection({ section, items, preview }: SettingsSectionProp
                     >
                         Batal
                     </Button>
-                    <Button type="submit" disabled={!isDirty || save.isPending}>
+                    <Button type="submit" disabled={!isDirty} loading={save.isPending}>
                         {section.saveLabel}
                     </Button>
                 </>

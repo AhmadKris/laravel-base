@@ -368,6 +368,37 @@ describe('saving settings', () => {
         });
     });
 
+    it('asks before leaving with unsaved changes in any section, and not after saving', async () => {
+        asUser();
+        serveSettings();
+
+        const router = renderApp('/settings');
+        const currency = await screen.findByLabelText('Mata uang');
+        await userEvent.clear(currency);
+        await userEvent.type(currency, 'USD');
+        await userEvent.click(
+            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
+                name: 'Beranda',
+            }),
+        );
+
+        expect(
+            await screen.findByRole('alertdialog', { name: 'Tinggalkan halaman ini?' }),
+        ).toBeVisible();
+        await userEvent.click(screen.getByRole('button', { name: 'Batal' }));
+        expect(router.state.location.pathname).toBe('/settings');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Simpan lokalisasi' }));
+        await screen.findByText('Pengaturan lokalisasi telah disimpan.');
+        await userEvent.click(
+            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
+                name: 'Beranda',
+            }),
+        );
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    });
+
     it('restores the stored values on cancel', async () => {
         asUser();
         serveSettings();

@@ -346,6 +346,8 @@ export interface components {
         AuditLogResource: {
             id: number;
             event: string | null;
+            /** @description What the actor did in Indonesian, the same text the search matches; null for an unknown event. */
+            event_label: string | null;
             actor: {
                 id: string;
                 name: string;

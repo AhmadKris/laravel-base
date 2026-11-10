@@ -41,6 +41,7 @@ function serveAll() {
                           {
                               id: 1,
                               event: 'user.deactivated',
+                              event_label: 'menonaktifkan pengguna',
                               actor: { id: 'a', name: 'Rina Hartono', email: 'r@example.com' },
                               subject: null,
                               properties: null,
@@ -49,6 +50,7 @@ function serveAll() {
                           {
                               id: 2,
                               event: 'module.unknown',
+                              event_label: null,
                               actor: null,
                               subject: null,
                               properties: null,

@@ -74,6 +74,20 @@ describe('company name', () => {
         ).not.toHaveLength(0);
     });
 
+    it('shows the copyright of the company at the bottom of every app page', async () => {
+        asUser([]);
+        servePublicSettings();
+
+        renderApp('/');
+
+        const footer = (
+            await screen.findByText(
+                `© ${new Date().getFullYear()} PT Maju Jaya. Hak cipta dilindungi.`,
+            )
+        ).closest('footer');
+        expect(footer).not.toBeNull();
+    });
+
     it('keeps the built-in name when the settings cannot be loaded', async () => {
         asUser([]);
         server.use(

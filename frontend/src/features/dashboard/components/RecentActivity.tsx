@@ -20,7 +20,8 @@ function ActivityRow({ activity }: { activity: AuditLog }) {
             <UserAvatar name={actorName} />
             <div className="flex min-w-0 flex-col">
                 <span className="text-sm">
-                    <span className="font-medium">{actorName}</span> {describeEvent(activity.event)}
+                    <span className="font-medium">{actorName}</span>{' '}
+                    {describeEvent(activity.event_label)}
                 </span>
                 {activity.created_at !== null && (
                     <span className="text-xs text-muted-foreground">

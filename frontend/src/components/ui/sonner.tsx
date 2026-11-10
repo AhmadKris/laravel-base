@@ -21,12 +21,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
             mobileOffset={{ top: '4.25rem' }}
             closeButton
             containerAriaLabel="Notifikasi"
+            // Each type keeps one icon, so the meaning does not rely on color alone.
             icons={{
-                success: <CircleCheckIcon className="size-4" />,
-                info: <InfoIcon className="size-4" />,
-                warning: <TriangleAlertIcon className="size-4" />,
-                error: <OctagonXIcon className="size-4" />,
-                loading: <Loader2Icon className="size-4 animate-spin" />,
+                success: <CircleCheckIcon className="size-4 text-success" />,
+                info: <InfoIcon className="size-4 text-info" />,
+                warning: <TriangleAlertIcon className="size-4 text-warning" />,
+                error: <OctagonXIcon className="size-4 text-destructive" />,
+                loading: <Loader2Icon className="size-4 animate-spin text-muted-foreground" />,
             }}
             style={
                 {
@@ -38,8 +39,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
             }
             toastOptions={{
                 closeButtonAriaLabel: 'Tutup notifikasi',
+                // Low contrast: a colored edge marks the type while the text stays on a neutral surface.
+                // The "!" overrides the border width that Sonner sets on every toast.
                 classNames: {
-                    toast: 'cn-toast',
+                    toast: 'cn-toast border-l-4!',
+                    title: 'font-medium',
+                    description: 'text-muted-foreground!',
+                    success: 'border-l-success!',
+                    info: 'border-l-info!',
+                    warning: 'border-l-warning!',
+                    error: 'border-l-destructive!',
                 },
             }}
             {...props}

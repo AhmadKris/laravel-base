@@ -3,12 +3,15 @@
 declare(strict_types=1);
 
 use App\Core\Audit\AuditLogger;
+use App\Core\Audit\Enums\AuditEvent;
 use App\Core\Authorization\Models\Role;
 use App\Modules\SystemConfiguration\Models\SystemConfiguration;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Spatie\Activitylog\Models\Activity;
+use Symfony\Component\Finder\SplFileInfo;
 
 uses(RefreshDatabase::class);
 
@@ -183,6 +186,27 @@ it('filters by inclusive date range', function () {
     $this->actingAs($this->admin)->getJson('/api/v1/audit-logs?date_from=2026-03-02')->assertJsonCount(2, 'data');
 });
 
+it('filters by a day in another time zone when the dates carry an offset', function () {
+    $this->travelTo('2026-11-09 16:59:00');
+    recordAudit('before.midnight.jakarta');
+    $this->travelTo('2026-11-09 17:00:00');
+    recordAudit('after.midnight.jakarta');
+    $this->travelTo('2026-11-10 16:59:59');
+    recordAudit('end.of.day.jakarta');
+    $this->travelTo('2026-11-10 17:00:00');
+    recordAudit('next.day.jakarta');
+
+    $events = $this->actingAs($this->admin)
+        ->getJson('/api/v1/audit-logs?'.http_build_query([
+            'date_from' => '2026-11-10T00:00:00+07:00',
+            'date_to' => '2026-11-10T23:59:59+07:00',
+        ]))
+        ->assertOk()
+        ->json('data.*.event');
+
+    expect($events)->toBe(['end.of.day.jakarta', 'after.midnight.jakarta']);
+});
+
 it('validates filters', function (string $query, string $field) {
     $this->actingAs($this->admin)
         ->getJson('/api/v1/audit-logs?'.$query)
@@ -193,6 +217,8 @@ it('validates filters', function (string $query, string $field) {
     'invalid user' => ['user_id=12', 'user_id'],
     'invalid date' => ['date_from=01-03-2026', 'date_from'],
     'reversed range' => ['date_from=2026-03-02&date_to=2026-03-01', 'date_to'],
+    'date-time without offset' => ['date_from=2026-03-02T00:00:00', 'date_from'],
+    'reversed range with offsets' => ['date_from=2026-03-02T00:00:00%2B07:00&date_to=2026-03-01T23:59:59%2B07:00', 'date_to'],
     'column outside the allowlist' => ['sort_by=properties', 'sort_by'],
 ]);
 
@@ -234,4 +260,64 @@ it('names the subject for the list', function () {
         ->all();
 
     expect($labels)->toEqualCanonicalizing(['Budi Santoso', 'Staff', 'company.phone']);
+});
+
+it('searches the event code, the action as shown, and the actor', function (string $term, array $expected) {
+    $budi = User::factory()->create(['name' => 'Budi Santoso', 'email' => 'budi@example.com']);
+    $sari = User::factory()->create(['name' => 'Sari Dewi', 'email' => 'sari@example.com']);
+    recordAudit('auth.login', actor: $budi);
+    recordAudit('user.created', actor: $sari);
+    recordAudit('role.deleted', actor: $sari);
+    $sari->delete();
+
+    $events = collect($this->actingAs($this->admin)
+        ->getJson('/api/v1/audit-logs?search='.urlencode($term))
+        ->assertOk()
+        ->json('data'))
+        ->pluck('event')
+        ->all();
+
+    expect($events)->toEqualCanonicalizing($expected);
+})->with([
+    'event code' => ['user.cre', ['user.created']],
+    'action in any case' => ['MASUK ke', ['auth.login']],
+    'actor name' => ['budi santoso', ['auth.login']],
+    'deleted actor email' => ['sari@example', ['user.created', 'role.deleted']],
+    'nothing' => ['tidak ada', []],
+]);
+
+it('treats wildcard characters in the search as text', function () {
+    $actor = User::factory()->create(['name' => 'Persen 100%']);
+    recordAudit('auth.login', actor: $actor);
+    recordAudit('auth.logout');
+
+    $this->actingAs($this->admin)->getJson('/api/v1/audit-logs?search=%25')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.event', 'auth.login');
+    $this->actingAs($this->admin)->getJson('/api/v1/audit-logs?search=auth_log')
+        ->assertJsonCount(0, 'data');
+});
+
+it('labels the event in Indonesian and leaves an unknown event unlabelled', function () {
+    $known = recordAudit('auth.login_failed');
+    $unknown = recordAudit('module.unknown');
+
+    $this->actingAs($this->admin)->getJson("/api/v1/audit-logs/{$known->id}")
+        ->assertJsonPath('data.event_label', 'gagal masuk');
+    $this->actingAs($this->admin)->getJson("/api/v1/audit-logs/{$unknown->id}")
+        ->assertJsonPath('data.event_label', null);
+});
+
+it('has a label for every event the application records', function () {
+    $recorded = collect(File::allFiles(app_path()))
+        ->flatMap(fn (SplFileInfo $file) => preg_match_all(
+            "/->record\(\s*'([a-z_]+\.[a-z_]+)'/",
+            $file->getContents(),
+            $matches,
+        ) ? $matches[1] : [])
+        ->unique()
+        ->values();
+
+    expect($recorded)->not->toBeEmpty()
+        ->and($recorded->reject(fn (string $event) => AuditEvent::tryFrom($event) !== null)->all())->toBe([]);
 });

@@ -46,7 +46,7 @@ export function ForgotPasswordPage() {
                         type="email"
                         autoComplete="username"
                     />
-                    <Button type="submit" disabled={requestLink.isPending}>
+                    <Button type="submit" loading={requestLink.isPending}>
                         Kirim tautan reset
                     </Button>
                 </form>

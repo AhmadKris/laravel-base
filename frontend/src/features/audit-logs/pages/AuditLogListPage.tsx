@@ -2,10 +2,11 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { DataTable } from '@/components/shared/DataTable';
+import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
+import { FilterBar } from '@/components/shared/FilterBar';
+import { SearchInput } from '@/components/shared/SearchInput';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -13,18 +14,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { useLastPageCorrection, useTableParams } from '@/hooks/useTableParams';
 import { AUDIT_MODULES } from '@/lib/audit-events';
+import { type DatePreset, dateRangeParams, readDateRange, toApiRange } from '@/lib/date-range';
 import type { AuditModule } from '@/types/api-response';
 import { auditLogColumns } from '../components/auditLogColumns';
 import { type AuditLogFilters, auditLogKeys, auditLogService } from '../services/auditLogService';
 
 const ALL_MODULES = 'all';
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-function readDate(value: string | null): string | undefined {
-    return value !== null && DATE_PATTERN.test(value) ? value : undefined;
-}
+// The page opens on today, which keeps the first load small and covers the usual daily review.
+const DEFAULT_PERIOD: DatePreset = 'today';
 
 function readModule(value: string | null): AuditModule | undefined {
     return AUDIT_MODULES.find((module) => module.value === value)?.value;
@@ -34,25 +35,20 @@ export function AuditLogListPage() {
     const { params, filters, searchInput, changeSearch, updateParams, tableProps } =
         useTableParams();
     const navigate = useNavigate();
+    const { timeZone } = usePublicSettings();
+    const range = readDateRange(params, DEFAULT_PERIOD);
 
     const auditFilters: AuditLogFilters = {
         ...filters,
         user_id: params.get('user_id') ?? undefined,
         module: readModule(params.get('module')),
-        date_from: readDate(params.get('date_from')),
-        date_to: readDate(params.get('date_to')),
+        ...toApiRange(range, timeZone),
     };
-    // ISO dates compare correctly as text.
-    const isRangeInvalid =
-        auditFilters.date_from !== undefined &&
-        auditFilters.date_to !== undefined &&
-        auditFilters.date_to < auditFilters.date_from;
 
     const logs = useQuery({
         queryKey: auditLogKeys.list(auditFilters),
         queryFn: () => auditLogService.list(auditFilters),
         placeholderData: keepPreviousData,
-        enabled: !isRangeInvalid,
     });
 
     const pagination = logs.data?.meta.pagination;
@@ -65,12 +61,13 @@ export function AuditLogListPage() {
         updateParams,
     );
 
-    const hasFilters =
+    const hasOtherFilters =
         auditFilters.search !== undefined ||
         auditFilters.user_id !== undefined ||
-        auditFilters.module !== undefined ||
-        auditFilters.date_from !== undefined ||
-        auditFilters.date_to !== undefined;
+        auditFilters.module !== undefined;
+    const hasFilters = hasOtherFilters || range.preset !== DEFAULT_PERIOD;
+    const activeFilters =
+        (auditFilters.module === undefined ? 0 : 1) + (range.preset === DEFAULT_PERIOD ? 0 : 1);
     const filteredActor = logs.data?.data.find(
         (log) => log.actor?.id === auditFilters.user_id,
     )?.actor;
@@ -81,8 +78,7 @@ export function AuditLogListPage() {
             search: undefined,
             user_id: undefined,
             module: undefined,
-            date_from: undefined,
-            date_to: undefined,
+            ...dateRangeParams({ preset: DEFAULT_PERIOD }, DEFAULT_PERIOD),
             page: undefined,
         });
     };
@@ -93,78 +89,52 @@ export function AuditLogListPage() {
                 title="Audit Log"
                 description="Riwayat aktivitas pengguna dan perubahan sistem. Hanya dapat dibaca."
             />
-            <div className="flex flex-wrap items-end gap-2">
-                <Input
-                    type="search"
-                    aria-label="Cari nama aktivitas"
-                    placeholder="Cari nama aktivitas, misalnya user.created"
-                    className="w-full sm:max-w-xs"
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <SearchInput
+                    label="Cari aktivitas atau pengguna"
+                    placeholder="Cari aktivitas atau pengguna"
                     value={searchInput}
-                    onChange={(event) => changeSearch(event.target.value)}
+                    onChange={changeSearch}
                 />
-                <Select
-                    value={auditFilters.module ?? ALL_MODULES}
-                    onValueChange={(value) =>
-                        updateParams({
-                            module: value === ALL_MODULES ? undefined : value,
-                            page: undefined,
-                        })
-                    }
-                >
-                    <SelectTrigger aria-label="Filter modul" className="w-40">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={ALL_MODULES}>Semua modul</SelectItem>
-                        {AUDIT_MODULES.map((module) => (
-                            <SelectItem key={module.value} value={module.value}>
-                                {module.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <div className="grid gap-1">
-                    <Label htmlFor="audit-date-from" className="text-xs text-muted-foreground">
-                        Dari tanggal (UTC)
-                    </Label>
-                    <Input
-                        id="audit-date-from"
-                        type="date"
-                        className="w-40"
-                        value={auditFilters.date_from ?? ''}
-                        onChange={(event) =>
-                            updateParams({ date_from: event.target.value, page: undefined })
+                <FilterBar activeCount={activeFilters}>
+                    <Select
+                        value={auditFilters.module ?? ALL_MODULES}
+                        onValueChange={(value) =>
+                            updateParams({
+                                module: value === ALL_MODULES ? undefined : value,
+                                page: undefined,
+                            })
+                        }
+                    >
+                        <SelectTrigger aria-label="Filter modul" className="w-full sm:w-40">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={ALL_MODULES}>Semua modul</SelectItem>
+                            {AUDIT_MODULES.map((module) => (
+                                <SelectItem key={module.value} value={module.value}>
+                                    {module.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <DateRangeFilter
+                        value={range}
+                        timeZone={timeZone}
+                        onChange={(next) =>
+                            updateParams({
+                                ...dateRangeParams(next, DEFAULT_PERIOD),
+                                page: undefined,
+                            })
                         }
                     />
-                </div>
-                <div className="grid gap-1">
-                    <Label htmlFor="audit-date-to" className="text-xs text-muted-foreground">
-                        Sampai tanggal (UTC)
-                    </Label>
-                    <Input
-                        id="audit-date-to"
-                        type="date"
-                        className="w-40"
-                        min={auditFilters.date_from}
-                        aria-invalid={isRangeInvalid}
-                        aria-describedby={isRangeInvalid ? 'audit-date-error' : undefined}
-                        value={auditFilters.date_to ?? ''}
-                        onChange={(event) =>
-                            updateParams({ date_to: event.target.value, page: undefined })
-                        }
-                    />
-                </div>
-                {hasFilters && (
-                    <Button type="button" variant="ghost" onClick={clearFilters}>
-                        Hapus semua filter
-                    </Button>
-                )}
+                    {hasFilters && (
+                        <Button type="button" variant="ghost" onClick={clearFilters}>
+                            Hapus semua filter
+                        </Button>
+                    )}
+                </FilterBar>
             </div>
-            {isRangeInvalid && (
-                <p id="audit-date-error" role="alert" className="text-sm text-destructive">
-                    Tanggal akhir tidak boleh lebih awal dari tanggal mulai.
-                </p>
-            )}
             {auditFilters.user_id !== undefined && (
                 <div className="flex items-center gap-2 text-sm">
                     <span>
@@ -187,20 +157,22 @@ export function AuditLogListPage() {
             <DataTable
                 {...tableProps}
                 columns={auditLogColumns}
-                rows={isRangeInvalid ? [] : logs.data?.data}
+                rows={logs.data?.data}
                 getRowId={(log) => String(log.id)}
-                isLoading={!isRangeInvalid && logs.isPending}
-                error={isRangeInvalid ? null : logs.error}
+                isLoading={logs.isPending}
+                error={logs.error}
                 onRetry={() => void logs.refetch()}
                 loadingLabel="Memuat audit log"
                 errorTitle="Audit log tidak dapat dimuat"
-                emptyTitle={hasFilters ? 'Tidak ada aktivitas yang cocok' : 'Belum ada aktivitas'}
+                emptyTitle={
+                    hasFilters ? 'Tidak ada aktivitas yang cocok' : 'Belum ada aktivitas hari ini'
+                }
                 emptyDescription={
                     hasFilters
                         ? 'Ubah atau hapus filter.'
-                        : 'Aktivitas pengguna dan perubahan sistem tercatat di sini.'
+                        : 'Pilih rentang waktu lain untuk melihat aktivitas sebelumnya.'
                 }
-                pagination={isRangeInvalid ? undefined : pagination}
+                pagination={pagination}
                 onRowClick={(log) => void navigate(`/audit-logs/${log.id}`)}
             />
         </section>

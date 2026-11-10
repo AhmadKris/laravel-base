@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { DataTableSort } from '@/components/shared/DataTable';
-import { PER_PAGE_OPTIONS } from '@/components/shared/dataTableColumns';
+import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from '@/components/shared/dataTableColumns';
 
 const SEARCH_DELAY_MS = 300;
 
@@ -9,7 +9,7 @@ type ParamChanges = Record<string, string | undefined>;
 
 export interface TableFilters {
     page: number;
-    per_page?: number;
+    per_page: number;
     search?: string;
     sort_by?: string;
     sort_direction?: string;
@@ -20,7 +20,7 @@ function readFilters(params: URLSearchParams): TableFilters {
 
     return {
         page: Math.max(Number(params.get('page')) || 1, 1),
-        per_page: PER_PAGE_OPTIONS.includes(perPage) ? perPage : undefined,
+        per_page: PER_PAGE_OPTIONS.includes(perPage) ? perPage : DEFAULT_PER_PAGE,
         search: params.get('search') ?? undefined,
         sort_by: params.get('sort_by') ?? undefined,
         sort_direction: params.get('sort_direction') ?? undefined,
@@ -41,9 +41,25 @@ function readSort(filters: TableFilters): DataTableSort | undefined {
  */
 export function useTableParams() {
     const [params, setParams] = useSearchParams();
-    const [searchInput, setSearchInput] = useState(params.get('search') ?? '');
+    const urlSearch = params.get('search') ?? '';
+    const [searchInput, setSearchInput] = useState(urlSearch);
+    const [syncedSearch, setSyncedSearch] = useState(urlSearch);
     const searchTimer = useRef<number | undefined>(undefined);
     const filters = readFilters(params);
+
+    // The URL can change without typing, through a menu link, Back, or clearing the filters. The
+    // field follows it then, but not after its own debounced write, which would drop a trailing
+    // space the user is still typing.
+    if (urlSearch !== syncedSearch) {
+        setSyncedSearch(urlSearch);
+
+        if (urlSearch !== searchInput.trim()) {
+            setSearchInput(urlSearch);
+        }
+    }
+
+    // A search still waiting to be written would bring back what the URL just left behind.
+    useEffect(() => window.clearTimeout(searchTimer.current), [urlSearch]);
 
     const updateParams = useCallback(
         (changes: ParamChanges) => {
