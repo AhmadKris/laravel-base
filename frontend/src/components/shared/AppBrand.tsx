@@ -5,16 +5,16 @@ import { useThemeStore } from '@/stores/theme-store';
 import type { LogoDisplay } from '@/types/api-response';
 
 const HEIGHT: Record<LogoDisplay['size'], string> = {
-    small: 'h-6',
-    medium: 'h-8',
-    large: 'h-10',
+    small: 'h-8',
+    medium: 'h-10',
+    large: 'h-12',
 };
 
 // A logo shown without the name usually contains the name itself, so it gets more width.
 const MAX_WIDTH: Record<LogoDisplay['size'], { withName: string; alone: string }> = {
-    small: { withName: 'max-w-24', alone: 'max-w-36' },
-    medium: { withName: 'max-w-32', alone: 'max-w-44' },
-    large: { withName: 'max-w-40', alone: 'max-w-52' },
+    small: { withName: 'max-w-32', alone: 'max-w-44' },
+    medium: { withName: 'max-w-40', alone: 'max-w-52' },
+    large: { withName: 'max-w-48', alone: 'max-w-56' },
 };
 
 const BACKGROUND: Record<LogoDisplay['background'], string> = {

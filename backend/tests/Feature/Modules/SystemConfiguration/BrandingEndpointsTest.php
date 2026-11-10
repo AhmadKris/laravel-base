@@ -35,6 +35,24 @@ function uploadedContent(string $name, string $content): UploadedFile
 }
 
 /**
+ * Only the PNG signature and size header, so the size can be read but the image cannot be decoded.
+ */
+function pngHeader(int $width, int $height): string
+{
+    return "\x89PNG\r\n\x1a\n".pack('N', 13).'IHDR'.pack('NNCCCCC', $width, $height, 8, 6, 0, 0, 0).pack('N', 0);
+}
+
+/**
+ * @return array{int, int}
+ */
+function storedSize(string $asset): array
+{
+    $size = getimagesizefromstring(Storage::disk(SystemConfiguration::BRANDING_DISK)->get(brandingValue($asset)['path']));
+
+    return [$size[0], $size[1]];
+}
+
+/**
  * An ICO file that holds one PNG image, which is how current browsers and tools write favicons.
  */
 function icoFile(int $size = 32): UploadedFile
@@ -104,7 +122,7 @@ it('replaces the previous file', function () {
 
     expect($this->disk->exists($oldPath))->toBeFalse()
         ->and($this->disk->allFiles('branding'))->toHaveCount(1)
-        ->and(brandingValue('logo')['path'])->toEndWith('.jpg');
+        ->and(brandingValue('logo')['path'])->toEndWith('.png');
 });
 
 it('accepts a favicon as ICO or PNG', function (UploadedFile $file, string $type) {
@@ -130,9 +148,9 @@ it('validates the file', function (string $asset, Closure $file, string $message
     'png renamed to txt' => ['logo', fn () => uploadedContent('logo.txt', UploadedFile::fake()->image('x.png')->getContent()), 'Logo harus berupa file PNG, JPG, atau WebP.'],
     'logo too large' => ['logo', fn () => UploadedFile::fake()->image('logo.png')->size(2049), 'Logo maksimal 2 MB.'],
     'dark logo svg' => ['logo-dark', fn () => uploadedContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'), 'Logo latar gelap harus berupa file PNG, JPG, atau WebP.'],
-    'logo too wide' => ['logo', fn () => UploadedFile::fake()->image('logo.png', 2049, 100), 'Logo maksimal 2048 x 2048 piksel.'],
-    'favicon not square' => ['favicon', fn () => UploadedFile::fake()->image('favicon.png', 64, 32), 'Favicon harus persegi, 16 sampai 512 piksel.'],
-    'favicon jpg' => ['favicon', fn () => UploadedFile::fake()->image('favicon.jpg', 32, 32), 'Favicon harus berupa file PNG atau ICO.'],
+    'favicon svg' => ['favicon', fn () => uploadedContent('favicon.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'), 'Favicon harus berupa file PNG, JPG, WebP, atau ICO.'],
+    'image above the pixel limit' => ['logo', fn () => uploadedContent('logo.png', pngHeader(10000, 5000)), 'Logo terlalu besar. Maksimal 40 megapiksel, misalnya 8000 x 5000 piksel.'],
+    'damaged image' => ['logo', fn () => uploadedContent('logo.png', pngHeader(100, 100)), 'Logo tidak dapat dibaca. Simpan ulang gambarnya lalu unggah kembali.'],
     'favicon too large' => ['favicon', fn () => UploadedFile::fake()->image('favicon.png', 64, 64)->size(1025), 'Favicon maksimal 1 MB.'],
 ]);
 
@@ -165,6 +183,54 @@ it('returns the logo display settings', function () {
 
     $this->getJson('/api/v1/branding')
         ->assertJsonPath('data.display', ['show_name' => false, 'background' => 'white', 'size' => 'large']);
+});
+
+it('scales an upload down to fit its display size and keeps its shape', function (string $asset, array $upload, array $stored) {
+    $this->actingAs($this->admin)
+        ->post("/api/v1/branding/{$asset}", ['file' => UploadedFile::fake()->image('image.png', ...$upload)])
+        ->assertOk();
+
+    expect(storedSize($asset === 'logo-dark' ? 'logo_dark' : $asset))->toBe($stored);
+})->with([
+    'wide logo' => ['logo', [3000, 1000], [1200, 400]],
+    'tall logo' => ['logo', [800, 1600], [200, 400]],
+    'dark logo' => ['logo-dark', [2400, 400], [1200, 200]],
+    'small logo stays as it is' => ['logo', [300, 100], [300, 100]],
+    'large favicon' => ['favicon', [1024, 1024], [256, 256]],
+    'wide favicon becomes square' => ['favicon', [1000, 500], [256, 256]],
+    'small wide favicon becomes square' => ['favicon', [64, 32], [64, 64]],
+]);
+
+it('fills the space around a non-square favicon with transparency', function () {
+    $this->actingAs($this->admin)
+        ->post('/api/v1/branding/favicon', ['file' => UploadedFile::fake()->image('favicon.png', 64, 32)])
+        ->assertOk();
+
+    $image = imagecreatefromstring(Storage::disk(SystemConfiguration::BRANDING_DISK)->get(brandingValue('favicon')['path']));
+
+    expect(imagecolorat($image, 0, 0) >> 24)->toBe(127)
+        ->and(imagecolorat($image, 32, 32) >> 24)->toBe(0);
+});
+
+it('stores photos as PNG and keeps an ICO file as uploaded', function () {
+    $ico = icoFile();
+    $icoContent = $ico->getContent();
+
+    $this->actingAs($this->admin)->post('/api/v1/branding/logo', ['file' => UploadedFile::fake()->image('logo.jpg', 400, 120)])->assertOk();
+    $this->actingAs($this->admin)->post('/api/v1/branding/favicon', ['file' => $ico])->assertOk();
+
+    expect(brandingValue('logo')['mime_type'])->toBe('image/png')
+        ->and(Storage::disk(SystemConfiguration::BRANDING_DISK)->get(brandingValue('favicon')['path']))->toBe($icoContent);
+});
+
+it('drops data appended to an uploaded image', function () {
+    $png = UploadedFile::fake()->image('logo.png', 200, 80)->getContent();
+
+    $this->actingAs($this->admin)
+        ->post('/api/v1/branding/logo', ['file' => uploadedContent('logo.png', $png.'<?php echo "appended"; ?>')])
+        ->assertOk();
+
+    expect(Storage::disk(SystemConfiguration::BRANDING_DISK)->get(brandingValue('logo')['path']))->not->toContain('appended');
 });
 
 it('returns not found for an unknown asset', function () {
