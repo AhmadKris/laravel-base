@@ -216,7 +216,7 @@ export function NotificationsPage() {
                 emptyAction={
                     hasFilters ? (
                         <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
-                            Reset filter
+                            Hapus filter
                         </Button>
                     ) : undefined
                 }

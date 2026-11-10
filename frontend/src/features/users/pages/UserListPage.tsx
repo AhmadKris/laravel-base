@@ -134,7 +134,7 @@ export function UserListPage() {
                 emptyAction={
                     hasFilters ? (
                         <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
-                            Reset filter
+                            Hapus filter
                         </Button>
                     ) : can('user.create') ? (
                         <Button asChild size="sm">
