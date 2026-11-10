@@ -787,18 +787,20 @@ Spasi memakai skala Tailwind, satu unit sama dengan 4 px. Nilai `gap` di dalam l
 | Grid kartu, misalnya statistik Beranda | `gap-4` |
 | Toolbar pencarian dan filter | `gap-2` |
 | Antarfield di form (`FormCard`) dan antarfield di bagian pengaturan | `gap-4` |
+| Antarbagian di dalam form (`FormSection`) | `gap-4`, pemisah `border-t pt-4` |
 | Antarfield di form halaman masuk | `gap-3` |
 | Label, field, petunjuk, dan error dalam `FormField` | `gap-1.5` |
 | Judul dan deskripsi yang bertumpuk | `gap-0.5` |
 | Ikon dan teks dalam satu baris, tombol yang berderet | `gap-2` |
 | Avatar atau logo dan nama | `gap-2.5` sampai `gap-3` |
 | Isi kartu | `p-5`. Baris aksi di bawah kartu `px-5 py-3` dengan `border-t`. |
-| Daftar label dan nilai (`dl`) | `gap-y-3`, kolom label `9rem` |
+| Daftar label dan nilai (`dl`) | `gap-y-3`, kolom label `9rem` pada `sm:` ke atas (`sm:grid-cols-[9rem_1fr]`) |
 | Empty dan error state | `p-8`, `gap-2`, rata tengah |
 
 Lebar konten:
 
-- Halaman form dan detail memakai `CenteredPage` dengan lebar `max-w-2xl`.
+- Halaman form standar dan detail memakai `CenteredPage` dengan lebar bawaan `max-w-2xl`.
+- Halaman pengaturan dan form kompleks (misalnya dokumen transaksi dengan banyak item baris) memakai `CenteredPage` varian `wide` (`max-w-5xl`).
 - Kartu halaman masuk memakai `max-w-md`.
 - `SearchInput` memakai `sm:max-w-xs`.
 - Halaman daftar memakai lebar penuh.

@@ -21,7 +21,13 @@ function SampleForm() {
 
     return (
         <form onSubmit={submit}>
-            <FormField control={control} name="name" label="Nama" description="Nama lengkap" />
+            <FormField
+                control={control}
+                name="name"
+                label="Nama"
+                description="Nama lengkap"
+                required
+            />
             <FormField control={control} name="email" label="Email" type="email" />
             <button type="submit">Simpan</button>
         </form>
@@ -32,13 +38,15 @@ beforeEach(() => {
     document.cookie = 'XSRF-TOKEN=existing; path=/';
 });
 
-it('connects the label and description to the input', () => {
+it('connects the label and description to the input and exposes required semantics', () => {
     render(<SampleForm />);
 
     const input = screen.getByLabelText('Nama');
 
     expect(input).toHaveAccessibleDescription('Nama lengkap');
+    expect(input).toHaveAttribute('aria-required', 'true');
     expect(input).not.toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-required');
 });
 
 it('shows server validation errors on the matching field and focuses it', async () => {

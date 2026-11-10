@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
 import { CenteredPage } from '@/components/shared/CenteredPage';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageSkeleton } from '@/components/shared/skeletons';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ApiError, toApiError } from '@/lib/api-error';
 import { UserForm } from '../components/UserForm';
@@ -49,6 +50,11 @@ export function UserEditPage() {
                         <EmptyState
                             title="Pengguna tidak ditemukan"
                             description="Pengguna ini sudah dihapus atau berada di luar akses Anda."
+                            action={
+                                <Button asChild variant="outline" size="sm">
+                                    <Link to="/users">Kembali ke daftar pengguna</Link>
+                                </Button>
+                            }
                         />
                     ) : (
                         <ErrorState

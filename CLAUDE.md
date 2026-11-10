@@ -85,7 +85,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Header aplikasi tetap di atas saat halaman di-scroll. Footer statis di bawah konten berisi hak cipta perusahaan. Jangan membuat container scroll bersarang yang membuat header ikut ter-scroll.
 - Toast hanya untuk umpan balik singkat dan muncul di kanan atas. Error yang perlu diperbaiki pengguna ditampilkan di dekat field atau form, bukan hanya di toast.
 - Toast memakai varian `success`, `info`, `warning`, atau `error`, masing-masing dengan ikon tetap. Maksimal satu aksi per toast. Error dari `notifyError` bertahan 8 detik, dan error server menyertakan kode permintaan. Informasi di toast harus tetap bisa ditemukan di halaman setelah toast hilang.
-- Halaman pengaturan dibagi per bagian. Setiap bagian memiliki tombol simpan sendiri yang nonaktif selama belum ada perubahan.
+- Halaman pengaturan dikelompokkan dalam tab per bagian. Setiap bagian memiliki tombol simpan sendiri yang nonaktif selama belum ada perubahan.
 - Form memiliki label, pesan error per field, dan tombol submit dengan `loading` selama permintaan berjalan.
 - Form yang dapat menyimpan memakai `useUnsavedChangesGuard`, sehingga pengguna ditanya sebelum meninggalkan perubahan yang belum disimpan. Panggil `allowNavigation()` sebelum redirect setelah berhasil menyimpan.
 - Data table memiliki pengurutan asc/desc pada kolom yang didukung API, filter jika datanya memungkinkan, dan dropdown jumlah data per halaman dengan pilihan 10, 20, 50, dan 100. Bawaannya 10.
@@ -95,8 +95,8 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Header menampilkan breadcrumb dari `handle` route. Route detail dan form mengisi `parents` dengan halaman di atasnya.
 - Klik pada baris data table membuka halaman detail. Tautan di dalam baris tetap ada untuk keyboard, dan tombol aksi di baris tidak ikut memicu klik baris.
 - Setiap resource yang dapat dibuat memiliki halaman form sendiri. Setelah berhasil dibuat, arahkan ke halaman detailnya.
-- Halaman form dan detail memakai `CenteredPage`, sehingga berada di tengah dengan lebar yang sama.
-- Form memakai `FormCard`: satu kolom, semua field sama lebar, aksi di kanan bawah dengan urutan Batal lalu Simpan.
+- Halaman form dan detail memakai `CenteredPage` (bawaan `max-w-2xl`), sehingga berada di tengah dengan lebar yang konsisten. Halaman pengaturan dan form kompleks (seperti dokumen transaksi dengan banyak item baris) boleh memakai varian lebar `wide` (`max-w-5xl`) dan tata letak multi-kolom per bagian agar tidak sempit dan terlalu panjang ke bawah.
+- Form standar memakai `FormCard` satu kolom dengan semua field sama lebar, dapat dikelompokkan dengan `FormSection` untuk keterbacaan, dan aksi di kanan bawah dengan urutan Batal lalu Simpan.
 - Relasi yang dapat diatur, seperti role pengguna, diisi di form yang sama dan disimpan dalam satu transaksi, bukan di halaman atau kartu terpisah.
 - Semua fungsi dapat dipakai dengan keyboard.
 - Teks UI dalam Bahasa Indonesia, spesifik: "Simpan pengguna", bukan "Submit".

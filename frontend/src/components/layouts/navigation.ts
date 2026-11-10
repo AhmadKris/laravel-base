@@ -8,6 +8,7 @@ export interface NavigationItem {
 }
 
 export interface NavigationSection {
+    id?: string;
     label?: string;
     items: NavigationItem[];
 }
@@ -15,6 +16,7 @@ export interface NavigationSection {
 export const navigationSections: NavigationSection[] = [
     { items: [{ label: 'Beranda', to: '/', icon: House }] },
     {
+        id: 'administration',
         label: 'Administrasi',
         items: [
             { label: 'Pengguna', to: '/users', icon: Users, permission: 'user.view' },

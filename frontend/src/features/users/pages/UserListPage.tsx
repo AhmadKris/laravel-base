@@ -62,6 +62,10 @@ export function UserListPage() {
 
     const hasFilters = filters.search !== undefined || filters.status !== undefined;
 
+    const clearFilters = () => {
+        updateParams({ search: undefined, status: undefined, page: undefined });
+    };
+
     return (
         <section className="flex flex-col gap-4">
             <PageHeader
@@ -104,6 +108,11 @@ export function UserListPage() {
                             <SelectItem value="inactive">Nonaktif</SelectItem>
                         </SelectContent>
                     </Select>
+                    {hasFilters && (
+                        <Button type="button" variant="ghost" onClick={clearFilters}>
+                            Hapus filter
+                        </Button>
+                    )}
                 </FilterBar>
             </div>
             <DataTable
@@ -121,6 +130,20 @@ export function UserListPage() {
                     hasFilters
                         ? 'Ubah kata kunci atau filter status.'
                         : 'Pengguna yang ditambahkan akan tampil di sini.'
+                }
+                emptyAction={
+                    hasFilters ? (
+                        <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+                            Reset filter
+                        </Button>
+                    ) : can('user.create') ? (
+                        <Button asChild size="sm">
+                            <Link to="/users/new">
+                                <Plus aria-hidden="true" />
+                                Tambah pengguna
+                            </Link>
+                        </Button>
+                    ) : undefined
                 }
                 pagination={pagination}
                 onRowClick={(user) => void navigate(`/users/${user.id}`)}

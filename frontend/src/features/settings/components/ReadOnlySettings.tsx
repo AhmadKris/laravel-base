@@ -21,7 +21,7 @@ interface ReadOnlySectionProps {
 export function ReadOnlySection({ section, items }: ReadOnlySectionProps) {
     return (
         <SectionCard title={section.title}>
-            <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
+            <dl className="grid gap-y-3 text-sm sm:grid-cols-[9rem_1fr]">
                 {section.fields.map((field, index) => (
                     <div key={field.key} className="contents">
                         <dt className="text-muted-foreground">{field.label}</dt>
@@ -48,7 +48,7 @@ interface OtherSettingsProps {
 export function OtherSettings({ items }: OtherSettingsProps) {
     return (
         <SectionCard title="Konfigurasi lain">
-            <dl className="grid gap-3 text-sm">
+            <dl className="grid gap-4 text-sm sm:grid-cols-2">
                 {items.map((item) => (
                     <div key={item.key} className="grid gap-0.5">
                         <dt className="font-mono text-xs text-muted-foreground">{item.key}</dt>

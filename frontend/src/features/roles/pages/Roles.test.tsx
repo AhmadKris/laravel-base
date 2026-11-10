@@ -150,6 +150,7 @@ describe('role list', () => {
         renderApp('/roles?search=zzz');
 
         expect(await screen.findByText('Tidak ada role yang cocok')).toBeVisible();
+        expect(screen.getByRole('button', { name: 'Reset pencarian' })).toBeVisible();
     });
 
     it('explains a loading failure', async () => {
@@ -245,7 +246,7 @@ describe('deleting a role', () => {
         expect(removed).toEqual(['7']);
     });
 
-    it('explains a role still in use and keeps the dialog', async () => {
+    it('explains a role still in use inside the dialog and clears the error on close', async () => {
         asUser();
         serveList([makeRole()]);
         server.use(
@@ -258,8 +259,14 @@ describe('deleting a role', () => {
         const dialog = await openDelete();
         await userEvent.click(within(dialog).getByRole('button', { name: 'Hapus role' }));
 
-        expect(await screen.findByText('Role masih dipakai oleh pengguna.')).toBeVisible();
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+            'Role masih dipakai oleh pengguna.',
+        );
         expect(screen.getByRole('alertdialog')).toBeVisible();
+
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Batal' }));
+        const reopened = await openDelete();
+        expect(within(reopened).queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('returns to the list after deleting from the detail page', async () => {
@@ -323,7 +330,7 @@ describe('role detail', () => {
         expect(screen.queryByRole('link', { name: 'Ubah role' })).not.toBeInTheDocument();
     });
 
-    it('explains a missing role without a retry', async () => {
+    it('explains a missing role without a retry and links back to the list', async () => {
         asUser();
         server.use(
             http.get('*/api/v1/roles/99', () =>
@@ -335,11 +342,44 @@ describe('role detail', () => {
 
         expect(await screen.findByText('Role tidak ditemukan')).toBeVisible();
         expect(screen.queryByRole('button', { name: 'Coba lagi' })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Kembali ke daftar role' })).toHaveAttribute(
+            'href',
+            '/roles',
+        );
     });
 });
 
 describe('role form', () => {
     beforeEach(() => servePermissions());
+
+    it('supports searching and selecting all permissions per module', async () => {
+        asUser();
+
+        renderApp('/roles/new');
+
+        expect(await screen.findByText('0 dari 3 dipilih')).toBeVisible();
+
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Pilih semua permission Pengguna' }),
+        );
+
+        expect(screen.getByRole('checkbox', { name: 'user.create' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'user.view' })).toBeChecked();
+        expect(screen.getByText('2 dari 3 dipilih')).toBeVisible();
+
+        await userEvent.type(screen.getByRole('searchbox', { name: 'Cari permission' }), 'audit');
+
+        expect(screen.queryByRole('checkbox', { name: 'user.view' })).not.toBeInTheDocument();
+        expect(screen.getByRole('checkbox', { name: 'audit.view' })).toBeVisible();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Hapus pencarian' }));
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Kosongkan permission Pengguna' }),
+        );
+
+        expect(screen.getByRole('checkbox', { name: 'user.view' })).not.toBeChecked();
+        expect(screen.getByText('0 dari 3 dipilih')).toBeVisible();
+    });
 
     it('creates a role with permissions and opens the detail page', async () => {
         asUser();

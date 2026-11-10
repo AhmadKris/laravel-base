@@ -126,15 +126,27 @@ function section(name: string) {
     return screen.getByRole('heading', { name }).closest('form') as HTMLElement;
 }
 
+async function openTab(name: string) {
+    await userEvent.click(await screen.findByRole('tab', { name }));
+}
+
 describe('settings page', () => {
-    it('shows each section with the stored values', async () => {
+    it('shows each section in its tab with the stored values', async () => {
         asUser();
         serveSettings();
 
         renderApp('/settings');
 
-        expect(await screen.findByLabelText('Nama perusahaan')).toHaveValue('PT Maju');
+        expect(await screen.findByRole('tablist', { name: 'Kategori pengaturan' })).toBeVisible();
+        expect(screen.getByRole('tab', { name: 'Perusahaan' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
+        expect(screen.getByLabelText('Nama perusahaan')).toHaveValue('PT Maju');
         expect(screen.getByLabelText('Telepon')).toHaveValue('021');
+        expect(screen.getByRole('button', { name: 'Simpan data perusahaan' })).toBeDisabled();
+
+        await openTab('Lokalisasi');
         expect(screen.getByLabelText('Mata uang')).toHaveValue('IDR');
         expect(screen.getByRole('combobox', { name: 'Zona waktu' })).toHaveTextContent(
             'Asia/Jakarta',
@@ -142,9 +154,10 @@ describe('settings page', () => {
         expect(screen.getByRole('combobox', { name: 'Bahasa' })).toHaveTextContent(
             'Bahasa Indonesia',
         );
-        expect(screen.getByRole('checkbox', { name: 'Modul laporan' })).not.toBeChecked();
-        expect(screen.getByRole('button', { name: 'Simpan data perusahaan' })).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Simpan lokalisasi' })).toBeDisabled();
+
+        await openTab('Fitur');
+        expect(screen.getByRole('checkbox', { name: 'Modul laporan' })).not.toBeChecked();
     });
 
     it('lists other keys read-only and never shows a sensitive value', async () => {
@@ -152,10 +165,11 @@ describe('settings page', () => {
         serveSettings();
 
         renderApp('/settings');
+        await openTab('Konfigurasi lain');
 
-        const others = (await screen.findByText('Konfigurasi lain')).closest(
-            '[data-slot="card"]',
-        ) as HTMLElement;
+        const others = screen
+            .getByRole('heading', { name: 'Konfigurasi lain' })
+            .closest('[data-slot="card"]') as HTMLElement;
         expect(within(others).getByText('upload.max_size_kb')).toBeVisible();
         expect(within(others).getByText('2048')).toBeVisible();
         expect(within(others).getByText('mail.smtp_password')).toBeVisible();
@@ -174,6 +188,8 @@ describe('settings page', () => {
 
         await screen.findByLabelText('Nama perusahaan');
         expect(screen.queryByLabelText('Telepon')).not.toBeInTheDocument();
+
+        await openTab('Konfigurasi lain');
         expect(screen.getByText('company.phone')).toBeVisible();
     });
 
@@ -200,9 +216,11 @@ describe('settings page', () => {
         renderApp('/settings');
 
         expect(await screen.findByText('PT Maju')).toBeVisible();
-        expect(screen.getByText('Bahasa Indonesia')).toBeVisible();
         expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Simpan/ })).not.toBeInTheDocument();
+
+        await openTab('Lokalisasi');
+        expect(screen.getByText('Bahasa Indonesia')).toBeVisible();
     });
 
     it('shows an error with a retry when loading fails', async () => {
@@ -285,7 +303,8 @@ describe('saving settings', () => {
         serveSettings();
 
         renderApp('/settings');
-        await userEvent.click(await screen.findByRole('checkbox', { name: 'Modul laporan' }));
+        await openTab('Fitur');
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Modul laporan' }));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan pengaturan fitur' }));
 
         await screen.findByText('Pengaturan fitur telah disimpan.');
@@ -304,6 +323,7 @@ describe('saving settings', () => {
         expect(await screen.findByText('Nama perusahaan wajib diisi.')).toBeVisible();
         expect(screen.getByText('Email harus berupa alamat email yang valid.')).toBeVisible();
 
+        await openTab('Lokalisasi');
         const currency = screen.getByLabelText('Mata uang');
         await userEvent.clear(currency);
         await userEvent.type(currency, 'rp');
@@ -372,7 +392,7 @@ describe('saving settings', () => {
         asUser();
         serveSettings();
 
-        const router = renderApp('/settings');
+        const router = renderApp('/settings?tab=localization');
         const currency = await screen.findByLabelText('Mata uang');
         await userEvent.clear(currency);
         await userEvent.type(currency, 'USD');
@@ -397,6 +417,22 @@ describe('saving settings', () => {
         );
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    });
+
+    it('keeps unsaved edits when switching tabs without blocking', async () => {
+        asUser();
+        serveSettings();
+
+        const router = renderApp('/settings');
+        const name = await screen.findByLabelText('Nama perusahaan');
+        await userEvent.type(name, ' Nusantara');
+
+        await openTab('Lokalisasi');
+        expect(router.state.location.search).toBe('?tab=localization');
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+
+        await openTab('Perusahaan');
+        expect(screen.getByLabelText('Nama perusahaan')).toHaveValue('PT Maju Nusantara');
     });
 
     it('restores the stored values on cancel', async () => {

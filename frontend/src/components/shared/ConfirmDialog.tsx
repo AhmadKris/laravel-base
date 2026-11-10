@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2, TriangleAlert } from 'lucide-react';
+import { CircleCheck, Loader2, TriangleAlert } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import {
     AlertDialog,
@@ -11,6 +11,34 @@ import {
     AlertDialogMedia,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { FormAlert } from './FormAlert';
+
+export type ConfirmVariant = 'destructive' | 'warning' | 'default';
+
+const VARIANT_STYLES: Record<
+    ConfirmVariant,
+    {
+        mediaClassName: string;
+        buttonVariant: 'destructive-solid' | 'warning-solid' | 'default';
+        Icon: typeof TriangleAlert;
+    }
+> = {
+    destructive: {
+        mediaClassName: 'bg-destructive/15 text-destructive',
+        buttonVariant: 'destructive-solid',
+        Icon: TriangleAlert,
+    },
+    warning: {
+        mediaClassName: 'bg-warning/15 text-warning',
+        buttonVariant: 'warning-solid',
+        Icon: TriangleAlert,
+    },
+    default: {
+        mediaClassName: 'bg-primary/15 text-primary',
+        buttonVariant: 'default',
+        Icon: CircleCheck,
+    },
+};
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -18,7 +46,8 @@ interface ConfirmDialogProps {
     title: string;
     description: string;
     confirmLabel: string;
-    confirmVariant?: 'destructive' | 'default';
+    confirmVariant?: ConfirmVariant;
+    error?: string;
     onConfirm: () => void;
     isPending?: boolean;
 }
@@ -30,10 +59,11 @@ export function ConfirmDialog({
     description,
     confirmLabel,
     confirmVariant = 'destructive',
+    error,
     onConfirm,
     isPending = false,
 }: ConfirmDialogProps) {
-    const isDestructive = confirmVariant === 'destructive';
+    const { mediaClassName, buttonVariant, Icon } = VARIANT_STYLES[confirmVariant];
 
     // The dialog stays open until the caller closes it, so a failed request can be retried.
     const handleConfirm = (event: MouseEvent) => {
@@ -52,26 +82,17 @@ export function ConfirmDialog({
         <AlertDialog open={open} onOpenChange={handleOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogMedia
-                        className={
-                            isDestructive
-                                ? 'bg-destructive/10 text-destructive'
-                                : 'bg-primary/10 text-primary'
-                        }
-                    >
-                        {isDestructive ? (
-                            <TriangleAlert aria-hidden="true" />
-                        ) : (
-                            <CircleAlert aria-hidden="true" />
-                        )}
+                    <AlertDialogMedia className={mediaClassName}>
+                        <Icon aria-hidden="true" />
                     </AlertDialogMedia>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>{description}</AlertDialogDescription>
                 </AlertDialogHeader>
+                <FormAlert message={error} />
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={isPending}>Batal</AlertDialogCancel>
                     <AlertDialogAction
-                        variant={confirmVariant}
+                        variant={buttonVariant}
                         disabled={isPending}
                         aria-busy={isPending}
                         onClick={handleConfirm}

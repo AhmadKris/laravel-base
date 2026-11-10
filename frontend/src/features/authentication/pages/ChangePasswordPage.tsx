@@ -34,6 +34,7 @@ export function ChangePasswordPage() {
                 description="Setelah diganti, sesi di perangkat lain akan diakhiri."
             />
             <FormCard
+                isDirty={form.formState.isDirty}
                 onSubmit={form.handleSubmit((values) => changePassword.mutate(values))}
                 actions={
                     <Button type="submit" loading={changePassword.isPending}>
@@ -47,12 +48,15 @@ export function ChangePasswordPage() {
                     name="current_password"
                     label="Password saat ini"
                     autoComplete="current-password"
+                    required
                 />
                 <PasswordField
                     control={form.control}
                     name="password"
                     label="Password baru"
                     autoComplete="new-password"
+                    required
+                    showLengthHint
                     description={NEW_PASSWORD_HINT}
                 />
                 <PasswordField
@@ -60,6 +64,7 @@ export function ChangePasswordPage() {
                     name="password_confirmation"
                     label="Ulangi password baru"
                     autoComplete="new-password"
+                    required
                 />
             </FormCard>
         </CenteredPage>

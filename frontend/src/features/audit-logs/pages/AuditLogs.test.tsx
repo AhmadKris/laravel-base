@@ -407,7 +407,7 @@ describe('audit log detail', () => {
         ).toBeVisible();
     });
 
-    it('explains a record that is missing or outside the access', async () => {
+    it('explains a record that is missing or outside the access and links back to the list', async () => {
         asUser();
         server.use(
             http.get('*/api/v1/audit-logs/99', () =>
@@ -421,6 +421,10 @@ describe('audit log detail', () => {
         renderApp('/audit-logs/99');
 
         expect(await screen.findByText('Aktivitas tidak ditemukan')).toBeVisible();
+        expect(screen.getByRole('link', { name: 'Kembali ke audit log' })).toHaveAttribute(
+            'href',
+            '/audit-logs',
+        );
     });
 });
 

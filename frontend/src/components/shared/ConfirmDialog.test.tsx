@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import { ConfirmDialog } from './ConfirmDialog';
 
-function renderDialog(overrides: { isPending?: boolean } = {}) {
+function renderDialog(
+    overrides: {
+        isPending?: boolean;
+        error?: string;
+        confirmVariant?: 'destructive' | 'warning' | 'default';
+    } = {},
+) {
     const onConfirm = vi.fn();
     const onOpenChange = vi.fn();
 
@@ -69,4 +75,18 @@ it('stays open on Escape while the request is running', async () => {
 
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(screen.getByRole('alertdialog')).toBeVisible();
+});
+
+it('shows the inline error inside the dialog when provided', () => {
+    renderDialog({ error: 'Data masih dipakai.' });
+
+    const dialog = screen.getByRole('alertdialog');
+    expect(dialog).toHaveTextContent('Data masih dipakai.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Data masih dipakai.');
+});
+
+it('supports the warning variant with solid warning contrast styling', () => {
+    renderDialog({ confirmVariant: 'warning' });
+
+    expect(screen.getByRole('button', { name: 'Hapus pengguna' })).toHaveClass('bg-warning-solid');
 });

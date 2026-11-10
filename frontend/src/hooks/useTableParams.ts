@@ -44,24 +44,40 @@ export function useTableParams() {
     const urlSearch = params.get('search') ?? '';
     const [searchInput, setSearchInput] = useState(urlSearch);
     const [syncedSearch, setSyncedSearch] = useState(urlSearch);
+    const [pendingOwnSearches, setPendingOwnSearches] = useState<string[]>([]);
+    const [externalResetCount, setExternalResetCount] = useState(0);
     const searchTimer = useRef<number | undefined>(undefined);
+    const latestUrlSearch = useRef(urlSearch);
     const filters = readFilters(params);
 
-    // The URL can change without typing, through a menu link, Back, or clearing the filters. The
-    // field follows it then, but not after its own debounced write, which would drop a trailing
-    // space the user is still typing.
+    // Only follow URL search changes triggered externally (menu link, Back button). Own updates
+    // stay queued in pendingOwnSearches so continuing to type during a router transition is not
+    // overwritten when an earlier debounced value settles in the URL.
     if (urlSearch !== syncedSearch) {
         setSyncedSearch(urlSearch);
+        const ownIndex = pendingOwnSearches.lastIndexOf(urlSearch);
 
-        if (urlSearch !== searchInput.trim()) {
+        if (ownIndex !== -1) {
+            setPendingOwnSearches(pendingOwnSearches.slice(ownIndex + 1));
+        } else {
+            setPendingOwnSearches([]);
             setSearchInput(urlSearch);
+            setExternalResetCount(externalResetCount + 1);
         }
     }
 
-    // A search still waiting to be written would bring back what the URL just left behind.
-    useEffect(() => window.clearTimeout(searchTimer.current), [urlSearch]);
+    useEffect(() => {
+        latestUrlSearch.current = urlSearch;
+    }, [urlSearch]);
 
-    const updateParams = useCallback(
+    // A search still waiting to be written would bring back what an external navigation left behind.
+    useEffect(() => {
+        if (externalResetCount > 0) {
+            window.clearTimeout(searchTimer.current);
+        }
+    }, [externalResetCount]);
+
+    const applyParams = useCallback(
         (changes: ParamChanges) => {
             setParams(
                 (current) => {
@@ -83,15 +99,44 @@ export function useTableParams() {
         [setParams],
     );
 
+    const applyParamsRef = useRef(applyParams);
+    useEffect(() => {
+        applyParamsRef.current = applyParams;
+    }, [applyParams]);
+
+    const queueOwnSearch = useCallback((nextSearch: string) => {
+        if (nextSearch === latestUrlSearch.current) {
+            setPendingOwnSearches([]);
+            return;
+        }
+
+        setPendingOwnSearches((current) => [...current, nextSearch]);
+    }, []);
+
+    const updateParams = useCallback(
+        (changes: ParamChanges) => {
+            if ('search' in changes) {
+                window.clearTimeout(searchTimer.current);
+                const nextSearch = changes.search ?? '';
+                setSearchInput(nextSearch);
+                queueOwnSearch(nextSearch);
+            }
+
+            applyParams(changes);
+        },
+        [applyParams, queueOwnSearch],
+    );
+
     useEffect(() => () => window.clearTimeout(searchTimer.current), []);
 
     const changeSearch = (value: string) => {
         setSearchInput(value);
         window.clearTimeout(searchTimer.current);
-        searchTimer.current = window.setTimeout(
-            () => updateParams({ search: value.trim(), page: undefined }),
-            SEARCH_DELAY_MS,
-        );
+        searchTimer.current = window.setTimeout(() => {
+            const nextSearch = value.trim();
+            queueOwnSearch(nextSearch);
+            applyParamsRef.current({ search: nextSearch, page: undefined });
+        }, SEARCH_DELAY_MS);
     };
 
     return {

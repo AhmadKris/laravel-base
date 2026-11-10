@@ -79,6 +79,8 @@ const TEXT_PAIRS = [
     ['brand-accent', 'brand'],
     ['primary', 'background'],
     ['primary-foreground', 'primary'],
+    ['destructive-solid-foreground', 'destructive-solid'],
+    ['warning-solid-foreground', 'warning-solid'],
     ['destructive', 'background'],
     ['popover-foreground', 'popover'],
     ['sidebar-foreground', 'sidebar'],
@@ -89,6 +91,8 @@ const TEXT_PAIRS = [
 const CONTROL_PAIRS = [
     ['input', 'background'],
     ['input', 'card'],
+    ['destructive-solid', 'popover'],
+    ['warning-solid', 'popover'],
     ['ring', 'background'],
     ['sidebar-ring', 'sidebar'],
 ];
