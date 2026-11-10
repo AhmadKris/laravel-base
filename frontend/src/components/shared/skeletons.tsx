@@ -75,7 +75,7 @@ export function FormSkeleton({ label }: SkeletonProps) {
 
 export function PageSkeleton({ label }: SkeletonProps) {
     return (
-        <div role="status" aria-label={label} className="flex flex-col gap-5">
+        <div role="status" aria-label={label} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
                 <Skeleton className="h-8 w-48" />
                 <Skeleton className="h-4 w-72 max-w-full" />
@@ -99,7 +99,7 @@ export function AppShellSkeleton({ label }: SkeletonProps) {
                     <Skeleton className="size-7" />
                     <Skeleton className="h-8 w-32" />
                 </div>
-                <div className="flex flex-col gap-5 p-4 md:p-6">
+                <div className="flex flex-col gap-4 p-4 md:p-6">
                     <Skeleton className="h-8 w-48" />
                     <Skeleton className="h-64 w-full rounded-xl" />
                 </div>

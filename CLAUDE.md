@@ -78,6 +78,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 
 - Antarmuka adalah alat kerja: padat informasi, tenang, dan konsisten antarmodul.
 - Gunakan komponen dan token shadcn/ui. Komponen baru dibuat hanya jika belum ada yang sesuai.
+- Spasi dan tipografi mengikuti skala di `DEVELOPMENT_GUIDELINE.md` bagian 7.8.
 - Setiap halaman data memiliki loading, empty, dan error state, serta responsif.
 - Halaman yang gagal dirender ditangkap `RouteErrorPage` di dalam layout, sehingga sidebar dan header tetap bisa dipakai. Route baru di dalam layout ditempatkan di bawah route tanpa path yang memiliki `errorElement`.
 - Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak. Gunakan `ConfirmDialog`, yang tetap terbuka dan tidak dapat ditutup selama permintaan berjalan.

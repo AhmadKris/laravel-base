@@ -15,7 +15,7 @@ export function HomePage() {
     const visibleStats = getDashboardStats().filter((stat) => can(stat.permission));
 
     return (
-        <section className="flex flex-col gap-5">
+        <section className="flex flex-col gap-4">
             <PageHeader title="Beranda" description="Ringkasan data dan aktivitas terbaru." />
             {visibleStats.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
