@@ -423,18 +423,21 @@ describe('role form', () => {
     it('shows the saved data right away instead of the previous version', async () => {
         asUser();
         const role = makeRole();
-        let reads = 0;
+        // Only reads after the save hang, so the heading can come from the saved response alone.
+        let saved = false;
         server.use(
             http.get('*/api/v1/roles/7', async () => {
-                reads += 1;
-
-                if (reads > 1) {
+                if (saved) {
                     await delay('infinite');
                 }
 
                 return one(role);
             }),
-            http.patch('*/api/v1/roles/7', () => one({ ...role, name: 'Nama Tersimpan' })),
+            http.patch('*/api/v1/roles/7', () => {
+                saved = true;
+
+                return one({ ...role, name: 'Nama Tersimpan' });
+            }),
         );
 
         renderApp('/roles/7/edit');

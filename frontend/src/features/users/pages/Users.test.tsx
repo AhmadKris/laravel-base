@@ -682,18 +682,21 @@ describe('user form', () => {
     it('shows the saved data right away instead of the previous version', async () => {
         asUser();
         const user = makeTarget();
-        let reads = 0;
+        // Only reads after the save hang, so the heading can come from the saved response alone.
+        let saved = false;
         server.use(
             http.get('*/api/v1/users/user-1', async () => {
-                reads += 1;
-
-                if (reads > 1) {
+                if (saved) {
                     await delay('infinite');
                 }
 
                 return one(user);
             }),
-            http.patch('*/api/v1/users/user-1', () => one({ ...user, name: 'Nama Tersimpan' })),
+            http.patch('*/api/v1/users/user-1', () => {
+                saved = true;
+
+                return one({ ...user, name: 'Nama Tersimpan' });
+            }),
         );
 
         renderApp('/users/user-1/edit');
