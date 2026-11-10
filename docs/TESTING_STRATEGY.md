@@ -690,7 +690,16 @@ test('user can log in successfully', async ({ page }) => {
 
 Gunakan akun test khusus. Jangan menggunakan credential production.
 
-## 10.4 E2E Best Practices
+## 10.4 Menjalankan E2E
+
+Test Playwright berada di `frontend/e2e` dan dijalankan dengan `npm run test:e2e` di `frontend/`. CI menjalankannya di job `e2e` pada setiap pull request.
+
+- Butuh MySQL dengan database `laravel_base_test` dan Chromium dari `npx playwright install chromium`.
+- Playwright menyalakan backend di port 8011 dan frontend hasil build di port 5173, lalu mematikannya setelah selesai.
+- Setiap run mengosongkan database dan mengisinya dengan `E2ESeeder`. Database development tidak disentuh.
+- Password akun uji diambil dari `E2E_PASSWORD`, dengan nilai bawaan yang hanya berlaku untuk database test.
+
+## 10.5 E2E Best Practices
 
 - Fokus pada critical business journey.
 - Gunakan stable locator.
@@ -742,6 +751,8 @@ Security testing mengacu pada risiko OWASP Top 10:2025 dan verification requirem
 - File upload dan download mengikuti access control.
 - Session dan token mengikuti kebijakan keamanan.
 - Security finding memiliki remediation plan.
+
+Status setiap kriteria untuk Base v1 beserta buktinya tercatat di `SECURITY_SPECIFICATION.md` bagian 21.1.
 
 ---
 

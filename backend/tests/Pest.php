@@ -10,6 +10,9 @@ pest()->extend(TestCase::class)->in('Feature');
 
 const UNKNOWN_USER = '01932f5e-1234-7000-8000-123456789abc';
 
+// Datasets are built before the application boots, so the path cannot come from base_path().
+const DOCS_PATH = __DIR__.'/../../docs';
+
 /**
  * @param  array<string, mixed>  $attributes
  */
@@ -30,7 +33,7 @@ function userWithRole(string $role, array $attributes = []): User
 function documentedEndpoints(): array
 {
     $section = Str::before(
-        Str::after(str_replace("\r\n", "\n", (string) file_get_contents(base_path('../docs/API_SPECIFICATION.md'))), '## 16.4 Endpoint Base v1'),
+        Str::after(str_replace("\r\n", "\n", (string) file_get_contents(DOCS_PATH.'/API_SPECIFICATION.md')), '## 16.4 Endpoint Base v1'),
         "\n# ",
     );
 
