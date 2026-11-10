@@ -1,16 +1,31 @@
 import { useSyncExternalStore } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
-const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`;
+// Matches the Tailwind lg breakpoint, where the full sidebar and a table fit side by side.
+const DESKTOP_BREAKPOINT = 1024;
 
-function subscribe(onChange: () => void): () => void {
-    const query = window.matchMedia(MOBILE_QUERY);
+function subscribeTo(query: string): (onChange: () => void) => () => void {
+    return (onChange) => {
+        const list = window.matchMedia(query);
 
-    query.addEventListener('change', onChange);
+        list.addEventListener('change', onChange);
 
-    return () => query.removeEventListener('change', onChange);
+        return () => list.removeEventListener('change', onChange);
+    };
 }
 
+const subscribeMobile = subscribeTo(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+const subscribeTablet = subscribeTo(
+    `(min-width: ${MOBILE_BREAKPOINT}px) and (max-width: ${DESKTOP_BREAKPOINT - 1}px)`,
+);
+
 export function useIsMobile(): boolean {
-    return useSyncExternalStore(subscribe, () => window.innerWidth < MOBILE_BREAKPOINT);
+    return useSyncExternalStore(subscribeMobile, () => window.innerWidth < MOBILE_BREAKPOINT);
+}
+
+export function useIsTablet(): boolean {
+    return useSyncExternalStore(
+        subscribeTablet,
+        () => window.innerWidth >= MOBILE_BREAKPOINT && window.innerWidth < DESKTOP_BREAKPOINT,
+    );
 }

@@ -78,6 +78,8 @@ const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const;
 // The column id the list pages use for row actions; on cards it sits next to the title.
 const ACTIONS_COLUMN = 'actions';
 
+const WIDE_SCREEN_ONLY = 'hidden xl:table-cell';
+
 function headerLabel(header: unknown): string {
     return typeof header === 'string' ? header : '';
 }
@@ -295,7 +297,11 @@ export function DataTable<TRow extends RowData>({
                                 return (
                                     <TableHead
                                         key={header.id}
-                                        className="sticky top-0 z-10 bg-card px-4 shadow-[inset_0_-1px_0_var(--border)]"
+                                        className={cn(
+                                            'sticky top-0 z-10 bg-card px-4 shadow-[inset_0_-1px_0_var(--border)]',
+                                            header.column.columnDef.meta?.wideScreenOnly &&
+                                                WIDE_SCREEN_ONLY,
+                                        )}
                                         aria-sort={
                                             activeDirection === undefined
                                                 ? undefined
@@ -336,7 +342,14 @@ export function DataTable<TRow extends RowData>({
                             }}
                         >
                             {row.getAllCells().map((cell) => (
-                                <TableCell key={cell.id} className="px-4">
+                                <TableCell
+                                    key={cell.id}
+                                    className={cn(
+                                        'px-4',
+                                        cell.column.columnDef.meta?.wideScreenOnly &&
+                                            WIDE_SCREEN_ONLY,
+                                    )}
+                                >
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                 </TableCell>
                             ))}

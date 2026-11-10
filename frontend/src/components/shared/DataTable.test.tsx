@@ -230,6 +230,22 @@ describe('row click', () => {
     });
 });
 
+const wideColumns: DataTableColumn<Row>[] = [
+    { id: 'name', header: 'Nama', accessorKey: 'name' },
+    { id: 'id', header: 'Kode', accessorKey: 'id', meta: { wideScreenOnly: true } },
+];
+
+it('leaves a secondary column out of the table below wide screens', () => {
+    renderTable({ columns: wideColumns });
+
+    expect(screen.getByRole('columnheader', { name: 'Kode' })).toHaveClass(
+        'hidden',
+        'xl:table-cell',
+    );
+    expect(screen.getByRole('cell', { name: 'A1' })).toHaveClass('hidden', 'xl:table-cell');
+    expect(screen.getByRole('cell', { name: 'Ani' })).not.toHaveClass('hidden');
+});
+
 describe('on a phone', () => {
     const desktopWidth = window.innerWidth;
 
@@ -249,6 +265,12 @@ describe('on a phone', () => {
         expect(within(card).getByText('Ani')).toBeVisible();
         expect(within(card).getByText('Kode')).toBeVisible();
         expect(within(card).getByText('A1')).toBeVisible();
+    });
+
+    it('still shows a secondary column in the card', () => {
+        renderTable({ columns: wideColumns });
+
+        expect(within(screen.getByRole('listitem')).getByText('A1')).toBeVisible();
     });
 
     it('opens the row from its card', async () => {
