@@ -971,7 +971,7 @@ Audit log bersifat read-only melalui API operasional. Tidak menyediakan endpoint
 | `date_from`, `date_to` | Format `YYYY-MM-DD` dalam UTC, inklusif |
 | `search` | Pencarian pada nama event |
 
-Setiap record berisi `id`, `event`, `actor`, `subject`, `properties`, dan `created_at`. Actor dan subject yang sudah di-soft delete tetap ditampilkan. `POST /audit-logs/export` tidak termasuk Base v1.
+Setiap record berisi `id`, `event`, `actor`, `subject`, `properties`, dan `created_at`. `subject` berisi `type`, `id`, dan `label` (nama atau key objek, `null` jika objek sudah tidak ada). Actor dan subject yang sudah di-soft delete tetap ditampilkan. Record yang dapat dilihat mengikuti data scope di `AUTHORIZATION_MATRIX.md` bagian 5.9. `POST /audit-logs/export` tidak termasuk Base v1.
 
 ---
 

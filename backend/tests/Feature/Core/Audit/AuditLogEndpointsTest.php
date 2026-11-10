@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Core\Audit\AuditLogger;
+use App\Core\Authorization\Models\Role;
+use App\Modules\SystemConfiguration\Models\SystemConfiguration;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -193,3 +195,43 @@ it('validates filters', function (string $query, string $field) {
     'reversed range' => ['date_from=2026-03-02&date_to=2026-03-01', 'date_to'],
     'column outside the allowlist' => ['sort_by=properties', 'sort_by'],
 ]);
+
+it('limits configuration records to the configuration scope of the viewer', function (string $role, array $expected) {
+    recordAudit('system.configuration_updated', properties: ['key' => 'company.name', 'old' => 'PT Lama', 'new' => 'PT Baru']);
+    recordAudit('system.configuration_updated', properties: ['key' => 'security.session_policy', 'old' => 'lax', 'new' => 'strict']);
+    recordAudit('system.branding_updated', properties: ['asset' => 'logo']);
+    recordAudit('user.created');
+
+    $keys = collect($this->actingAs(userWithRole($role))->getJson('/api/v1/audit-logs')->assertOk()->json('data'))
+        ->map(fn (array $log): string => $log['properties']['key'] ?? $log['event'])
+        ->all();
+
+    expect($keys)->toEqualCanonicalizing($expected);
+})->with([
+    'admin' => ['Admin', ['company.name', 'system.branding_updated', 'user.created']],
+    'super admin' => ['Super Admin', ['company.name', 'security.session_policy', 'system.branding_updated', 'user.created']],
+]);
+
+it('returns not found for a configuration record outside the scope', function () {
+    $hidden = recordAudit('system.configuration_updated', properties: ['key' => 'security.session_policy', 'new' => 'strict']);
+    $visible = recordAudit('system.configuration_updated', properties: ['key' => 'localization.timezone', 'new' => 'Asia/Jakarta']);
+
+    $this->actingAs($this->admin)->getJson("/api/v1/audit-logs/{$hidden->id}")->assertNotFound();
+    $this->actingAs($this->admin)->getJson("/api/v1/audit-logs/{$visible->id}")->assertOk();
+});
+
+it('names the subject for the list', function () {
+    $user = User::factory()->create(['name' => 'Budi Santoso']);
+    $role = Role::query()->where('name', 'Staff')->sole();
+    $configuration = SystemConfiguration::factory()->create(['key' => 'company.phone']);
+
+    recordAudit('user.updated', $user);
+    recordAudit('role.updated', $role);
+    recordAudit('system.configuration_updated', $configuration, ['key' => 'company.phone']);
+
+    $labels = collect($this->actingAs($this->admin)->getJson('/api/v1/audit-logs')->assertOk()->json('data'))
+        ->pluck('subject.label')
+        ->all();
+
+    expect($labels)->toEqualCanonicalizing(['Budi Santoso', 'Staff', 'company.phone']);
+});

@@ -5,45 +5,35 @@ declare(strict_types=1);
 namespace App\Core\Audit\Controllers;
 
 use App\Core\Api\Responses\ApiResponse;
-use App\Core\Audit\AuditLogger;
+use App\Core\Audit\AuditLogQuery;
 use App\Core\Audit\Requests\AuditLogListRequest;
 use App\Core\Audit\Resources\AuditLogResource;
 use App\Modules\UserManagement\Models\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\JsonResponse;
-use Spatie\Activitylog\Models\Activity;
+use Illuminate\Http\Request;
 
 final class AuditLogController
 {
+    public function __construct(private readonly AuditLogQuery $logs) {}
+
     public function index(AuditLogListRequest $request): JsonResponse
     {
-        $logs = $request->applyFilters($this->query())->paginate($request->perPage());
+        $logs = $request->applyFilters($this->logs->visibleTo($this->viewer($request)))->paginate($request->perPage());
 
         return ApiResponse::paginated($logs, AuditLogResource::class, 'Audit logs retrieved successfully');
     }
 
-    public function show(string $auditLog): JsonResponse
+    public function show(Request $request, string $auditLog): JsonResponse
     {
         return ApiResponse::success(
-            new AuditLogResource($this->query()->findOrFail($auditLog)),
+            new AuditLogResource($this->logs->visibleTo($this->viewer($request))->findOrFail($auditLog)),
             'Audit log retrieved successfully',
         );
     }
 
-    /**
-     * @return Builder<Activity>
-     */
-    private function query(): Builder
+    private function viewer(Request $request): User
     {
-        $includeTrashed = fn (Builder $query) => $query->withoutGlobalScope(SoftDeletingScope::class);
-
-        return Activity::query()->inLog(AuditLogger::LOG_NAME)->with([
-            'causer' => fn (MorphTo $causer) => $causer->constrain([User::class => $includeTrashed]),
-            'subject' => fn (MorphTo $subject) => $subject->constrain([
-                User::class => $includeTrashed,
-            ]),
-        ]);
+        /** @var User */
+        return $request->user();
     }
 }

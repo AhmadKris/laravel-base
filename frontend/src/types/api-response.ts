@@ -3,7 +3,6 @@ import type { components } from './api';
 type Schemas = components['schemas'];
 
 export type AuthenticatedUser = Schemas['AuthenticatedUserResource'];
-export type AuditLog = Schemas['AuditLogResource'];
 export type Role = Schemas['RoleResource'];
 export type Permission = Schemas['PermissionResource'];
 export type StoreRolePayload = Schemas['StoreRoleRequest'];
@@ -15,9 +14,19 @@ export type ForgotPasswordPayload = Schemas['ForgotPasswordRequest'];
 export type ResetPasswordPayload = Schemas['ResetPasswordRequest'];
 export type ChangePasswordPayload = Schemas['ChangePasswordRequest'];
 
-// Scramble cannot infer the JSON cast of `value`, so these two types are written by hand.
-export type ConfigurationValue =
-    string | number | boolean | null | ConfigurationValue[] | { [key: string]: ConfigurationValue };
+// Scramble cannot infer JSON columns, so the types below that hold them are written by hand.
+export type JsonValue =
+    string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+export type ConfigurationValue = JsonValue;
+
+// Scramble types the subject label as unknown and the properties as an empty object.
+export type AuditLog = Omit<Schemas['AuditLogResource'], 'subject' | 'properties'> & {
+    subject: { type: string; id: string | number | null; label: string | null } | null;
+    properties: Record<string, JsonValue> | null;
+};
+
+export type AuditModule = Schemas['AuditModule'];
 
 export type SystemConfiguration = Omit<Schemas['SystemConfigurationResource'], 'value'> & {
     value: ConfigurationValue;

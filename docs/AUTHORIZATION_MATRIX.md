@@ -365,6 +365,8 @@ Catatan: Admin hanya boleh menetapkan role yang telah diizinkan oleh administrat
 
 Audit log harus bersifat read-only bagi pengguna operasional.
 
+`*` Admin dan role custom melihat semua record, kecuali record `system.*` yang memiliki `properties.key` di luar prefix konfigurasi yang diizinkan untuk Admin (bagian 5.8). Record tersebut memuat nilai lama dan baru konfigurasi, sehingga mengikuti batas yang sama. Record di luar batas tidak muncul di daftar dan mengembalikan HTTP 404 di detail. Super Admin dan System Admin melihat semua record.
+
 ---
 
 # 6. Data Access Scope
