@@ -1,4 +1,4 @@
-import { type ReactNode, Suspense } from 'react';
+import { type ReactNode, Suspense, useState } from 'react';
 import { Outlet } from 'react-router';
 import { AppBrand } from '@/components/shared/AppBrand';
 import { Copyright } from '@/components/shared/Copyright';
@@ -12,6 +12,8 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { useIsTablet } from '@/hooks/use-mobile';
+import { readSidebarState, saveSidebarState } from '@/lib/sidebar-state';
 import { MainNavigation } from './MainNavigation';
 import { UserMenu } from './UserMenu';
 
@@ -20,9 +22,31 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+    const isTablet = useIsTablet();
+    const [desktopOpen, setDesktopOpen] = useState(readSidebarState);
+    const [tabletOpen, setTabletOpen] = useState(false);
+    const [wasTablet, setWasTablet] = useState(isTablet);
+
+    // A tablet is too narrow for the full sidebar and a table, so it starts as icons each time
+    // the width reaches tablet size. Opening it there is not remembered for the desktop.
+    if (isTablet !== wasTablet) {
+        setWasTablet(isTablet);
+        setTabletOpen(false);
+    }
+
+    const changeOpen = (open: boolean) => {
+        if (isTablet) {
+            setTabletOpen(open);
+
+            return;
+        }
+
+        setDesktopOpen(open);
+        saveSidebarState(open);
+    };
+
     return (
-        // SidebarProvider writes this cookie but cannot read it without a server render.
-        <SidebarProvider defaultOpen={!document.cookie.includes('sidebar_state=false')}>
+        <SidebarProvider open={isTablet ? tabletOpen : desktopOpen} onOpenChange={changeOpen}>
             <a
                 href="#main-content"
                 className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background focus:p-2"

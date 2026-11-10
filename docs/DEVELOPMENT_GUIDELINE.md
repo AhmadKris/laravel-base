@@ -772,6 +772,63 @@ Semua halaman harus memperhatikan:
 
 Untuk komponen UI, gunakan design system dan reusable component agar tampilan antar-module konsisten.
 
+## 7.8 Skala Spasi dan Tipografi
+
+Aturan ini berlaku untuk halaman dan komponen di `src/features/*` serta `src/components/shared`. Komponen di `src/components/ui` mengikuti shadcn/ui dan tidak dijadikan acuan.
+
+### Spasi
+
+Spasi memakai skala Tailwind, satu unit sama dengan 4 px. Nilai `gap` di dalam layout aplikasi hanya `0.5`, `1`, `1.5`, `2`, `2.5`, `3`, dan `4`. Padding mengikuti tabel di bawah. Nilai arbitrary seperti `gap-[18px]` tidak dipakai.
+
+| Tempat | Kelas |
+|---|---|
+| Padding konten halaman | `p-4 md:p-6`, sudah diberikan `AppLayout`. Halaman tidak menambah padding luar. |
+| Antarblok di halaman: `PageHeader`, toolbar, tabel, kartu | `gap-4` |
+| Grid kartu, misalnya statistik Beranda | `gap-4` |
+| Toolbar pencarian dan filter | `gap-2` |
+| Antarfield di form (`FormCard`) dan antarfield di bagian pengaturan | `gap-4` |
+| Antarfield di form halaman masuk | `gap-3` |
+| Label, field, petunjuk, dan error dalam `FormField` | `gap-1.5` |
+| Judul dan deskripsi yang bertumpuk | `gap-0.5` |
+| Ikon dan teks dalam satu baris, tombol yang berderet | `gap-2` |
+| Avatar atau logo dan nama | `gap-2.5` sampai `gap-3` |
+| Isi kartu | `p-5`. Baris aksi di bawah kartu `px-5 py-3` dengan `border-t`. |
+| Daftar label dan nilai (`dl`) | `gap-y-3`, kolom label `9rem` |
+| Empty dan error state | `p-8`, `gap-2`, rata tengah |
+
+Lebar konten:
+
+- Halaman form dan detail memakai `CenteredPage` dengan lebar `max-w-2xl`.
+- Kartu halaman masuk memakai `max-w-md`.
+- `SearchInput` memakai `sm:max-w-xs`.
+- Halaman daftar memakai lebar penuh.
+
+### Tipografi
+
+Font aplikasi adalah Geist Variable melalui token `--font-sans`. Ukuran teks hanya memakai skala Tailwind, tanpa nilai arbitrary seperti `text-[13px]`.
+
+| Peran | Kelas |
+|---|---|
+| Judul halaman (`h1`), satu per halaman, melalui `PageHeader` | `text-2xl font-semibold tracking-tight` |
+| Judul halaman error di dalam layout | `text-xl font-semibold tracking-tight` |
+| Judul bagian atau kartu (`h2`, `CardTitle`) | `text-sm font-semibold` |
+| Deskripsi halaman | `text-sm text-muted-foreground` |
+| Teks isi, sel tabel, nilai field | `text-sm` |
+| Teks pendukung: deskripsi bagian, petunjuk field, waktu, metadata | `text-xs text-muted-foreground` |
+| Pesan error field | `text-xs text-destructive` |
+| Kode teknis: nama event, key konfigurasi | `font-mono text-xs` |
+| Angka statistik di `StatTile` | `text-3xl font-semibold tracking-tight tabular-nums` |
+
+Berat huruf:
+
+- `font-semibold` untuk judul.
+- `font-medium` untuk nama, nilai penting, dan judul empty state.
+- `font-bold` tidak dipakai.
+
+Warna teks memakai token: `foreground`, `muted-foreground`, `destructive`, dan token status. Warna Tailwind mentah seperti `text-neutral-900` hanya dipakai jika sengaja meniru latar di luar tema, misalnya latar putih di belakang logo yang dipilih di pengaturan, beserta pratinjaunya.
+
+Halaman penuh di luar layout aplikasi, yaitu halaman masuk (`AuthLayout`) dan halaman 404, boleh memakai spasi lebih besar (`gap-6` sampai `gap-10`, `p-10`). Halaman ini berfungsi sebagai identitas perusahaan, bukan alat kerja.
+
 ---
 
 # 8. Error Handling

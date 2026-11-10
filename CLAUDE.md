@@ -78,6 +78,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 
 - Antarmuka adalah alat kerja: padat informasi, tenang, dan konsisten antarmodul.
 - Gunakan komponen dan token shadcn/ui. Komponen baru dibuat hanya jika belum ada yang sesuai.
+- Spasi dan tipografi mengikuti skala di `DEVELOPMENT_GUIDELINE.md` bagian 7.8.
 - Setiap halaman data memiliki loading, empty, dan error state, serta responsif.
 - Halaman yang gagal dirender ditangkap `RouteErrorPage` di dalam layout, sehingga sidebar dan header tetap bisa dipakai. Route baru di dalam layout ditempatkan di bawah route tanpa path yang memiliki `errorElement`.
 - Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak. Gunakan `ConfirmDialog`, yang tetap terbuka dan tidak dapat ditutup selama permintaan berjalan.
@@ -90,6 +91,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Data table memiliki pengurutan asc/desc pada kolom yang didukung API, filter jika datanya memungkinkan, dan dropdown jumlah data per halaman dengan pilihan 10, 20, 50, dan 100. Bawaannya 10.
 - Filter tanggal memakai `DateRangeFilter`: satu field dengan preset Hari ini, 7 hari terakhir, 30 hari terakhir, Bulan ini, dan Semua waktu, lalu rentang lain lewat `Calendar` (react-day-picker): klik pertama memulai rentang, klik kedua menutupnya, dan hari setelah hari ini tidak dapat dipilih. Hari dihitung dalam zona waktu perusahaan dan dikirim ke API dengan offset.
 - Halaman daftar memakai `SearchInput` untuk pencarian dan `FilterBar` untuk filter lain. Di ponsel, filter masuk ke sheet dari bawah, sedangkan pencarian tetap terlihat. `DataTable` menampilkan baris sebagai kartu di ponsel: kolom pertama menjadi judul, kolom `actions` di sampingnya, dan kolom lain sebagai label dan nilai.
+- Di lebar tablet (768 sampai 1023 px) sidebar menciut menjadi ikon. Tabel harus muat tanpa scroll ke samping mulai 768 px. Jika tidak muat, kolom sekunder diberi `meta: { wideScreenOnly: true }`, dan nilainya tetap tersedia di kartu ponsel dan halaman detail.
 - Header menampilkan breadcrumb dari `handle` route. Route detail dan form mengisi `parents` dengan halaman di atasnya.
 - Klik pada baris data table membuka halaman detail. Tautan di dalam baris tetap ada untuk keyboard, dan tombol aksi di baris tidak ikut memicu klik baris.
 - Setiap resource yang dapat dibuat memiliki halaman form sendiri. Setelah berhasil dibuat, arahkan ke halaman detailnya.

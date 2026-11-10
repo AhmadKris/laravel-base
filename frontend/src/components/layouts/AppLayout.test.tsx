@@ -1,9 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ProtectedRoute } from '@/app/guards/ProtectedRoute';
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from '@/test/server';
@@ -98,6 +98,76 @@ it('remembers a collapsed sidebar', () => {
     );
 
     document.cookie = 'sidebar_state=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+});
+
+function sidebarState(): string | null {
+    return document.querySelector('[data-slot="sidebar"]')?.getAttribute('data-state') ?? null;
+}
+
+describe('at tablet width', () => {
+    const desktopWidth = window.innerWidth;
+    const originalMatchMedia = window.matchMedia;
+    const widthListeners = new Set<() => void>();
+
+    const resizeTo = (width: number) => {
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            writable: true,
+            value: width,
+        });
+        act(() => widthListeners.forEach((listener) => listener()));
+    };
+
+    beforeEach(() => {
+        window.matchMedia = ((query: string) => ({
+            matches: false,
+            media: query,
+            addEventListener: (_type: string, listener: () => void) => widthListeners.add(listener),
+            removeEventListener: (_type: string, listener: () => void) =>
+                widthListeners.delete(listener),
+        })) as unknown as typeof window.matchMedia;
+    });
+
+    afterEach(() => {
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            writable: true,
+            value: desktopWidth,
+        });
+        window.matchMedia = originalMatchMedia;
+        widthListeners.clear();
+        document.cookie = 'sidebar_state=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    });
+
+    it('starts as icons and opens without changing the desktop preference', async () => {
+        document.cookie = 'sidebar_state=false; path=/';
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            writable: true,
+            value: 800,
+        });
+        const user = userEvent.setup();
+        renderLayout(['user.view']);
+
+        expect(sidebarState()).toBe('collapsed');
+        expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Buka atau tutup menu' }));
+
+        expect(sidebarState()).toBe('expanded');
+        expect(document.cookie).toContain('sidebar_state=false');
+    });
+
+    it('collapses when a desktop window shrinks and restores the desktop choice after', () => {
+        renderLayout([]);
+        expect(sidebarState()).toBe('expanded');
+
+        resizeTo(800);
+        expect(sidebarState()).toBe('collapsed');
+
+        resizeTo(desktopWidth);
+        expect(sidebarState()).toBe('expanded');
+    });
 });
 
 it('groups administration items under a heading', () => {

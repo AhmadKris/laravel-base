@@ -44,16 +44,32 @@ export function userColumns(options: ColumnOptions): DataTableColumn<User>[] {
                         >
                             {row.original.name}
                         </Link>
-                        <span className="text-xs text-muted-foreground">{row.original.email}</span>
+                        <span
+                            className="max-w-48 truncate text-xs text-muted-foreground"
+                            title={row.original.email}
+                        >
+                            {row.original.email}
+                        </span>
                     </div>
                 </div>
             ),
         },
-        { id: 'username', header: 'Username', cell: ({ row }) => row.original.username ?? '-' },
+        {
+            id: 'username',
+            header: 'Username',
+            cell: ({ row }) => row.original.username ?? '-',
+            // Optional and shown on the detail page, so it gives way first on a tablet.
+            meta: { wideScreenOnly: true },
+        },
         {
             id: 'roles',
             header: 'Role',
-            cell: ({ row }) => row.original.roles?.join(', ') || '-',
+            // Several roles wrap instead of widening the table past a tablet screen.
+            cell: ({ row }) => (
+                <span className="block min-w-24 whitespace-normal">
+                    {row.original.roles?.join(', ') || '-'}
+                </span>
+            ),
         },
         {
             id: 'status',

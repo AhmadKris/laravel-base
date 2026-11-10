@@ -93,7 +93,7 @@ export function BrandingSection({ canUpdate, onDirtyChange }: BrandingSectionPro
                     Tampil di sidebar, halaman masuk, dan tab browser.
                 </p>
             </div>
-            <div className="grid gap-5">
+            <div className="grid gap-4">
                 {ASSETS.map((rule) => (
                     <BrandingField
                         key={rule.asset}
