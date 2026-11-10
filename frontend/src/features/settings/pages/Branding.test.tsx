@@ -327,7 +327,7 @@ describe('logo for dark backgrounds and display options', () => {
         expect(preview.querySelector('img[src="/api/v1/branding/logo-dark?v=3"]')).not.toBeNull();
 
         await userEvent.click(
-            screen.getByRole('checkbox', { name: 'Tampilkan nama aplikasi di samping logo' }),
+            screen.getByRole('checkbox', { name: 'Tampilkan nama perusahaan di samping logo' }),
         );
 
         expect(within(preview).queryByText('Enterprise System')).not.toBeInTheDocument();

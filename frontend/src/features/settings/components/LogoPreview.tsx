@@ -1,5 +1,6 @@
 import { BrandMark } from '@/components/shared/AppBrand';
 import { DEFAULT_LOGO_DISPLAY, useBranding } from '@/hooks/useBranding';
+import { usePublicSettings } from '@/hooks/usePublicSettings';
 import type { LogoDisplay } from '@/types/api-response';
 import { fieldName } from '../settingSections';
 import type { SectionValues } from './SettingsSection';
@@ -32,6 +33,7 @@ interface LogoPreviewProps {
 
 export function LogoPreview({ values }: LogoPreviewProps) {
     const { logoUrl, logoDarkUrl } = useBranding();
+    const { companyName } = usePublicSettings();
     const display = toDisplay(values);
 
     return (
@@ -47,6 +49,7 @@ export function LogoPreview({ values }: LogoPreviewProps) {
                     {/* Fixed colors, so both panels look the same in light and dark mode. */}
                     <div className="flex h-16 min-w-0 items-center gap-2.5 rounded-lg border bg-white px-3 text-sm text-neutral-900">
                         <BrandMark
+                            name={companyName}
                             logoUrl={logoUrl}
                             display={display}
                             markClassName="bg-primary text-primary-foreground"
@@ -57,6 +60,7 @@ export function LogoPreview({ values }: LogoPreviewProps) {
                 <figure className="grid gap-1">
                     <div className="flex h-16 min-w-0 items-center gap-2.5 rounded-lg bg-brand px-3 text-sm text-brand-foreground">
                         <BrandMark
+                            name={companyName}
                             logoUrl={logoDarkUrl ?? logoUrl}
                             display={display}
                             markClassName="bg-brand-foreground text-brand"

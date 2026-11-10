@@ -1,6 +1,6 @@
 import { cn } from 'cn';
 import { useBranding } from '@/hooks/useBranding';
-import { APP_NAME } from '@/lib/app-name';
+import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { useThemeStore } from '@/stores/theme-store';
 import type { LogoDisplay } from '@/types/api-response';
 
@@ -24,6 +24,7 @@ const BACKGROUND: Record<LogoDisplay['background'], string> = {
 };
 
 interface BrandMarkProps {
+    name: string;
     logoUrl: string | undefined;
     display: LogoDisplay;
     /** Colors of the letter shown while no logo is uploaded. */
@@ -36,6 +37,7 @@ interface BrandMarkProps {
  * Renders the logo and the name as siblings, so the parent decides the layout and gap.
  */
 export function BrandMark({
+    name,
     logoUrl,
     display,
     markClassName,
@@ -55,14 +57,14 @@ export function BrandMark({
                         markClassName,
                     )}
                 >
-                    {APP_NAME.charAt(0)}
+                    {name.charAt(0)}
                 </span>
             ) : (
                 <span className={cn('flex shrink-0 items-center', BACKGROUND[display.background])}>
                     <img
                         src={logoUrl}
-                        // Without the name beside it, the logo is the only thing naming the application.
-                        alt={showName ? '' : APP_NAME}
+                        // Without the name beside it, the logo is the only thing naming the company.
+                        alt={showName ? '' : name}
                         className={cn(
                             'w-auto object-contain',
                             HEIGHT[display.size],
@@ -73,24 +75,26 @@ export function BrandMark({
                 </span>
             )}
             {showName && (
-                <span className={cn('truncate font-semibold', nameClassName)}>{APP_NAME}</span>
+                <span className={cn('truncate font-semibold', nameClassName)}>{name}</span>
             )}
         </>
     );
 }
 
-interface AppBrandProps extends Omit<BrandMarkProps, 'logoUrl' | 'display'> {
+interface AppBrandProps extends Omit<BrandMarkProps, 'name' | 'logoUrl' | 'display'> {
     /** "dark" for a surface that is dark in both themes, such as the login panel. */
     surface?: 'theme' | 'dark';
 }
 
 export function AppBrand({ surface = 'theme', ...props }: AppBrandProps) {
     const { logoUrl, logoDarkUrl, display } = useBranding();
+    const { companyName } = usePublicSettings();
     const theme = useThemeStore((state) => state.resolved);
     const isDark = surface === 'dark' || theme === 'dark';
 
     return (
         <BrandMark
+            name={companyName}
             logoUrl={isDark ? (logoDarkUrl ?? logoUrl) : logoUrl}
             display={display}
             {...props}

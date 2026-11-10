@@ -151,10 +151,11 @@ Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya 
 | T-1005 | Role: daftar, form, pengaturan permission | L | T-404, T-905 | Konflik `version` meminta user memuat ulang data | Done |
 | T-1006 | Audit log: daftar, filter, detail | M | T-701, T-905 | Hanya baca | Done |
 | T-1007 | Pengaturan sistem | M | T-803, T-905 | Konflik `version` ditangani, nilai sensitif tidak ditampilkan | Done |
-| T-1008 | Terjemahkan email reset password ke Bahasa Indonesia | S | T-304 | Subjek dan isi email berbahasa Indonesia dan teruji | Todo |
+| T-1008 | Terjemahkan email reset password ke Bahasa Indonesia | S | T-304 | Subjek dan isi email berbahasa Indonesia dan teruji | Done |
 | T-1009 | Login dengan email atau username, Ingat saya 30 hari, halaman 404 di dalam layout | M | T-1001 | Email dan username tidak peka huruf besar-kecil, cookie Ingat saya batal saat logout, ganti password, dan penonaktifan | Done |
 | T-1010 | Kebijakan identifier autentikasi: normalisasi email dan username di semua jalur, constraint database | S | T-1009 | Nilai tidak ternormalisasi ditolak database, duplikat setelah normalisasi ditolak | Done |
 | T-1011 | Upload logo, logo latar gelap, dan favicon di Pengaturan, dengan ukuran gambar yang disesuaikan otomatis dan pilihan nama, latar, serta ukuran logo. Tampil di sidebar, halaman login, dan tab browser | M | T-1007 | File privat dengan nama acak, SVG ditolak, path hanya ditulis endpoint upload | Done |
+| T-1012 | Nama perusahaan dan zona waktu dari Pengaturan dipakai di seluruh aplikasi | S | T-1007 | Sidebar, halaman masuk, judul tab, dan tanggal mengikuti pengaturan dan langsung berubah setelah disimpan | Done |
 
 ## Fase 11: Verifikasi
 
