@@ -1004,6 +1004,25 @@ Aturan tambahan:
 - `GET /system-configurations/public` mengembalikan objek `key: value` dari konfigurasi publik yang tidak sensitif.
 - `GET /system-configurations/feature-flags` mengembalikan daftar `key` dan `enabled` dari key berawalan `feature.`.
 
+### Branding
+
+| Method | Endpoint | Permission |
+|---|---|---|
+| GET | /branding | Public |
+| GET | /branding/{asset} | Public |
+| POST | /branding/{asset} | system_config.update |
+| DELETE | /branding/{asset} | system_config.update |
+
+`{asset}` bernilai `logo`, `logo-dark`, atau `favicon`. Nilai lain mengembalikan HTTP 404. `logo-dark` dipakai di mode gelap dan panel login, dan bersifat opsional.
+
+- `GET /branding` mengembalikan `logo`, `logo_dark`, dan `favicon` berupa `{ "version": 2 }` atau `null`, serta `display` berisi `show_name` (boolean), `background` (`transparent`, `white`, `primary`), dan `size` (`small`, `medium`, `large`). Client menambahkan `?v={version}` pada URL file agar file baru langsung dimuat.
+- `GET /branding/{asset}` mengembalikan file gambar, atau HTTP 404 jika belum ada.
+- `POST /branding/{asset}` menerima `multipart/form-data` dengan field `file` dan mengembalikan `version` baru. File lama dihapus setelah transaksi berhasil.
+- `DELETE /branding/{asset}` menghapus file dan mengembalikan HTTP 204. Aplikasi kembali memakai tampilan bawaan.
+- File disimpan pada key `company.logo`, `company.logo_dark`, dan `company.favicon`, yang tidak dapat diubah melalui `PATCH /system-configurations/{key}`.
+- Pengaturan tampilan disimpan pada key `company.logo_show_name`, `company.logo_background`, dan `company.logo_size`, dan diubah melalui `PATCH /system-configurations/{key}` dengan `version`.
+- Aturan file dan header keamanan mengikuti `SECURITY_SPECIFICATION.md` bagian 10.5.
+
 ---
 
 ## 8.10 Health Check

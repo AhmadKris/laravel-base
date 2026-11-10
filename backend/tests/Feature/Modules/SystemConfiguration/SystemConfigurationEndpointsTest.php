@@ -185,6 +185,9 @@ it('validates the payload', function (string $key, array $payload, string $field
     SystemConfiguration::factory()->create(['key' => 'localization.currency']);
     SystemConfiguration::factory()->create(['key' => 'feature.reports']);
     SystemConfiguration::factory()->create(['key' => 'other.setting']);
+    SystemConfiguration::factory()->create(['key' => 'company.logo_show_name']);
+    SystemConfiguration::factory()->create(['key' => 'company.logo_background']);
+    SystemConfiguration::factory()->create(['key' => 'company.logo_size']);
 
     $this->actingAs($this->superAdmin)
         ->patchJson("/api/v1/system-configurations/{$key}", $payload)
@@ -201,7 +204,26 @@ it('validates the payload', function (string $key, array $payload, string $field
     'invalid currency' => ['localization.currency', ['value' => 'RUPIAH', 'version' => 1], 'value'],
     'feature flag not boolean' => ['feature.reports', ['value' => 'maybe', 'version' => 1], 'value'],
     'oversized value' => ['other.setting', ['value' => str_repeat('a', 10001), 'version' => 1], 'value'],
+    'show name as number' => ['company.logo_show_name', ['value' => 1, 'version' => 1], 'value'],
+    'unknown logo background' => ['company.logo_background', ['value' => 'gradient', 'version' => 1], 'value'],
+    'unknown logo size' => ['company.logo_size', ['value' => 'huge', 'version' => 1], 'value'],
 ]);
+
+it('names the configuration in validation messages', function () {
+    $this->actingAs($this->superAdmin)
+        ->patchJson(configurationUrl($this->companyName), ['value' => '', 'version' => 1])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.value.0', 'Nama perusahaan wajib diisi.');
+});
+
+it('explains an oversized value in Indonesian', function () {
+    SystemConfiguration::factory()->create(['key' => 'other.setting']);
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/system-configurations/other.setting', ['value' => str_repeat('a', 10001), 'version' => 1])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.value.0', 'Nilai terlalu besar.');
+});
 
 it('accepts null for optional values', function () {
     SystemConfiguration::factory()->create(['key' => 'company.phone', 'value' => '021']);

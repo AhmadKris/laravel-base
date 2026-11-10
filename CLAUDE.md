@@ -78,7 +78,9 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Antarmuka adalah alat kerja: padat informasi, tenang, dan konsisten antarmodul.
 - Gunakan komponen dan token shadcn/ui. Komponen baru dibuat hanya jika belum ada yang sesuai.
 - Setiap halaman data memiliki loading, empty, dan error state, serta responsif.
-- Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak.
+- Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak. Gunakan `ConfirmDialog`, yang tetap terbuka dan tidak dapat ditutup selama permintaan berjalan.
+- Toast hanya untuk umpan balik singkat dan muncul di kanan atas. Error yang perlu diperbaiki pengguna ditampilkan di dekat field atau form, bukan hanya di toast.
+- Halaman pengaturan dibagi per bagian. Setiap bagian memiliki tombol simpan sendiri yang nonaktif selama belum ada perubahan.
 - Form memiliki label, pesan error per field, dan tombol yang nonaktif saat submit.
 - Data table memiliki pengurutan asc/desc pada kolom yang didukung API, filter jika datanya memungkinkan, dan dropdown jumlah data per halaman dengan pilihan 10, 20, 50, dan 100.
 - Klik pada baris data table membuka halaman detail. Tautan di dalam baris tetap ada untuk keyboard, dan tombol aksi di baris tidak ikut memicu klik baris.

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation, useMatches } from 'react-router';
+import { useFaviconSync } from '@/hooks/useBranding';
 import { APP_NAME } from '@/lib/app-name';
 
 interface RouteHandle {
@@ -10,6 +11,8 @@ export function RootRoute() {
     const { pathname } = useLocation();
     const title = (useMatches().at(-1)?.handle as RouteHandle | undefined)?.title;
     const previousPathname = useRef(pathname);
+
+    useFaviconSync();
 
     useEffect(() => {
         document.title = title === undefined ? APP_NAME : `${title} - ${APP_NAME}`;
