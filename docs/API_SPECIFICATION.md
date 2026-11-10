@@ -910,17 +910,17 @@ Base resource:
 /api/v1/notifications
 ```
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /notifications | List notifications |
-| GET | /notifications/unread-count | Unread count |
-| PATCH | /notifications/{id}/read | Mark as read |
-| POST | /notifications/read-all | Mark all as read |
-| DELETE | /notifications/{id} | Delete notification |
-| GET | /notification-preferences | Get own preferences |
-| PUT | /notification-preferences | Update own preferences |
+| Method | Endpoint | Description | Status |
+|---|---|---|---|
+| GET | /notifications | List notifications | Aktif (Base v1) |
+| GET | /notifications/unread-count | Unread count | Aktif (Base v1) |
+| PATCH | /notifications/{id}/read | Mark as read | Aktif (Base v1) |
+| POST | /notifications/read-all | Mark all as read | Aktif (Base v1) |
+| DELETE | /notifications/{id} | Delete notification | Ditunda |
+| GET | /notification-preferences | Get own preferences | Ditunda (menunggu multi-channel) |
+| PUT | /notification-preferences | Update own preferences | Ditunda (menunggu multi-channel) |
 
-Notification harus dibatasi berdasarkan penerima. User tidak boleh membaca atau mengubah notification milik user lain.
+Notification harus dibatasi berdasarkan penerima. User tidak boleh membaca atau mengubah notification milik user lain. Resource di luar kepemilikan penerima mengembalikan HTTP 404.
 
 ---
 
@@ -1729,6 +1729,10 @@ Nama parameter path tidak dibandingkan, sehingga `{id}` di tabel cocok dengan `{
 | GET | /branding/{asset} | Publik |
 | POST | /branding/{asset} | system_config.update |
 | DELETE | /branding/{asset} | system_config.update |
+| GET | /notifications | Login |
+| GET | /notifications/unread-count | Login |
+| PATCH | /notifications/{id}/read | Login |
+| POST | /notifications/read-all | Login |
 
 ### Di luar `/api/v1`
 

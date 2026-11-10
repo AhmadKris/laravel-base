@@ -596,7 +596,7 @@ Unique: `(document_id, reference_type, reference_id)`. Index: `(reference_type, 
 
 ## 5.4 Notification Module
 
-Tahap awal memakai tabel bawaan Laravel Database Notifications (`make:notifications-table`). Tabel custom pada bagian ini hanya digunakan jika pelacakan delivery per channel benar-benar dibutuhkan. Jangan memakai keduanya sekaligus.
+Implementasi saat ini memakai tabel bawaan Laravel Database Notifications (`make:notifications-table`: `id` UUID PK, `type`, `notifiable_type`, `notifiable_id`, `data`, `read_at`, `created_at`, `updated_at`, serta index inbox `(notifiable_type, notifiable_id, read_at, created_at)`). Tabel custom pada bagian ini hanya digunakan jika pelacakan delivery per channel (`notification_deliveries`) benar-benar dibutuhkan. Jangan memakai keduanya sekaligus.
 
 ### notifications
 
@@ -1529,7 +1529,7 @@ Daftar ini merupakan foundation schema, bukan seluruh database aplikasi enterpri
 
 ## Notification & Integration
 
-- [ ] Create notifications table
+- [x] Create notifications table
 - [ ] Create notification_deliveries
 - [ ] Create integration_connections
 - [ ] Create integration_logs

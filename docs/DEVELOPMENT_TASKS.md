@@ -156,6 +156,7 @@ Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya 
 | T-1010 | Kebijakan identifier autentikasi: normalisasi email dan username di semua jalur, constraint database | S | T-1009 | Nilai tidak ternormalisasi ditolak database, duplikat setelah normalisasi ditolak | Done |
 | T-1011 | Upload logo, logo latar gelap, dan favicon di Pengaturan, dengan ukuran gambar yang disesuaikan otomatis dan pilihan nama, latar, serta ukuran logo. Tampil di sidebar, halaman login, dan tab browser | M | T-1007 | File privat dengan nama acak, SVG ditolak, path hanya ditulis endpoint upload | Done |
 | T-1012 | Nama perusahaan dan zona waktu dari Pengaturan dipakai di seluruh aplikasi | S | T-1007 | Sidebar, halaman masuk, judul tab, dan tanggal mengikuti pengaturan dan langsung berubah setelah disimpan | Done |
+| T-1013 | In-app notification: tabel `notifications`, API daftar/unread-count/mark-read/read-all, event keamanan akun dan perubahan role, popover lonceng di header, serta halaman `/notifications` | M | T-904, T-905 | Setiap endpoint diuji 2xx/401/404, bebas N+1, OpenAPI cocok dengan `API_SPECIFICATION.md`, popover dan halaman `/notifications` lulus test | Done |
 
 ## Fase 11: Verifikasi
 
@@ -185,4 +186,4 @@ Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya 
 - Token API, daftar sesi aktif, dan email verification.
 - MFA. Wajib dikerjakan sebelum aplikasi nyata go-live, minimal untuk akun privileged.
 - Import user, export user, dan export audit log.
-- Modul Tahap 2 dan Tahap 3 pada `README.md`.
+- Modul Tahap 2 (`Document`, `Workflow`, serta channel email, delivery tracking, dan preferensi `Notification`) dan Tahap 3 pada `README.md`.

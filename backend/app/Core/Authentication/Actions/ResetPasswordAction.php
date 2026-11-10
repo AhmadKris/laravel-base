@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core\Authentication\Actions;
 
 use App\Core\Audit\AuditLogger;
+use App\Core\Authentication\Events\PasswordReset;
 use App\Core\Authentication\Exceptions\InvalidPasswordResetException;
 use App\Core\Authentication\Services\SessionService;
 use App\Modules\UserManagement\Models\User;
@@ -33,6 +34,8 @@ final class ResetPasswordAction
                     $this->sessionService->endAll($user);
                     $this->auditLogger->record('auth.password_reset', $user, actor: $user);
                 });
+
+                DB::afterCommit(static fn () => PasswordReset::dispatch($user));
             },
         );
 

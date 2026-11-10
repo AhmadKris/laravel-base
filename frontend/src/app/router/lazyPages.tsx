@@ -89,3 +89,9 @@ export const AuditLogDetailPage = lazy(() =>
         default: module.AuditLogDetailPage,
     })),
 );
+
+export const NotificationsPage = lazy(() =>
+    import('@/features/notifications/pages/NotificationsPage').then((module) => ({
+        default: module.NotificationsPage,
+    })),
+);

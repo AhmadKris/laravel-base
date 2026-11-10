@@ -7,6 +7,7 @@ namespace App\Modules\UserManagement\Actions;
 use App\Core\Audit\AuditLogger;
 use App\Core\Authorization\Exceptions\PrivilegeEscalationException;
 use App\Core\Authorization\Services\RoleAssignmentService;
+use App\Modules\UserManagement\Events\UserRolesChanged;
 use App\Modules\UserManagement\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -22,13 +23,13 @@ final class AssignUserRolesAction
      *
      * @throws PrivilegeEscalationException
      */
-    public function execute(User $user, array $roles, User $actor): User
+    public function execute(User $user, array $roles, User $actor, bool $notify = true): User
     {
         if ($user->is($actor)) {
             throw new PrivilegeEscalationException;
         }
 
-        DB::transaction(function () use ($user, $roles, $actor): void {
+        DB::transaction(function () use ($user, $roles, $actor, $notify): void {
             User::query()->whereKey($user->id)->lockForUpdate()->sole();
 
             $current = $user->roles()->pluck('name')->all();
@@ -49,6 +50,10 @@ final class AssignUserRolesAction
 
             if ($removed !== []) {
                 $this->auditLogger->record('user.role_removed', $user, ['roles' => $removed], $actor);
+            }
+
+            if ($notify && ($added !== [] || $removed !== [])) {
+                DB::afterCommit(static fn () => UserRolesChanged::dispatch($user, $roles));
             }
         });
 
