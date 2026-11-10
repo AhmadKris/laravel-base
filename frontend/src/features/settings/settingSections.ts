@@ -103,7 +103,7 @@ const FIXED_SECTIONS: SettingSection[] = [
         fields: [
             {
                 key: 'company.logo_show_name',
-                label: 'Tampilkan nama aplikasi di samping logo',
+                label: 'Tampilkan nama perusahaan di samping logo',
                 kind: 'boolean',
                 schema: z.boolean(),
             },

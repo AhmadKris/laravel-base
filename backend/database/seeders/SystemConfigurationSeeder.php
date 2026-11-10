@@ -18,7 +18,7 @@ class SystemConfigurationSeeder extends Seeder
             'company.email' => [null, false, 'Email perusahaan'],
             'company.logo' => [null, false, 'Logo perusahaan'],
             'company.logo_dark' => [null, false, 'Logo untuk latar gelap'],
-            'company.logo_show_name' => [true, false, 'Tampilkan nama aplikasi di samping logo'],
+            'company.logo_show_name' => [true, false, 'Tampilkan nama perusahaan di samping logo'],
             'company.logo_background' => ['transparent', false, 'Latar di belakang logo'],
             'company.logo_size' => ['medium', false, 'Ukuran tampil logo'],
             'company.favicon' => [null, false, 'Favicon aplikasi'],

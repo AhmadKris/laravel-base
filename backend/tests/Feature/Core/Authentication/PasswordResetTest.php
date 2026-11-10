@@ -178,3 +178,23 @@ it('limits password reset requests', function () {
         ->assertTooManyRequests()
         ->assertJsonPath('code', 'TOO_MANY_REQUESTS');
 });
+
+it('writes the reset email in Indonesian', function () {
+    $mail = (new ResetPassword('token-value'))->toMail(User::factory()->create());
+    $html = (string) $mail->render();
+
+    expect($mail->subject)->toBe('Reset password akun Anda')
+        ->and($mail->introLines)->toBe(['Anda menerima email ini karena ada permintaan reset password untuk akun Anda.'])
+        ->and($mail->actionText)->toBe('Reset password')
+        ->and($mail->outroLines)->toBe([
+            'Tautan reset password ini berlaku selama 60 menit.',
+            'Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tidak berubah.',
+        ])
+        ->and($html)->toContain('Halo,')
+        ->toContain('Salam,')
+        ->toContain('salin dan tempel URL berikut')
+        ->toContain('Hak cipta dilindungi.')
+        ->not->toContain('Hello!')
+        ->not->toContain('Regards')
+        ->not->toContain('trouble clicking');
+});

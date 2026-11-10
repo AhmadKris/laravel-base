@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { type ApiError, toApiError } from '@/lib/api-error';
 import { brandingKeys } from '@/lib/branding';
+import { publicSettingKeys } from '@/lib/public-settings';
 import { formatDateTime } from '@/lib/format';
 import type { SystemConfiguration } from '@/types/api-response';
 import {
@@ -123,6 +124,8 @@ export function SettingsSection({ section, items, preview }: SettingsSectionProp
             void queryClient.invalidateQueries({ queryKey: settingKeys.all });
             // The logo display keys reach the sidebar and login page through the branding endpoint.
             void queryClient.invalidateQueries({ queryKey: brandingKeys.all });
+            // The company name and time zone are read app-wide from the public settings.
+            void queryClient.invalidateQueries({ queryKey: publicSettingKeys.all });
             toast.success(`Pengaturan ${section.title.toLowerCase()} telah disimpan.`);
         },
     });
