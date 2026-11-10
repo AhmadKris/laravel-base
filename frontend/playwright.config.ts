@@ -6,7 +6,6 @@ export default defineConfig({
     workers: 1,
     forbidOnly: Boolean(process.env.CI),
     reporter: process.env.CI ? 'github' : 'list',
-    globalSetup: './e2e/global-setup.ts',
     use: {
         baseURL: FRONTEND_URL,
         trace: 'retain-on-failure',
@@ -14,7 +13,9 @@ export default defineConfig({
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
     webServer: [
         {
-            command: `php artisan serve --host=127.0.0.1 --port=${BACKEND_PORT}`,
+            // The database is reset before the server starts: the API rate limiter keeps its
+            // counters in the cache table, so no request succeeds until the migrations have run.
+            command: `php artisan migrate:fresh --force --seed --seeder=E2ESeeder && php artisan serve --host=127.0.0.1 --port=${BACKEND_PORT}`,
             cwd: '../backend',
             url: `http://127.0.0.1:${BACKEND_PORT}/api/v1/health`,
             env: backendEnv,

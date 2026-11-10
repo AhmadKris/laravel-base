@@ -21,7 +21,7 @@ class E2ESeeder extends Seeder
             throw new RuntimeException('The E2E seeder must never run in production.');
         }
 
-        // Read from the process: frontend/e2e/global-setup.ts passes it when it runs this seeder.
+        // Read from the process: frontend/playwright.config.ts passes it when it runs this seeder.
         $password = getenv('E2E_PASSWORD');
 
         if (! is_string($password) || strlen($password) < 12) {
