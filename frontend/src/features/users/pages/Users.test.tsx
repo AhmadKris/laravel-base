@@ -30,8 +30,18 @@ function makeTarget(overrides: Partial<User> = {}): User {
     };
 }
 
-function makeRole(id: number, name: string): Role {
-    return { id, name, is_protected: false, users_count: 0, version: 1, created_at: null };
+function makeRole(id: number, name: string, overrides: Partial<Role> = {}): Role {
+    return {
+        id,
+        name,
+        is_protected: false,
+        can_assign: true,
+        permissions_count: 1,
+        users_count: 0,
+        version: 1,
+        created_at: null,
+        ...overrides,
+    };
 }
 
 function asUser(permissions: string[] = ALL) {
@@ -97,6 +107,7 @@ function recordListRequests(rows: User[]) {
 
 beforeEach(() => {
     document.cookie = 'XSRF-TOKEN=existing; path=/';
+    serveRoles();
 });
 
 describe('user list', () => {
@@ -139,7 +150,7 @@ describe('user list', () => {
         expect(router.state.location.search).toBe('?search=bud');
     });
 
-    it('filters by status', async () => {
+    it('filters by status and role and clears both filters', async () => {
         asUser();
         const requests = recordListRequests([makeTarget()]);
 
@@ -149,6 +160,14 @@ describe('user list', () => {
         await userEvent.click(await screen.findByRole('option', { name: 'Nonaktif' }));
 
         await waitFor(() => expect(requests.at(-1)?.get('status')).toBe('inactive'));
+
+        await userEvent.click(screen.getByRole('combobox', { name: 'Filter role' }));
+        await userEvent.click(await screen.findByRole('option', { name: 'Staff' }));
+
+        await waitFor(() => expect(requests.at(-1)?.get('role')).toBe('Staff'));
+
+        await userEvent.click(screen.getByRole('button', { name: 'Hapus filter' }));
+        await waitFor(() => expect(requests.at(-1)?.has('role')).toBe(false));
     });
 
     it('clears a status-only filter without reverting after the search delay', async () => {
@@ -832,6 +851,44 @@ describe('user form', () => {
             'Anda tidak dapat memberikan akses melebihi kewenangan Anda.',
         );
         expect(router.state.location.pathname).toBe('/users/user-1/edit');
+    });
+
+    it('disables roles outside the actor assignment policy and shows permission summary', async () => {
+        asUser();
+        serveDetail(makeTarget({ roles: ['Admin'] }));
+        server.use(
+            http.get('*/api/v1/roles', () =>
+                page([
+                    makeRole(1, 'Admin', {
+                        is_protected: true,
+                        can_assign: false,
+                        permissions_count: 10,
+                    }),
+                    makeRole(2, 'Super Admin', {
+                        is_protected: true,
+                        can_assign: false,
+                        permissions_count: 15,
+                    }),
+                    makeRole(3, 'Staff', {
+                        is_protected: true,
+                        can_assign: true,
+                        permissions_count: 1,
+                    }),
+                ]),
+            ),
+        );
+
+        renderApp('/users/user-1/edit');
+
+        const adminCheckbox = await screen.findByRole('checkbox', { name: 'Admin' });
+        expect(adminCheckbox).toBeChecked();
+        expect(adminCheckbox).toBeDisabled();
+        expect(screen.getByRole('checkbox', { name: 'Super Admin' })).toBeDisabled();
+        expect(screen.getByRole('checkbox', { name: 'Staff' })).toBeEnabled();
+        expect(screen.getByText('Role bawaan - 10 hak akses')).toBeVisible();
+        expect(
+            screen.getAllByText('Di luar kewenangan Anda untuk menetapkan atau mencabut role ini.'),
+        ).toHaveLength(2);
     });
 
     it('hides roles when editing the own account', async () => {

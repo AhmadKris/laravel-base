@@ -13,6 +13,9 @@ const ALL = [
     'role.delete',
     'permission.view',
     'permission.assign',
+    'user.view',
+    'user.create',
+    'audit.view',
 ];
 
 function makeRole(overrides: Partial<Role> = {}): Role {
@@ -20,7 +23,9 @@ function makeRole(overrides: Partial<Role> = {}): Role {
         id: 7,
         name: 'Auditor',
         is_protected: false,
+        can_assign: true,
         users_count: 0,
+        permissions_count: 1,
         permissions: ['user.view'],
         version: 3,
         created_at: '2026-11-01T03:00:00Z',
@@ -88,11 +93,11 @@ beforeEach(() => {
 });
 
 describe('role list', () => {
-    it('shows name, type, user count', async () => {
+    it('shows name, type, user count, and permission count', async () => {
         asUser();
         serveList([
-            makeRole({ users_count: 4 }),
-            makeRole({ id: 1, name: 'Staff', is_protected: true }),
+            makeRole({ users_count: 4, permissions_count: 3 }),
+            makeRole({ id: 1, name: 'Staff', is_protected: true, permissions_count: 1 }),
         ]);
 
         renderApp('/roles');
@@ -100,6 +105,7 @@ describe('role list', () => {
         const row = (await screen.findByRole('link', { name: 'Auditor' })).closest('tr');
         expect(row).toHaveTextContent('Kustom');
         expect(row).toHaveTextContent('4');
+        expect(row).toHaveTextContent('3 izin');
         expect(screen.getByRole('link', { name: 'Staff' }).closest('tr')).toHaveTextContent(
             'Bawaan',
         );
@@ -294,16 +300,21 @@ describe('deleting a role', () => {
 });
 
 describe('role detail', () => {
-    it('groups the permissions by module', async () => {
-        asUser(['role.view']);
+    it('groups permissions in plain Indonesian and links user count to filtered users', async () => {
+        asUser(['role.view', 'user.view']);
         serveDetail(makeRole({ permissions: ['audit.view', 'user.view'], users_count: 2 }));
 
         renderApp('/roles/7');
 
         expect(await screen.findByRole('heading', { name: 'Auditor' })).toBeVisible();
-        expect(screen.getByText('Audit Log')).toBeVisible();
-        expect(screen.getByText('Pengguna')).toBeVisible();
+        expect(screen.getByRole('heading', { name: 'Audit Log' })).toBeVisible();
+        expect(screen.getByRole('heading', { name: 'Pengguna' })).toBeVisible();
+        expect(screen.getByText('Lihat pengguna')).toBeVisible();
         expect(screen.getByText('user.view')).toBeVisible();
+        expect(screen.getByRole('link', { name: '2 pengguna' })).toHaveAttribute(
+            'href',
+            '/users?role=Auditor',
+        );
     });
 
     it('says when a role has no permissions', async () => {
@@ -358,33 +369,71 @@ describe('role detail', () => {
 describe('role form', () => {
     beforeEach(() => servePermissions());
 
-    it('supports searching and selecting all permissions per module', async () => {
+    it('supports searching, selecting per module, auto-dependencies, and filtering selected permissions', async () => {
         asUser();
 
         renderApp('/roles/new');
 
         expect(await screen.findByText('0 dari 3 dipilih')).toBeVisible();
 
+        // Checking user.create automatically enables its user.view prerequisite.
+        await userEvent.click(screen.getByRole('checkbox', { name: /Tambah pengguna/ }));
+        expect(screen.getByRole('checkbox', { name: /user\.create/ })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: /user\.view/ })).toBeChecked();
+        expect(screen.getByText('2 dari 3 dipilih')).toBeVisible();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Dipilih (2)' }));
+        expect(screen.queryByRole('checkbox', { name: /audit\.view/ })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Semua' }));
+        expect(screen.getByRole('checkbox', { name: /audit\.view/ })).toBeVisible();
+
+        // Unchecking prerequisite user.view cascades off user.create cleanly.
+        await userEvent.click(screen.getByRole('checkbox', { name: /user\.view/ }));
+        expect(screen.getByRole('checkbox', { name: /user\.create/ })).not.toBeChecked();
+        expect(screen.getByText('0 dari 3 dipilih')).toBeVisible();
+
         await userEvent.click(
             screen.getByRole('button', { name: 'Pilih semua permission Pengguna' }),
         );
+        expect(screen.getByRole('checkbox', { name: /user\.create/ })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: /user\.view/ })).toBeChecked();
 
-        expect(screen.getByRole('checkbox', { name: 'user.create' })).toBeChecked();
-        expect(screen.getByRole('checkbox', { name: 'user.view' })).toBeChecked();
-        expect(screen.getByText('2 dari 3 dipilih')).toBeVisible();
+        await userEvent.type(
+            screen.getByRole('searchbox', { name: 'Cari permission' }),
+            'jejak aktivitas',
+        );
 
-        await userEvent.type(screen.getByRole('searchbox', { name: 'Cari permission' }), 'audit');
-
-        expect(screen.queryByRole('checkbox', { name: 'user.view' })).not.toBeInTheDocument();
-        expect(screen.getByRole('checkbox', { name: 'audit.view' })).toBeVisible();
+        expect(screen.queryByRole('checkbox', { name: /user\.view/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('checkbox', { name: /audit\.view/ })).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: 'Hapus pencarian' }));
         await userEvent.click(
             screen.getByRole('button', { name: 'Kosongkan permission Pengguna' }),
         );
 
-        expect(screen.getByRole('checkbox', { name: 'user.view' })).not.toBeChecked();
+        expect(screen.getByRole('checkbox', { name: /user\.view/ })).not.toBeChecked();
         expect(screen.getByText('0 dari 3 dipilih')).toBeVisible();
+    });
+
+    it('locks permissions above the actor and shows user impact and diff when editing', async () => {
+        asUser(['role.view', 'role.update', 'permission.view', 'permission.assign', 'user.view']);
+        serveDetail(makeRole({ users_count: 5, permissions: ['user.view'] }));
+
+        renderApp('/roles/7/edit');
+
+        const auditBox = await screen.findByRole('checkbox', { name: /audit\.view/ });
+        expect(auditBox).toBeDisabled();
+        expect(
+            screen.getAllByText('Di luar kewenangan Anda (akun Anda tidak memiliki izin ini).')
+                .length,
+        ).toBeGreaterThan(0);
+
+        await userEvent.click(screen.getByRole('checkbox', { name: /user\.view/ }));
+        expect(screen.getByText(/Perubahan hak akses langsung berlaku untuk/)).toHaveTextContent(
+            '5 pengguna',
+        );
+        expect(screen.getByText('-1 dicabut')).toBeVisible();
     });
 
     it('creates a role with permissions and opens the detail page', async () => {
@@ -402,7 +451,7 @@ describe('role form', () => {
 
         const router = renderApp('/roles/new');
         await userEvent.type(await screen.findByLabelText('Nama'), ' Baru ');
-        await userEvent.click(await screen.findByRole('checkbox', { name: 'audit.view' }));
+        await userEvent.click(await screen.findByRole('checkbox', { name: /audit\.view/ }));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan role' }));
 
         await screen.findByRole('heading', { name: 'Baru' });
@@ -454,12 +503,12 @@ describe('role form', () => {
         renderApp('/roles/7/edit');
         const name = await screen.findByLabelText('Nama');
         expect(name).toHaveValue('Auditor');
-        expect(await screen.findByRole('checkbox', { name: 'user.view' })).toBeChecked();
+        expect(await screen.findByRole('checkbox', { name: /user\.view/ })).toBeChecked();
 
         await userEvent.clear(name);
         await userEvent.type(name, 'Auditor Baru');
-        await userEvent.click(screen.getByRole('checkbox', { name: 'user.view' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'audit.view' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: /user\.view/ }));
+        await userEvent.click(screen.getByRole('checkbox', { name: /audit\.view/ }));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan role' }));
 
         await screen.findByText('Role Auditor Baru telah disimpan.');
@@ -509,7 +558,7 @@ describe('role form', () => {
         );
 
         renderApp('/roles/7/edit');
-        await screen.findByRole('checkbox', { name: 'user.view' });
+        await screen.findByRole('checkbox', { name: /user\.view/ });
         await userEvent.click(screen.getByRole('button', { name: 'Simpan role' }));
 
         await waitFor(() => expect(body).toEqual({ name: 'Auditor' }));
@@ -530,7 +579,7 @@ describe('role form', () => {
 
         renderApp('/roles/1/edit');
         expect(await screen.findByLabelText('Nama')).toBeDisabled();
-        await userEvent.click(await screen.findByRole('checkbox', { name: 'audit.view' }));
+        await userEvent.click(await screen.findByRole('checkbox', { name: /audit\.view/ }));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan role' }));
 
         await waitFor(() =>
@@ -569,7 +618,7 @@ describe('role form', () => {
         );
 
         const router = renderApp('/roles/7/edit');
-        await userEvent.click(await screen.findByRole('checkbox', { name: 'audit.view' }));
+        await userEvent.click(await screen.findByRole('checkbox', { name: /audit\.view/ }));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan role' }));
 
         expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -581,8 +630,8 @@ describe('role form', () => {
 
         await waitFor(() => expect(screen.getByLabelText('Nama')).toHaveValue('Diubah Orang Lain'));
         expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-        expect(await screen.findByRole('checkbox', { name: 'audit.view' })).toBeChecked();
-        expect(screen.getByRole('checkbox', { name: 'user.view' })).not.toBeChecked();
+        expect(await screen.findByRole('checkbox', { name: /audit\.view/ })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: /user\.view/ })).not.toBeChecked();
     });
 
     it('explains a refused permission', async () => {
@@ -596,7 +645,7 @@ describe('role form', () => {
         );
 
         renderApp('/roles/7/edit');
-        await userEvent.click(await screen.findByRole('checkbox', { name: 'audit.view' }));
+        await userEvent.click(await screen.findByRole('checkbox', { name: /audit\.view/ }));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan role' }));
 
         expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -651,7 +700,7 @@ describe('role form', () => {
         await screen.findByText('Daftar permission tidak dapat dimuat.');
         await userEvent.click(screen.getByRole('button', { name: 'Coba lagi' }));
 
-        expect(await screen.findByRole('checkbox', { name: 'user.view' })).toBeVisible();
+        expect(await screen.findByRole('checkbox', { name: /user\.view/ })).toBeVisible();
     });
 
     it('blocks the form routes without permission', async () => {

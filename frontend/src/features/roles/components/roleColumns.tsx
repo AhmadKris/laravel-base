@@ -54,10 +54,18 @@ export function roleColumns({
             ),
         },
         {
+            id: 'permissions_count',
+            header: 'Hak akses',
+            cell: ({ row }) => (
+                <span className="tabular-nums">{row.original.permissions_count ?? 0} izin</span>
+            ),
+        },
+        {
             id: 'created_at',
             header: 'Dibuat',
             accessorKey: 'created_at',
             enableSorting: true,
+            meta: { wideScreenOnly: true },
             cell: ({ row }) =>
                 row.original.created_at ? formatDateTime(row.original.created_at) : '-',
         },

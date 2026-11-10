@@ -494,7 +494,9 @@ export interface components {
             id: number;
             name: string;
             is_protected: boolean;
+            can_assign: boolean;
             users_count?: number;
+            permissions_count?: number;
             permissions?: string[];
             version: number;
             /** Format: date-time */
@@ -1539,6 +1541,7 @@ export interface operations {
                 sort_by?: 'name' | 'email' | 'created_at';
                 sort_direction?: 'asc' | 'desc';
                 status?: components['schemas']['ActiveStatus'];
+                role?: string;
             };
             header?: never;
             path?: never;
