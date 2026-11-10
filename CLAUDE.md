@@ -50,6 +50,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 - Client bergantung pada `code`, bukan `message`.
 - Filter dan sorting memakai allowlist. Default `per_page` 20, maksimum 100.
 - Idempotency key dan optimistic locking hanya untuk endpoint di bagian 12 `API_SPECIFICATION.md`. Endpoint baru yang berisiko ditambahkan ke daftar tersebut.
+- Setiap route baru dicatat di bagian 16.4 `API_SPECIFICATION.md` beserta aksesnya: `Publik`, `Login`, `Lokal`, atau nama permission. `RouteProtectionTest` dan `ApiDocumentationTest` gagal jika route, middleware, atau OpenAPI tidak sesuai tabel tersebut.
 
 ## Otorisasi dan Keamanan
 

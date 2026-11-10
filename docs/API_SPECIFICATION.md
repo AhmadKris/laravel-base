@@ -408,6 +408,8 @@ Authentication menggunakan Laravel Sanctum.
 
 ## 7.1 Authentication Endpoints
 
+Sesi aktif, verifikasi email, dan token API ditunda sesuai `README.md`. Endpoint yang terpasang tercantum di bagian 16.4.
+
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
 | GET | /auth/user | Current user | Required |
@@ -509,7 +511,7 @@ Response harus mengikuti scope dan informasi yang boleh dilihat oleh user terseb
 
 # 8. Core Module API Specification
 
-Seluruh endpoint di bawah merupakan baseline. Modul bisnis spesifik dapat menambahkan endpoint sesuai `MODULE_SPECIFICATION.md`.
+Seluruh endpoint di bawah merupakan baseline. Modul bisnis spesifik dapat menambahkan endpoint sesuai `MODULE_SPECIFICATION.md`. Endpoint yang terpasang di Base v1 tercantum di bagian 16.4.
 
 ## 8.1 User Management
 
@@ -641,6 +643,7 @@ Aturan tambahan:
 - Body `POST /roles` adalah `name` dan `permissions` (opsional). Body `PATCH /roles/{id}` adalah `name` dan `permissions`, keduanya opsional, dan `version` wajib jika `permissions` dikirim.
 - `permissions` pada `POST /roles` dan `PATCH /roles/{id}` memerlukan permission `permission.assign`. Nama dan permission disimpan dalam satu transaksi, sehingga permission yang ditolak atau `version` yang usang membatalkan seluruh perubahan.
 - `GET /roles/{id}` memuat `permissions`, sedangkan `GET /roles` tidak.
+- `GET /roles` mendukung `search` pada nama serta `sort_by` untuk `name` dan `created_at`.
 - Role bawaan (Super Admin, Admin, Staff, Viewer) tidak dapat diganti nama atau dihapus, dengan code `ROLE_PROTECTED`. Permission role Super Admin tidak dapat diubah melalui API.
 - Role yang masih terpasang pada user, termasuk user yang di-soft delete, tidak dapat dihapus, dengan code `ROLE_IN_USE`.
 - Actor hanya dapat menambahkan permission yang dimilikinya sendiri. Pelanggaran mengembalikan HTTP 403 dengan code `AUTH_PRIVILEGE_ESCALATION`.
@@ -998,6 +1001,7 @@ Credential, secret, dan konfigurasi internal tidak boleh dikembalikan melalui en
 Aturan tambahan:
 
 - Konfigurasi diidentifikasi dengan `key`, misalnya `company.name`. Response berisi `key`, `value`, `is_public`, `is_sensitive`, `description`, `version`, dan `updated_at`.
+- `GET /system-configurations` mendukung `search` pada key serta `sort_by` untuk `key` dan `updated_at`.
 - Nilai `is_sensitive` selalu dikembalikan sebagai `null`, disimpan terenkripsi, dan tidak ditulis ke audit log.
 - `PATCH /system-configurations/{key}` menerima `value` dan `version`. Flag `is_public` dan `is_sensitive` tidak dapat diubah melalui API.
 - Nilai divalidasi per key untuk `company.*`, `localization.*`, dan `feature.*`.
@@ -1669,6 +1673,76 @@ components:
 ```
 
 Untuk API token client, definisikan security scheme Bearer terpisah. Konfigurasi OpenAPI harus mencerminkan autentikasi aktual, bukan mengasumsikan semua client menggunakan cookie.
+
+## 16.4 Endpoint Base v1
+
+Tabel di bagian ini adalah daftar endpoint yang benar-benar terpasang. Tabel di bagian 7 dan 8 juga memuat endpoint untuk fase berikutnya.
+
+Dua test membaca tabel ini:
+
+- `RouteProtectionTest` gagal jika ada route yang tidak tercatat, atau jika middleware-nya tidak sesuai kolom Akses.
+- `ApiDocumentationTest` gagal jika endpoint di OpenAPI hasil Scramble berbeda dari tabel API.
+
+Nilai kolom Akses:
+
+| Akses | Arti |
+|---|---|
+| Publik | Tanpa login |
+| Login | Wajib login, tanpa permission khusus. Data yang dikembalikan milik user itu sendiri. |
+| Lokal | Hanya tersedia di environment `local` |
+| `{resource}.{action}` | Wajib login dan memiliki permission tersebut |
+
+Nama parameter path tidak dibandingkan, sehingga `{id}` di tabel cocok dengan `{user}` di route.
+
+### API (`/api/v1`)
+
+| Method | Endpoint | Akses |
+|---|---|---|
+| GET | /health | Publik |
+| GET | /auth/user | Login |
+| POST | /auth/forgot-password | Publik |
+| POST | /auth/reset-password | Publik |
+| POST | /auth/change-password | Login |
+| GET | /users | user.view |
+| POST | /users | user.create |
+| GET | /users/{id} | user.view |
+| PATCH | /users/{id} | user.update |
+| DELETE | /users/{id} | user.delete |
+| GET | /users/{id}/roles | user.view |
+| PUT | /users/{id}/roles | user.assign_role |
+| GET | /roles | role.view |
+| POST | /roles | role.create |
+| GET | /roles/{id} | role.view |
+| PATCH | /roles/{id} | role.update |
+| DELETE | /roles/{id} | role.delete |
+| GET | /roles/{id}/permissions | role.view |
+| PUT | /roles/{id}/permissions | permission.assign |
+| GET | /permissions | permission.view |
+| GET | /audit-logs | audit.view |
+| GET | /audit-logs/{id} | audit.view |
+| GET | /system-configurations | system_config.view |
+| GET | /system-configurations/public | Publik |
+| GET | /system-configurations/feature-flags | system_config.feature_flags |
+| GET | /system-configurations/{key} | system_config.view |
+| PATCH | /system-configurations/{key} | system_config.update |
+| GET | /branding | Publik |
+| GET | /branding/{asset} | Publik |
+| POST | /branding/{asset} | system_config.update |
+| DELETE | /branding/{asset} | system_config.update |
+
+### Di luar `/api/v1`
+
+| Method | Endpoint | Akses |
+|---|---|---|
+| GET | /sanctum/csrf-cookie | Publik |
+| POST | /login | Publik |
+| POST | /logout | Login |
+| GET | /up | Publik |
+| GET | /docs/api | Lokal |
+| GET | /docs/api.json | Lokal |
+| GET | /_scramble/dev-tools/devtools.js | Lokal |
+
+`/up` adalah health check bawaan Laravel untuk load balancer. Isinya tidak memuat data aplikasi.
 
 ---
 
