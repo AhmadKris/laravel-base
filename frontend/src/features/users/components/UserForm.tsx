@@ -1,12 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { FormAlert } from '@/components/shared/FormAlert';
 import { FormCard } from '@/components/shared/FormCard';
 import { FormField } from '@/components/shared/FormField';
+import { FormSection } from '@/components/shared/FormSection';
 import { PasswordField } from '@/components/shared/PasswordField';
+import { SearchInput } from '@/components/shared/SearchInput';
 import { ListSkeleton } from '@/components/shared/skeletons';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -61,6 +64,7 @@ export function UserForm({ user }: UserFormProps) {
     const { can } = usePermission();
     const currentUserId = useAuthStore((state) => state.user?.id);
     const canEditRoles = can('user.assign_role') && can('role.view') && user?.id !== currentUserId;
+    const [roleQuery, setRoleQuery] = useState('');
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema(user === undefined)),
         defaultValues: {
@@ -97,9 +101,14 @@ export function UserForm({ user }: UserFormProps) {
         onError: (error) => applyFormError(error, form.setError),
     });
 
+    const filteredRoles = (roleOptions.data ?? []).filter((role) =>
+        role.name.toLowerCase().includes(roleQuery.trim().toLowerCase()),
+    );
+
     return (
         <>
             <FormCard
+                isDirty={form.formState.isDirty}
                 onSubmit={form.handleSubmit((values) => save.mutate(values))}
                 actions={
                     <>
@@ -113,99 +122,149 @@ export function UserForm({ user }: UserFormProps) {
                 }
             >
                 <FormAlert message={form.formState.errors.root?.server?.message} />
-                <FormField control={form.control} name="name" label="Nama" autoComplete="off" />
-                <FormField
-                    control={form.control}
-                    name="email"
-                    label="Email"
-                    type="email"
-                    autoComplete="off"
-                />
-                <FormField
-                    control={form.control}
-                    name="username"
-                    label="Username (opsional)"
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    description="Dapat dipakai untuk masuk selain email."
-                />
-                {user === undefined && (
-                    <PasswordField
+                <FormSection
+                    title="Identitas akun"
+                    description="Nama, email, dan username untuk masuk ke aplikasi."
+                >
+                    <FormField
                         control={form.control}
-                        name="password"
-                        label="Password awal"
-                        autoComplete="new-password"
-                        description={NEW_PASSWORD_HINT}
+                        name="name"
+                        label="Nama"
+                        autoComplete="off"
+                        required
                     />
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        label="Email"
+                        type="email"
+                        autoComplete="off"
+                        required
+                    />
+                    <FormField
+                        control={form.control}
+                        name="username"
+                        label="Username (opsional)"
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        description="Dapat dipakai untuk masuk selain email."
+                    />
+                </FormSection>
+                {user === undefined && (
+                    <FormSection
+                        title="Kredensial"
+                        description="Password awal yang diberikan untuk pengguna baru."
+                    >
+                        <PasswordField
+                            control={form.control}
+                            name="password"
+                            label="Password awal"
+                            autoComplete="new-password"
+                            required
+                            showLengthHint
+                            description={NEW_PASSWORD_HINT}
+                        />
+                    </FormSection>
                 )}
                 {canEditRoles && (
-                    <Controller
-                        control={form.control}
-                        name="roles"
-                        render={({ field, fieldState }) => (
-                            <fieldset className="grid gap-2">
-                                <legend className="mb-1.5 text-sm leading-none font-medium">
-                                    Role
-                                </legend>
-                                {roleOptions.isPending && (
-                                    <ListSkeleton label="Memuat daftar role" rows={2} />
-                                )}
-                                {roleOptions.isError && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-destructive">
-                                            Daftar role tidak dapat dimuat.
-                                        </span>
-                                        <Button
-                                            type="button"
-                                            variant="link"
-                                            size="sm"
-                                            className="h-auto p-0"
-                                            onClick={() => void roleOptions.refetch()}
-                                        >
-                                            Coba lagi
-                                        </Button>
+                    <FormSection
+                        title="Hak akses"
+                        description="Tetapkan satu atau beberapa role untuk pengguna ini."
+                    >
+                        <Controller
+                            control={form.control}
+                            name="roles"
+                            render={({ field, fieldState }) => (
+                                <fieldset className="grid gap-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <legend className="text-sm leading-none font-medium">
+                                            Role
+                                        </legend>
+                                        {roleOptions.isSuccess && (
+                                            <span className="text-xs text-muted-foreground tabular-nums">
+                                                {field.value.length} role dipilih
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                                {roleOptions.isSuccess && (
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                        {roleOptions.data.map((role) => {
-                                            const id = `user-role-${role.id}`;
+                                    {roleOptions.isPending && (
+                                        <ListSkeleton label="Memuat daftar role" rows={2} />
+                                    )}
+                                    {roleOptions.isError && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-destructive">
+                                                Daftar role tidak dapat dimuat.
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                size="sm"
+                                                className="h-auto p-0"
+                                                onClick={() => void roleOptions.refetch()}
+                                            >
+                                                Coba lagi
+                                            </Button>
+                                        </div>
+                                    )}
+                                    {roleOptions.isSuccess && roleOptions.data.length > 6 && (
+                                        <SearchInput
+                                            label="Cari role"
+                                            placeholder="Cari nama role"
+                                            value={roleQuery}
+                                            onChange={setRoleQuery}
+                                        />
+                                    )}
+                                    {roleOptions.isSuccess && filteredRoles.length === 0 && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Tidak ada role yang cocok dengan pencarian.
+                                        </p>
+                                    )}
+                                    {roleOptions.isSuccess && filteredRoles.length > 0 && (
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            {filteredRoles.map((role) => {
+                                                const id = `user-role-${role.id}`;
 
-                                            return (
-                                                <div
-                                                    key={role.id}
-                                                    className="flex items-center gap-2"
-                                                >
-                                                    <Checkbox
-                                                        id={id}
-                                                        checked={field.value.includes(role.name)}
-                                                        onBlur={field.onBlur}
-                                                        onCheckedChange={(checked) =>
-                                                            field.onChange(
-                                                                checked === true
-                                                                    ? [...field.value, role.name]
-                                                                    : field.value.filter(
-                                                                          (name) =>
-                                                                              name !== role.name,
-                                                                      ),
-                                                            )
-                                                        }
-                                                    />
-                                                    <Label htmlFor={id}>{role.name}</Label>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                                {fieldState.error?.message !== undefined && (
-                                    <p className="text-xs text-destructive">
-                                        {fieldState.error.message}
-                                    </p>
-                                )}
-                            </fieldset>
-                        )}
-                    />
+                                                return (
+                                                    <div
+                                                        key={role.id}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        <Checkbox
+                                                            id={id}
+                                                            checked={field.value.includes(
+                                                                role.name,
+                                                            )}
+                                                            onBlur={field.onBlur}
+                                                            onCheckedChange={(checked) =>
+                                                                field.onChange(
+                                                                    checked === true
+                                                                        ? [
+                                                                              ...field.value,
+                                                                              role.name,
+                                                                          ]
+                                                                        : field.value.filter(
+                                                                              (name) =>
+                                                                                  name !==
+                                                                                  role.name,
+                                                                          ),
+                                                                )
+                                                            }
+                                                        />
+                                                        <Label htmlFor={id}>{role.name}</Label>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {fieldState.error?.message !== undefined && (
+                                        <p className="text-xs text-destructive">
+                                            {fieldState.error.message}
+                                        </p>
+                                    )}
+                                </fieldset>
+                            )}
+                        />
+                    </FormSection>
                 )}
             </FormCard>
             {guard.dialog}

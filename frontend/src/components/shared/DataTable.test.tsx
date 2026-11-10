@@ -61,11 +61,16 @@ it('shows the loading state', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
 });
 
-it('shows the empty state', () => {
-    renderTable({ rows: [], emptyDescription: 'Tambahkan pengguna pertama.' });
+it('shows the empty state and optional action', () => {
+    renderTable({
+        rows: [],
+        emptyDescription: 'Tambahkan pengguna pertama.',
+        emptyAction: <button type="button">Tambah sekarang</button>,
+    });
 
     expect(screen.getByText('Belum ada pengguna')).toBeVisible();
     expect(screen.getByText('Tambahkan pengguna pertama.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Tambah sekarang' })).toBeVisible();
 });
 
 it('shows the error state and can retry', async () => {

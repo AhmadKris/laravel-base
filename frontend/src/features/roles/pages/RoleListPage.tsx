@@ -44,6 +44,10 @@ export function RoleListPage() {
 
     const hasSearch = filters.search !== undefined;
 
+    const clearSearch = () => {
+        updateParams({ search: undefined, page: undefined });
+    };
+
     return (
         <section className="flex flex-col gap-4">
             <PageHeader
@@ -60,12 +64,19 @@ export function RoleListPage() {
                     )
                 }
             />
-            <SearchInput
-                label="Cari nama role"
-                placeholder="Cari nama role"
-                value={searchInput}
-                onChange={changeSearch}
-            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <SearchInput
+                    label="Cari nama role"
+                    placeholder="Cari nama role"
+                    value={searchInput}
+                    onChange={changeSearch}
+                />
+                {hasSearch && (
+                    <Button type="button" variant="ghost" onClick={clearSearch}>
+                        Hapus pencarian
+                    </Button>
+                )}
+            </div>
             <DataTable
                 {...tableProps}
                 columns={columns}
@@ -81,6 +92,20 @@ export function RoleListPage() {
                     hasSearch
                         ? 'Ubah kata kunci pencarian.'
                         : 'Role yang ditambahkan tampil di sini.'
+                }
+                emptyAction={
+                    hasSearch ? (
+                        <Button type="button" variant="outline" size="sm" onClick={clearSearch}>
+                            Reset pencarian
+                        </Button>
+                    ) : can('role.create') ? (
+                        <Button asChild size="sm">
+                            <Link to="/roles/new">
+                                <Plus aria-hidden="true" />
+                                Tambah role
+                            </Link>
+                        </Button>
+                    ) : undefined
                 }
                 pagination={pagination}
                 onRowClick={(role) => void navigate(`/roles/${role.id}`)}

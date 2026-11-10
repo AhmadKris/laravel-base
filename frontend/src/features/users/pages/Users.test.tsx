@@ -151,6 +151,28 @@ describe('user list', () => {
         await waitFor(() => expect(requests.at(-1)?.get('status')).toBe('inactive'));
     });
 
+    it('clears a status-only filter without reverting after the search delay', async () => {
+        asUser();
+        const requests = recordListRequests([makeTarget()]);
+
+        const router = renderApp('/users');
+        await screen.findByRole('link', { name: 'Budi Santoso' });
+        await userEvent.click(screen.getByRole('combobox', { name: 'Filter status' }));
+        await userEvent.click(await screen.findByRole('option', { name: 'Nonaktif' }));
+        await waitFor(() => expect(router.state.location.search).toBe('?status=inactive'));
+
+        await userEvent.click(screen.getByRole('button', { name: 'Hapus filter' }));
+        await waitFor(() => expect(router.state.location.search).toBe(''));
+
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
+
+        expect(router.state.location.search).toBe('');
+        expect(screen.getByRole('combobox', { name: 'Filter status' })).toHaveTextContent(
+            'Semua status',
+        );
+        expect(requests.at(-1)?.has('status')).toBe(false);
+    });
+
     it('sorts through the column header', async () => {
         asUser();
         const requests = recordListRequests([makeTarget()]);
@@ -253,23 +275,29 @@ describe('user list', () => {
         expect(router.state.location.search).toBe('?page=3');
     });
 
-    it('explains an empty result and a failure', async () => {
+    it('explains an empty result and resets filters', async () => {
         asUser();
-        serveList([]);
+        const requests = recordListRequests([]);
 
         renderApp('/users?search=zzz');
 
         expect(await screen.findByText('Tidak ada pengguna yang cocok')).toBeVisible();
         expect(screen.getByRole('searchbox')).toHaveValue('zzz');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Reset filter' }));
+
+        await waitFor(() => expect(requests.at(-1)?.has('search')).toBe(false));
+        expect(screen.getByRole('searchbox')).toHaveValue('');
     });
 
-    it('explains an empty module', async () => {
+    it('explains an empty module and offers a create action', async () => {
         asUser();
         serveList([]);
 
         renderApp('/users');
 
         expect(await screen.findByText('Belum ada pengguna')).toBeVisible();
+        expect(screen.getAllByRole('link', { name: 'Tambah pengguna' })).toHaveLength(2);
     });
 
     it('explains a loading failure', async () => {
@@ -399,7 +427,7 @@ describe('changing user status', () => {
         expect(body).toEqual({ status: 'active' });
     });
 
-    it('explains a refusal and keeps the dialog', async () => {
+    it('explains a refusal inside the dialog and keeps it open', async () => {
         asUser();
         serveList([makeTarget()]);
         server.use(
@@ -412,9 +440,9 @@ describe('changing user status', () => {
         const dialog = await openFromList('Nonaktifkan pengguna');
         await userEvent.click(within(dialog).getByRole('button', { name: 'Nonaktifkan pengguna' }));
 
-        expect(
-            await screen.findByText('Super Admin aktif terakhir tidak dapat dinonaktifkan.'),
-        ).toBeVisible();
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+            'Super Admin aktif terakhir tidak dapat dinonaktifkan.',
+        );
         expect(screen.getByRole('alertdialog')).toBeVisible();
     });
 
@@ -469,7 +497,7 @@ describe('user detail', () => {
         ).not.toBeInTheDocument();
     });
 
-    it('treats a user outside the scope as not found', async () => {
+    it('treats a user outside the scope as not found and links back to the list', async () => {
         asUser();
         server.use(
             http.get('*/api/v1/users/user-x', () =>
@@ -481,6 +509,10 @@ describe('user detail', () => {
 
         expect(await screen.findByText('Pengguna tidak ditemukan')).toBeVisible();
         expect(screen.queryByRole('button', { name: 'Coba lagi' })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Kembali ke daftar pengguna' })).toHaveAttribute(
+            'href',
+            '/users',
+        );
     });
 
     it('offers a retry for other failures', async () => {
@@ -542,6 +574,7 @@ describe('user form', () => {
 
         const router = renderApp('/users/new');
         await userEvent.type(await screen.findByLabelText('Nama'), 'Dewi');
+        expect(screen.getByText('Ada perubahan belum disimpan')).toBeVisible();
         await userEvent.click(
             within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
                 name: 'Pengguna',

@@ -10,22 +10,32 @@ import { server } from '@/test/server';
 import { makeUser, renderWithProviders } from '@/test/utils';
 import { AppLayout } from './AppLayout';
 
-function renderLayout(permissions: string[], queryClient?: QueryClient) {
+function renderLayout(permissions: string[], queryClient?: QueryClient, initialPath = '/') {
     useAuthStore.getState().setUser(makeUser(permissions));
 
-    const router = createMemoryRouter([
-        {
-            element: (
-                <ProtectedRoute>
-                    <AppLayout />
-                </ProtectedRoute>
-            ),
-            children: [{ path: '/', element: <p>page content</p> }],
-        },
-        { path: '/login', element: <p>login page</p> },
-    ]);
+    const router = createMemoryRouter(
+        [
+            {
+                element: (
+                    <ProtectedRoute>
+                        <AppLayout />
+                    </ProtectedRoute>
+                ),
+                children: [
+                    { path: '/', element: <p>page content</p> },
+                    { path: '/users', element: <p>users page</p> },
+                    { path: '/users/new', element: <p>new user page</p> },
+                    { path: '/roles', element: <p>roles page</p> },
+                ],
+            },
+            { path: '/login', element: <p>login page</p> },
+        ],
+        { initialEntries: [initialPath] },
+    );
 
-    renderWithProviders(<RouterProvider router={router} />, queryClient);
+    const view = renderWithProviders(<RouterProvider router={router} />, queryClient);
+
+    return { router, unmount: view.unmount };
 }
 
 function menuLabels(): string[] {
@@ -38,6 +48,10 @@ function menuLabels(): string[] {
 
 beforeEach(() => {
     document.cookie = 'XSRF-TOKEN=existing; path=/';
+});
+
+afterEach(() => {
+    localStorage.removeItem('sidebar_collapsed_sections');
 });
 
 it('shows only the menu items allowed by the backend permissions', () => {
@@ -173,13 +187,108 @@ describe('at tablet width', () => {
 it('groups administration items under a heading', () => {
     renderLayout(['user.view']);
 
-    expect(screen.getByText('Administrasi')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+    );
 });
 
 it('hides a heading with no visible items', () => {
     renderLayout([]);
 
     expect(screen.queryByText('Administrasi')).not.toBeInTheDocument();
+});
+
+it('collapses and expands a menu section and remembers the preference', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderLayout(['user.view', 'role.view']);
+
+    const toggle = screen.getByRole('button', { name: 'Administrasi' });
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('link', { name: 'Pengguna' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Beranda' })).toBeInTheDocument();
+
+    unmount();
+    renderLayout(['user.view', 'role.view']);
+
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+    );
+    expect(screen.queryByRole('link', { name: 'Pengguna' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Administrasi' }));
+
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+    );
+    expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
+});
+
+it('automatically expands a collapsed section when its route is active', async () => {
+    localStorage.setItem('sidebar_collapsed_sections', JSON.stringify(['administration']));
+    renderLayout(['user.view'], undefined, '/users');
+
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+    );
+    expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
+});
+
+it('auto-expands on route entry while allowing manual collapse within the section', async () => {
+    const user = userEvent.setup();
+    const { router } = renderLayout(['user.view', 'role.view']);
+
+    await user.click(screen.getByRole('button', { name: 'Administrasi' }));
+    expect(screen.queryByRole('link', { name: 'Pengguna' })).not.toBeInTheDocument();
+
+    await act(async () => {
+        await router.navigate('/users');
+    });
+
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+    );
+    expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Administrasi' }));
+    expect(screen.queryByRole('link', { name: 'Pengguna' })).not.toBeInTheDocument();
+
+    await act(async () => {
+        await router.navigate('/users/new');
+    });
+
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+    );
+});
+
+it('keeps section items reachable in icon mode even if collapsed in desktop view', async () => {
+    localStorage.setItem('sidebar_collapsed_sections', JSON.stringify(['administration']));
+    document.cookie = 'sidebar_state=false; path=/';
+    const user = userEvent.setup();
+
+    renderLayout(['user.view']);
+
+    expect(sidebarState()).toBe('collapsed');
+    expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Buka atau tutup menu' }));
+
+    expect(sidebarState()).toBe('expanded');
+    expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+    );
+    expect(screen.queryByRole('link', { name: 'Pengguna' })).not.toBeInTheDocument();
+
+    document.cookie = 'sidebar_state=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 });
 
 it('closes the mobile menu after choosing a page', async () => {

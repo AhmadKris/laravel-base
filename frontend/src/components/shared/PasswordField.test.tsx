@@ -45,3 +45,29 @@ it('does not submit the form when toggled', () => {
         'button',
     );
 });
+
+it('tracks live minimum length progress when showLengthHint is enabled', async () => {
+    function HintForm() {
+        const form = useForm({ defaultValues: { password: '' } });
+
+        return (
+            <form>
+                <PasswordField
+                    control={form.control}
+                    name="password"
+                    label="Password baru"
+                    showLengthHint
+                />
+            </form>
+        );
+    }
+
+    const user = userEvent.setup();
+    render(<HintForm />);
+
+    expect(screen.getByText('Minimal 12 karakter (0/12)')).toBeVisible();
+
+    await user.type(screen.getByLabelText('Password baru'), 'sandi-baru-aman');
+
+    expect(screen.getByText('Minimal 12 karakter terpenuhi')).toBeVisible();
+});

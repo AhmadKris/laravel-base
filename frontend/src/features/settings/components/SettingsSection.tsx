@@ -237,6 +237,7 @@ function SettingInput({ field, form }: SettingInputProps) {
                 name={name}
                 label={field.label}
                 description={field.description}
+                required
                 renderControl={(control, attributes) => (
                     <Select
                         value={typeof control.value === 'string' ? control.value : ''}
@@ -264,6 +265,7 @@ function SettingInput({ field, form }: SettingInputProps) {
             name={name}
             label={field.label}
             description={field.description}
+            required={field.required}
             type={field.inputType}
             maxLength={field.maxLength}
             autoComplete="off"

@@ -97,7 +97,6 @@ export function NotificationsPage() {
     const hasFilters = notificationFilters.search !== undefined || activeFilters > 0;
 
     const clearFilters = () => {
-        changeSearch('');
         updateParams({
             search: undefined,
             status: undefined,
@@ -213,6 +212,13 @@ export function NotificationsPage() {
                     hasFilters
                         ? 'Ubah kata kunci atau filter yang dipilih.'
                         : 'Pemberitahuan akun dan sistem akan muncul di sini.'
+                }
+                emptyAction={
+                    hasFilters ? (
+                        <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+                            Reset filter
+                        </Button>
+                    ) : undefined
                 }
                 pagination={pagination}
                 onRowClick={handleRowClick}

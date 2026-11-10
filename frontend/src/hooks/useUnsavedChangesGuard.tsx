@@ -50,6 +50,7 @@ export function useUnsavedChangesGuard(isDirty: boolean): UnsavedChangesGuard {
                 title="Tinggalkan halaman ini?"
                 description="Perubahan yang belum disimpan akan hilang."
                 confirmLabel="Tinggalkan halaman"
+                confirmVariant="warning"
                 onConfirm={() => blocker.proceed?.()}
             />
         ),

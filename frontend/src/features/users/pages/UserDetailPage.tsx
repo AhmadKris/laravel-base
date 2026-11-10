@@ -3,11 +3,15 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
 import { CenteredPage } from '@/components/shared/CenteredPage';
+import { CopyButton } from '@/components/shared/CopyButton';
+import { DetailCard } from '@/components/shared/DetailCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageSkeleton } from '@/components/shared/skeletons';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { UserAvatar } from '@/components/shared/UserAvatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { usePermission } from '@/hooks/usePermission';
@@ -48,6 +52,11 @@ export function UserDetailPage() {
                         <EmptyState
                             title="Pengguna tidak ditemukan"
                             description="Pengguna ini sudah dihapus atau berada di luar akses Anda."
+                            action={
+                                <Button asChild variant="outline" size="sm">
+                                    <Link to="/users">Kembali ke daftar pengguna</Link>
+                                </Button>
+                            }
                         />
                     ) : (
                         <ErrorState
@@ -66,13 +75,16 @@ export function UserDetailPage() {
     const canChangeStatus = isActive
         ? can('user.delete') && user.id !== currentUserId
         : can('user.update');
+    const roles = user.roles ?? [];
 
     return (
         <CenteredPage>
             <BackLink to="/users" label="Daftar pengguna" />
             <PageHeader
+                leading={<UserAvatar name={user.name} size="lg" />}
                 title={user.name}
                 description={user.email}
+                descriptionAction={<CopyButton value={user.email} label="Salin email" />}
                 actions={
                     <>
                         {can('audit.view') && (
@@ -98,20 +110,43 @@ export function UserDetailPage() {
                     </>
                 }
             />
-            <Card className="px-5 py-5">
-                <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
+            <DetailCard title="Informasi akun">
+                <dl className="grid gap-y-3 text-sm sm:grid-cols-[9rem_1fr]">
                     <dt className="text-muted-foreground">Status</dt>
                     <dd>
                         <StatusBadge status={user.status} />
                     </dd>
                     <dt className="text-muted-foreground">Username</dt>
-                    <dd>{user.username ?? NOT_SET}</dd>
+                    <dd className="min-w-0">
+                        {user.username ? (
+                            <div className="flex items-center gap-1.5">
+                                <span className="min-w-0 break-all">{user.username}</span>
+                                <CopyButton value={user.username} label="Salin username" />
+                            </div>
+                        ) : (
+                            NOT_SET
+                        )}
+                    </dd>
                     <dt className="text-muted-foreground">Role</dt>
-                    <dd>{user.roles?.join(', ') || NOT_SET}</dd>
+                    <dd className="min-w-0">
+                        {roles.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                                {roles.map((role) => (
+                                    <Badge key={role} variant="secondary">
+                                        {role}
+                                    </Badge>
+                                ))}
+                            </div>
+                        ) : (
+                            NOT_SET
+                        )}
+                    </dd>
                     <dt className="text-muted-foreground">Dibuat</dt>
-                    <dd>{user.created_at ? formatDateTime(user.created_at) : NOT_SET}</dd>
+                    <dd className="tabular-nums">
+                        {user.created_at ? formatDateTime(user.created_at) : NOT_SET}
+                    </dd>
                 </dl>
-            </Card>
+            </DetailCard>
             <UserStatusDialog user={statusTarget} onClose={() => setStatusTarget(null)} />
         </CenteredPage>
     );

@@ -1,7 +1,7 @@
 import { flexRender, type RowData, useTable } from '@tanstack/react-table';
 import { cn } from 'cn';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import type { MouseEvent } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -44,6 +44,7 @@ interface DataTableProps<TRow extends RowData> {
     errorTitle: string;
     emptyTitle: string;
     emptyDescription?: string;
+    emptyAction?: ReactNode;
     pagination?: PaginationMeta;
     onPageChange?: (page: number) => void;
     onPerPageChange?: (perPage: number) => void;
@@ -154,6 +155,7 @@ export function DataTable<TRow extends RowData>({
     errorTitle,
     emptyTitle,
     emptyDescription,
+    emptyAction,
     pagination,
     onPageChange,
     onPerPageChange,
@@ -194,7 +196,11 @@ export function DataTable<TRow extends RowData>({
     if (rows === undefined || rows.length === 0) {
         return (
             <Card className="gap-0 py-0">
-                <EmptyState title={emptyTitle} description={emptyDescription} />
+                <EmptyState
+                    title={emptyTitle}
+                    description={emptyDescription}
+                    action={emptyAction}
+                />
             </Card>
         );
     }
@@ -226,7 +232,8 @@ export function DataTable<TRow extends RowData>({
                                 key={row.id}
                                 className={cn(
                                     'grid gap-2 px-4 py-3',
-                                    onRowClick && 'cursor-pointer',
+                                    onRowClick &&
+                                        'cursor-pointer transition-colors hover:bg-muted/50',
                                 )}
                                 onClick={(event) => {
                                     if (onRowClick !== undefined && isRowActivation(event)) {

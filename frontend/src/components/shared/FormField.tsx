@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 interface ControlAttributes {
     id: string;
     'aria-invalid': boolean;
+    'aria-required'?: boolean;
     'aria-describedby': string | undefined;
 }
 
@@ -33,6 +34,7 @@ export function FormField<TValues extends FieldValues>({
     name,
     label,
     description,
+    required = false,
     renderControl,
     ...inputProps
 }: FormFieldProps<TValues>) {
@@ -48,12 +50,23 @@ export function FormField<TValues extends FieldValues>({
     const attributes: ControlAttributes = {
         id,
         'aria-invalid': fieldState.invalid,
+        ...(required ? { 'aria-required': true } : {}),
         'aria-describedby': describedBy,
     };
 
     return (
         <div className="grid gap-1.5">
-            <Label htmlFor={id}>{label}</Label>
+            <div className="flex items-center gap-0.5">
+                <Label htmlFor={id}>{label}</Label>
+                {required && (
+                    <span
+                        aria-hidden="true"
+                        className="text-sm leading-none font-medium text-destructive"
+                    >
+                        *
+                    </span>
+                )}
+            </div>
             {renderControl ? (
                 renderControl(field, attributes)
             ) : (

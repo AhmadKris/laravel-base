@@ -84,3 +84,11 @@ export function toApiError(error: unknown): ApiError {
         requestId: headers['x-request-id'] as string | undefined,
     });
 }
+
+export function toApiErrorMessage(error: unknown): string {
+    const apiError = toApiError(error);
+
+    return apiError.status >= 500 && apiError.requestId !== undefined
+        ? `${apiError.message} (Kode permintaan: ${apiError.requestId})`
+        : apiError.message;
+}

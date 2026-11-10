@@ -2,10 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
 import { CenteredPage } from '@/components/shared/CenteredPage';
+import { CopyButton } from '@/components/shared/CopyButton';
+import { DetailCard } from '@/components/shared/DetailCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageSkeleton } from '@/components/shared/skeletons';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { usePermission } from '@/hooks/usePermission';
 import { ApiError, toApiError } from '@/lib/api-error';
@@ -95,6 +98,11 @@ export function AuditLogDetailPage() {
                         <EmptyState
                             title="Aktivitas tidak ditemukan"
                             description="Aktivitas ini tidak ada atau berada di luar akses Anda."
+                            action={
+                                <Button asChild variant="outline" size="sm">
+                                    <Link to="/audit-logs">Kembali ke audit log</Link>
+                                </Button>
+                            }
                         />
                     ) : (
                         <ErrorState
@@ -127,10 +135,19 @@ export function AuditLogDetailPage() {
                 title={eventTitle(log.event_label)}
                 description={log.created_at ? formatDateTime(log.created_at) : undefined}
             />
-            <Card className="px-5 py-5">
-                <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
+            <DetailCard title="Ringkasan aktivitas">
+                <dl className="grid gap-y-3 text-sm sm:grid-cols-[9rem_1fr]">
                     <dt className="text-muted-foreground">Kode aktivitas</dt>
-                    <dd className="font-mono text-xs leading-5">{log.event}</dd>
+                    <dd className="flex items-center gap-1.5">
+                        {log.event ? (
+                            <>
+                                <span className="font-mono text-xs leading-5">{log.event}</span>
+                                <CopyButton value={log.event} label="Salin kode aktivitas" />
+                            </>
+                        ) : (
+                            <span className="text-muted-foreground">-</span>
+                        )}
+                    </dd>
                     <dt className="text-muted-foreground">Pengguna</dt>
                     <dd className="min-w-0">
                         {log.actor === null ? (
@@ -181,9 +198,8 @@ export function AuditLogDetailPage() {
                         )}
                     </dd>
                 </dl>
-            </Card>
-            <Card className="gap-4 px-5 py-5">
-                <h2 className="text-sm font-semibold">Detail perubahan</h2>
+            </DetailCard>
+            <DetailCard title="Detail perubahan">
                 {changeEntries.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                         Aktivitas ini tidak mencatat data tambahan.
@@ -191,21 +207,35 @@ export function AuditLogDetailPage() {
                 ) : (
                     <DetailList entries={changeEntries} />
                 )}
-            </Card>
+            </DetailCard>
             {contextEntries.length > 0 && (
-                <Card className="gap-4 px-5 py-5">
-                    <h2 className="text-sm font-semibold">Asal permintaan</h2>
-                    <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
-                        {contextEntries.map(([key, value]) => (
-                            <div key={key} className="contents">
-                                <dt className="text-muted-foreground">
-                                    {CONTEXT_LABELS[key] ?? key}
-                                </dt>
-                                <dd className="min-w-0 break-words">{String(value)}</dd>
-                            </div>
-                        ))}
+                <DetailCard title="Asal permintaan">
+                    <dl className="grid gap-y-3 text-sm sm:grid-cols-[9rem_1fr]">
+                        {contextEntries.map(([key, value]) => {
+                            const text = String(value);
+                            const label = CONTEXT_LABELS[key] ?? key;
+
+                            return (
+                                <div key={key} className="contents">
+                                    <dt className="text-muted-foreground">{label}</dt>
+                                    <dd className="min-w-0 break-words">
+                                        {key === 'ip_address' || key === 'request_id' ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="min-w-0 break-all">{text}</span>
+                                                <CopyButton
+                                                    value={text}
+                                                    label={`Salin ${label.toLowerCase()}`}
+                                                />
+                                            </div>
+                                        ) : (
+                                            text
+                                        )}
+                                    </dd>
+                                </div>
+                            );
+                        })}
                     </dl>
-                </Card>
+                </DetailCard>
             )}
         </CenteredPage>
     );

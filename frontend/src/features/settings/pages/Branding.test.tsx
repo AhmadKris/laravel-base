@@ -129,6 +129,10 @@ const image = (name: string, size = 10) =>
 const fieldOf = (label: string) =>
     screen.getByText(label, { selector: 'label' }).closest('div.flex') as HTMLElement;
 
+async function openBrandingTab() {
+    await userEvent.click(await screen.findByRole('tab', { name: 'Branding' }));
+}
+
 beforeEach(() => {
     document.cookie = 'XSRF-TOKEN=existing; path=/';
     branding = makeBranding();
@@ -147,6 +151,7 @@ describe('logo and favicon settings', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
 
         expect(await screen.findByRole('heading', { name: 'Logo dan favicon' })).toBeVisible();
         expect(
@@ -165,6 +170,7 @@ describe('logo and favicon settings', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
         await userEvent.upload(await screen.findByLabelText('Logo'), image('logo kantor.png'));
 
         expect(screen.getByRole('img', { name: 'Pratinjau logo' })).toHaveAttribute(
@@ -192,6 +198,7 @@ describe('logo and favicon settings', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
         await userEvent.upload(
             await screen.findByLabelText('Logo'),
             image('logo.png', 2 * 1024 * 1024),
@@ -208,6 +215,7 @@ describe('logo and favicon settings', () => {
         const user = userEvent.setup({ applyAccept: false });
 
         renderApp('/settings');
+        await openBrandingTab();
         await user.upload(await screen.findByLabelText('Logo'), image('logo.svg'));
         await user.upload(screen.getByLabelText('Favicon'), image('favicon.gif'));
 
@@ -246,6 +254,7 @@ describe('logo and favicon settings', () => {
         );
 
         renderApp('/settings');
+        await openBrandingTab();
         await userEvent.upload(await screen.findByLabelText('Favicon'), image('favicon.png'));
         await userEvent.click(screen.getByRole('button', { name: 'Simpan favicon' }));
 
@@ -262,6 +271,7 @@ describe('logo and favicon settings', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
         await userEvent.upload(await screen.findByLabelText('Logo'), image('logo.png'));
         await userEvent.click(within(fieldOf('Logo')).getByRole('button', { name: 'Batal' }));
 
@@ -275,6 +285,7 @@ describe('logo and favicon settings', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
         await userEvent.click(await screen.findByRole('button', { name: 'Hapus logo' }));
         const dialog = await screen.findByRole('alertdialog', { name: 'Hapus logo perusahaan?' });
         await userEvent.click(within(dialog).getByRole('button', { name: 'Hapus logo' }));
@@ -290,6 +301,7 @@ describe('logo and favicon settings', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
 
         expect(await screen.findByRole('img', { name: 'Logo saat ini' })).toBeVisible();
         expect(
@@ -304,6 +316,7 @@ describe('logo for dark backgrounds and display options', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
         await userEvent.upload(
             await screen.findByLabelText('Logo latar gelap'),
             image('logo-putih.png'),
@@ -320,6 +333,7 @@ describe('logo for dark backgrounds and display options', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
         const preview = (await screen.findByText('Pratinjau')).parentElement as HTMLElement;
         await waitFor(() =>
             expect(within(preview).getAllByText('Enterprise System')).toHaveLength(2),
@@ -349,7 +363,7 @@ describe('logo for dark backgrounds and display options', () => {
         asUser();
         serveBranding();
 
-        renderApp('/settings');
+        renderApp('/settings?tab=branding');
 
         expect(
             await screen.findByText('Pengaturan ini berlaku setelah logo diunggah.'),
@@ -421,6 +435,7 @@ describe('branding in the app', () => {
         serveBranding();
 
         renderApp('/settings');
+        await openBrandingTab();
 
         await waitFor(() =>
             expect(document.getElementById('app-favicon')).toHaveAttribute(

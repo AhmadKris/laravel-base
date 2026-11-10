@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
 import { CenteredPage } from '@/components/shared/CenteredPage';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageSkeleton } from '@/components/shared/skeletons';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ApiError, toApiError } from '@/lib/api-error';
 import { RoleForm } from '../components/RoleForm';
@@ -47,6 +48,11 @@ export function RoleEditPage() {
                         <EmptyState
                             title="Role tidak ditemukan"
                             description="Role ini sudah dihapus."
+                            action={
+                                <Button asChild variant="outline" size="sm">
+                                    <Link to="/roles">Kembali ke daftar role</Link>
+                                </Button>
+                            }
                         />
                     ) : (
                         <ErrorState
@@ -71,6 +77,11 @@ export function RoleEditPage() {
                     <EmptyState
                         title="Role ini tidak dapat diubah"
                         description="Super Admin selalu memiliki seluruh permission."
+                        action={
+                            <Button asChild variant="outline" size="sm">
+                                <Link to="/roles">Kembali ke daftar role</Link>
+                            </Button>
+                        }
                     />
                 </Card>
             ) : (

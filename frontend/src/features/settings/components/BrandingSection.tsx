@@ -6,9 +6,8 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useBranding } from '@/hooks/useBranding';
-import { toApiError } from '@/lib/api-error';
+import { toApiError, toApiErrorMessage } from '@/lib/api-error';
 import { brandingKeys, brandingService } from '@/lib/branding';
-import { notifyError } from '@/lib/notify';
 import type { BrandingAsset } from '@/types/api-response';
 
 interface AssetRule {
@@ -161,11 +160,11 @@ function BrandingField({ rule, currentUrl, canUpdate, onDirtyChange }: BrandingF
     const remove = useMutation({
         mutationFn: () => brandingService.remove(rule.asset),
         onSuccess: () => {
+            remove.reset();
             setIsRemoving(false);
             void queryClient.invalidateQueries({ queryKey: brandingKeys.all });
             toast.success(`${rule.label} telah dihapus.`);
         },
-        onError: notifyError,
     });
 
     const shownUrl = previewUrl ?? currentUrl;
@@ -277,10 +276,16 @@ function BrandingField({ rule, currentUrl, canUpdate, onDirtyChange }: BrandingF
             </div>
             <ConfirmDialog
                 open={isRemoving}
-                onOpenChange={setIsRemoving}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        remove.reset();
+                    }
+                    setIsRemoving(open);
+                }}
                 title={`Hapus ${rule.object}?`}
                 description={`${rule.label} yang diunggah akan dihapus dan aplikasi kembali memakai tampilan bawaan.`}
                 confirmLabel={`Hapus ${rule.label.toLowerCase()}`}
+                error={remove.error ? toApiErrorMessage(remove.error) : undefined}
                 isPending={remove.isPending}
                 onConfirm={() => remove.mutate()}
             />

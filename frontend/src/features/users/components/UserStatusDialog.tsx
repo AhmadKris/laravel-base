@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { notifyError } from '@/lib/notify';
+import { toApiErrorMessage } from '@/lib/api-error';
 import type { User } from '@/types/api-response';
 import { userKeys, userService } from '../services/userService';
 
@@ -29,9 +29,9 @@ export function UserStatusDialog({ user, onClose }: UserStatusDialogProps) {
                     ? `Pengguna ${target.name} telah dinonaktifkan.`
                     : `Pengguna ${target.name} telah diaktifkan kembali.`,
             );
+            changeStatus.reset();
             onClose();
         },
-        onError: notifyError,
     });
 
     return (
@@ -39,6 +39,7 @@ export function UserStatusDialog({ user, onClose }: UserStatusDialogProps) {
             open={user !== null}
             onOpenChange={(open) => {
                 if (!open) {
+                    changeStatus.reset();
                     onClose();
                 }
             }}
@@ -54,6 +55,7 @@ export function UserStatusDialog({ user, onClose }: UserStatusDialogProps) {
             }
             confirmLabel={isDeactivating ? 'Nonaktifkan pengguna' : 'Aktifkan pengguna'}
             confirmVariant={isDeactivating ? 'destructive' : 'default'}
+            error={changeStatus.error ? toApiErrorMessage(changeStatus.error) : undefined}
             isPending={changeStatus.isPending}
             onConfirm={() => {
                 if (user !== null) {

@@ -73,7 +73,6 @@ export function AuditLogListPage() {
     )?.actor;
 
     const clearFilters = () => {
-        changeSearch('');
         updateParams({
             search: undefined,
             user_id: undefined,
@@ -171,6 +170,13 @@ export function AuditLogListPage() {
                     hasFilters
                         ? 'Ubah atau hapus filter.'
                         : 'Pilih rentang waktu lain untuk melihat aktivitas sebelumnya.'
+                }
+                emptyAction={
+                    hasFilters ? (
+                        <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
+                            Reset filter
+                        </Button>
+                    ) : undefined
                 }
                 pagination={pagination}
                 onRowClick={(log) => void navigate(`/audit-logs/${log.id}`)}

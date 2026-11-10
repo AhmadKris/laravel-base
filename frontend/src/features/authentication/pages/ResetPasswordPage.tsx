@@ -59,6 +59,8 @@ function ResetPasswordForm({ token, email }: ResetLink) {
                 name="password"
                 label="Password baru"
                 autoComplete="new-password"
+                required
+                showLengthHint
                 description={NEW_PASSWORD_HINT}
             />
             <PasswordField
@@ -66,6 +68,7 @@ function ResetPasswordForm({ token, email }: ResetLink) {
                 name="password_confirmation"
                 label="Ulangi password baru"
                 autoComplete="new-password"
+                required
             />
             <Button type="submit" loading={resetPassword.isPending}>
                 Simpan password baru
