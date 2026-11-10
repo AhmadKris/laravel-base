@@ -200,3 +200,128 @@ it('counts a soft deleted user as still using the role', function () {
         ->assertConflict()
         ->assertJsonPath('code', 'ROLE_IN_USE');
 });
+
+it('shows a role with its sorted permissions', function () {
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/roles/'.role('Admin')->id)
+        ->assertOk()
+        ->assertJsonPath('data.permissions.0', 'audit.view')
+        ->assertJsonPath('data.users_count', 0);
+});
+
+it('leaves permissions out of the role list', function () {
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/roles')
+        ->assertOk()
+        ->assertJsonMissingPath('data.0.permissions');
+});
+
+it('creates a role together with its permissions', function () {
+    $this->actingAs($this->superAdmin)
+        ->postJson('/api/v1/roles', ['name' => 'Auditor', 'permissions' => ['audit.view', 'user.view']])
+        ->assertCreated()
+        ->assertJsonPath('data.permissions', ['audit.view', 'user.view'])
+        ->assertJsonPath('data.version', 2);
+
+    expect(Activity::query()->where('event', 'permission.assigned')->sole()->properties['permissions'])
+        ->toBe(['audit.view', 'user.view']);
+});
+
+it('creates nothing when a requested permission is above the actor', function () {
+    $role = Role::create(['name' => 'Role Writer', 'guard_name' => 'web']);
+    $role->givePermissionTo(['role.create', 'permission.assign']);
+    $actor = User::factory()->create();
+    $actor->assignRole($role);
+
+    $this->actingAs($actor)
+        ->postJson('/api/v1/roles', ['name' => 'Auditor', 'permissions' => ['audit.view']])
+        ->assertForbidden()
+        ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
+
+    expect(Role::query()->where('name', 'Auditor')->exists())->toBeFalse();
+});
+
+it('requires the assign permission to set permissions while creating', function () {
+    $role = Role::create(['name' => 'Role Writer', 'guard_name' => 'web']);
+    $role->givePermissionTo('role.create');
+    $actor = User::factory()->create();
+    $actor->assignRole($role);
+
+    $this->actingAs($actor)
+        ->postJson('/api/v1/roles', ['name' => 'Auditor', 'permissions' => []])
+        ->assertForbidden();
+
+    expect(Role::query()->where('name', 'Auditor')->exists())->toBeFalse();
+});
+
+it('rejects an unknown permission while creating', function () {
+    $this->actingAs($this->superAdmin)
+        ->postJson('/api/v1/roles', ['name' => 'Auditor', 'permissions' => ['tidak.ada']])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('permissions.0');
+});
+
+it('renames and changes permissions together', function () {
+    $role = Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$role->id, ['name' => 'Internal Auditor', 'permissions' => ['audit.view'], 'version' => 1])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Internal Auditor')
+        ->assertJsonPath('data.permissions', ['audit.view'])
+        ->assertJsonPath('data.version', 2);
+});
+
+it('keeps the old name when the version is stale', function () {
+    $role = Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$role->id, ['name' => 'Renamed', 'permissions' => ['audit.view'], 'version' => 9])
+        ->assertConflict()
+        ->assertJsonPath('code', 'RESOURCE_VERSION_CONFLICT');
+
+    expect($role->refresh()->name)->toBe('Auditor')
+        ->and($role->permissions()->count())->toBe(0);
+});
+
+it('requires a version when changing permissions', function () {
+    $role = Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$role->id, ['permissions' => ['audit.view']])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('version');
+});
+
+it('lets a built-in role change permissions without renaming', function () {
+    $staff = role('Staff');
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$staff->id, ['name' => 'Staff', 'permissions' => ['audit.view'], 'version' => $staff->version])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Staff')
+        ->assertJsonPath('data.permissions', ['audit.view']);
+});
+
+it('never changes the super admin permissions here', function () {
+    $superAdmin = role('Super Admin');
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$superAdmin->id, ['permissions' => [], 'version' => $superAdmin->version])
+        ->assertConflict()
+        ->assertJsonPath('code', 'ROLE_PROTECTED');
+});
+
+it('requires the assign permission to change permissions here', function () {
+    $writer = Role::create(['name' => 'Role Writer', 'guard_name' => 'web']);
+    $writer->givePermissionTo('role.update');
+    $actor = User::factory()->create();
+    $actor->assignRole($writer);
+    $role = Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
+
+    $this->actingAs($actor)
+        ->patchJson('/api/v1/roles/'.$role->id, ['name' => 'Renamed', 'permissions' => [], 'version' => 1])
+        ->assertForbidden();
+
+    expect($role->refresh()->name)->toBe('Auditor');
+});

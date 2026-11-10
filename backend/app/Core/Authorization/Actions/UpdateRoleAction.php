@@ -12,23 +12,36 @@ use Illuminate\Support\Facades\DB;
 
 final class UpdateRoleAction
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly AssignRolePermissionsAction $assignPermissions,
+    ) {}
 
     /**
+     * @param  list<string>|null  $permissions
+     *
      * @throws RoleProtectedException
      */
-    public function execute(Role $role, string $name, User $actor): Role
+    public function execute(Role $role, ?string $name, ?array $permissions, ?int $version, User $actor): Role
     {
-        if ($role->isProtected()) {
+        $isRenaming = $name !== null && $name !== $role->name;
+
+        if ($isRenaming && $role->isProtected()) {
             throw new RoleProtectedException;
         }
 
-        DB::transaction(function () use ($role, $name, $actor): void {
-            $oldName = $role->name;
+        DB::transaction(function () use ($role, $name, $isRenaming, $permissions, $version, $actor): void {
+            if ($isRenaming) {
+                $oldName = $role->name;
 
-            $role->update(['name' => $name]);
+                $role->update(['name' => $name]);
 
-            $this->auditLogger->record('role.updated', $role, ['old_name' => $oldName, 'new_name' => $name], $actor);
+                $this->auditLogger->record('role.updated', $role, ['old_name' => $oldName, 'new_name' => $name], $actor);
+            }
+
+            if ($permissions !== null) {
+                $this->assignPermissions->execute($role, $permissions, (int) $version, $actor);
+            }
         });
 
         return $role;

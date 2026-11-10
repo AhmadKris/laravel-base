@@ -44,25 +44,37 @@ final class RoleController
     {
         Gate::authorize('create', Role::class);
 
-        $role = $action->execute($request->validated('name'), $this->actor($request));
+        $permissions = $request->validated('permissions');
 
-        return ApiResponse::success(new RoleResource($role->refresh()), 'Role created successfully', 201);
+        if ($permissions !== null) {
+            Gate::authorize('assignPermissions', Role::class);
+        }
+
+        $role = $action->execute($request->validated('name'), $permissions, $this->actor($request));
+
+        return ApiResponse::success($this->detail($role), 'Role created successfully', 201);
     }
 
     public function show(Role $role): JsonResponse
     {
         Gate::authorize('view', $role);
 
-        return ApiResponse::success(new RoleResource($role->loadCount('users')), 'Role retrieved successfully');
+        return ApiResponse::success($this->detail($role), 'Role retrieved successfully');
     }
 
     public function update(UpdateRoleRequest $request, Role $role, UpdateRoleAction $action): JsonResponse
     {
         Gate::authorize('update', $role);
 
-        $action->execute($role, $request->validated('name'), $this->actor($request));
+        $permissions = $request->validated('permissions');
 
-        return ApiResponse::success(new RoleResource($role), 'Role updated successfully');
+        if ($permissions !== null) {
+            Gate::authorize('assignPermissions', $role);
+        }
+
+        $action->execute($role, $request->validated('name'), $permissions, $request->validated('version'), $this->actor($request));
+
+        return ApiResponse::success($this->detail($role), 'Role updated successfully');
     }
 
     public function destroy(Request $request, Role $role, DeleteRoleAction $action): Response
@@ -99,6 +111,11 @@ final class RoleController
         );
 
         return ApiResponse::success(new RoleResource($role), 'Role permissions updated successfully');
+    }
+
+    private function detail(Role $role): RoleResource
+    {
+        return new RoleResource($role->refresh()->load('permissions')->loadCount('users'));
     }
 
     private function actor(Request $request): User

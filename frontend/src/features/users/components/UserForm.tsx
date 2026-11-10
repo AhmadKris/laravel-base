@@ -86,6 +86,7 @@ export function UserForm({ user }: UserFormProps) {
                 setUser({ ...currentUser, name: saved.name, email: saved.email });
             }
 
+            queryClient.setQueryData(userKeys.detail(saved.id), saved);
             void queryClient.invalidateQueries({ queryKey: userKeys.all });
             toast.success(`Pengguna ${saved.name} telah disimpan.`);
             void navigate(`/users/${saved.id}`, { replace: true });

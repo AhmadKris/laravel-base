@@ -370,6 +370,7 @@ export interface components {
             name: string;
             is_protected: boolean;
             users_count?: number;
+            permissions?: string[];
             version: number;
             /** Format: date-time */
             created_at: string | null;
@@ -377,6 +378,7 @@ export interface components {
         /** StoreRoleRequest */
         StoreRoleRequest: {
             name: string;
+            permissions?: string[];
         };
         /** StoreUserRequest */
         StoreUserRequest: {
@@ -406,7 +408,9 @@ export interface components {
         };
         /** UpdateRoleRequest */
         UpdateRoleRequest: {
-            name: string;
+            name?: string;
+            permissions?: string[];
+            version?: number;
         };
         /** UpdateUserRequest */
         UpdateUserRequest: {
@@ -799,7 +803,9 @@ export interface operations {
                         success: boolean;
                         /** @constant */
                         message: 'Role created successfully';
-                        data: unknown[] | components['schemas']['RoleResource'];
+                        data:
+                            | unknown[]
+                            | (components['schemas']['RoleResource'] & Record<string, never>);
                         meta: null;
                     };
                 };
@@ -830,7 +836,9 @@ export interface operations {
                         success: boolean;
                         /** @constant */
                         message: 'Role retrieved successfully';
-                        data: unknown[] | components['schemas']['RoleResource'];
+                        data:
+                            | unknown[]
+                            | (components['schemas']['RoleResource'] & Record<string, never>);
                         meta: null;
                     };
                 };
@@ -874,7 +882,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 'application/json': components['schemas']['UpdateRoleRequest'];
             };
@@ -889,7 +897,9 @@ export interface operations {
                         success: boolean;
                         /** @constant */
                         message: 'Role updated successfully';
-                        data: unknown[] | components['schemas']['RoleResource'];
+                        data:
+                            | unknown[]
+                            | (components['schemas']['RoleResource'] & Record<string, never>);
                         meta: null;
                     };
                 };

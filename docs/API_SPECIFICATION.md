@@ -638,7 +638,9 @@ Backend harus memeriksa:
 
 Aturan tambahan:
 
-- Body `POST /roles` dan `PATCH /roles/{id}` adalah `name`.
+- Body `POST /roles` adalah `name` dan `permissions` (opsional). Body `PATCH /roles/{id}` adalah `name` dan `permissions`, keduanya opsional, dan `version` wajib jika `permissions` dikirim.
+- `permissions` pada `POST /roles` dan `PATCH /roles/{id}` memerlukan permission `permission.assign`. Nama dan permission disimpan dalam satu transaksi, sehingga permission yang ditolak atau `version` yang usang membatalkan seluruh perubahan.
+- `GET /roles/{id}` memuat `permissions`, sedangkan `GET /roles` tidak.
 - Role bawaan (Super Admin, Admin, Staff, Viewer) tidak dapat diganti nama atau dihapus, dengan code `ROLE_PROTECTED`. Permission role Super Admin tidak dapat diubah melalui API.
 - Role yang masih terpasang pada user, termasuk user yang di-soft delete, tidak dapat dihapus, dengan code `ROLE_IN_USE`.
 - Actor hanya dapat menambahkan permission yang dimilikinya sendiri. Pelanggaran mengembalikan HTTP 403 dengan code `AUTH_PRIVILEGE_ESCALATION`.
