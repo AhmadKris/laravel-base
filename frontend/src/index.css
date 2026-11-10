@@ -28,6 +28,7 @@
     --color-brand: var(--brand);
     --color-brand-foreground: var(--brand-foreground);
     --color-brand-muted: var(--brand-muted);
+    --color-brand-accent: var(--brand-accent);
     --color-success: var(--success);
     --color-warning: var(--warning);
     --color-info: var(--info);
@@ -94,6 +95,7 @@
     --brand: oklch(0.3 0.09 265);
     --brand-foreground: oklch(0.985 0 0);
     --brand-muted: oklch(0.87 0.03 260);
+    --brand-accent: oklch(0.8 0.12 250);
 }
 
 .dark {
@@ -135,6 +137,7 @@
     --brand: oklch(0.27 0.085 265);
     --brand-foreground: oklch(0.985 0 0);
     --brand-muted: oklch(0.87 0.03 260);
+    --brand-accent: oklch(0.8 0.12 250);
 }
 
 @layer base {

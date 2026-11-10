@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { ArrowRight, UserRound } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { FormAlert } from '@/components/shared/FormAlert';
@@ -8,7 +9,9 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { PasswordField } from '@/components/shared/PasswordField';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { applyFormError } from '@/lib/form-errors';
 import { useAuthStore } from '@/stores/auth-store';
 import { loginSchema, type LoginValues } from '../schemas';
@@ -19,6 +22,7 @@ const REMEMBER_HINT_ID = 'login-remember-hint';
 
 export function LoginPage() {
     const setUser = useAuthStore((state) => state.setUser);
+    const { companyName } = usePublicSettings();
     const form = useForm<LoginValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: { identifier: '', password: '', remember: false },
@@ -34,7 +38,7 @@ export function LoginPage() {
     return (
         <>
             <PageHeader
-                title="Masuk"
+                title={`Masuk ke ${companyName}`}
                 description="Gunakan email atau username dan password akun Anda."
             />
             <form
@@ -47,10 +51,25 @@ export function LoginPage() {
                     control={form.control}
                     name="identifier"
                     label="Email atau username"
-                    type="text"
-                    autoComplete="username"
-                    autoCapitalize="none"
-                    spellCheck={false}
+                    renderControl={(field, attributes) => (
+                        <div className="relative">
+                            <UserRound
+                                aria-hidden="true"
+                                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                            />
+                            <Input
+                                {...field}
+                                {...attributes}
+                                value={typeof field.value === 'string' ? field.value : ''}
+                                type="text"
+                                autoComplete="username"
+                                autoCapitalize="none"
+                                spellCheck={false}
+                                placeholder="nama@perusahaan.com atau username"
+                                className="pl-9"
+                            />
+                        </div>
+                    )}
                 />
                 <PasswordField
                     control={form.control}
@@ -79,7 +98,10 @@ export function LoginPage() {
                                 </div>
                             )}
                         />
-                        <Link to="/forgot-password" className="text-sm underline">
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm font-medium text-primary hover:underline"
+                        >
                             Lupa password?
                         </Link>
                     </div>
@@ -90,6 +112,7 @@ export function LoginPage() {
                 </div>
                 <Button type="submit" disabled={login.isPending}>
                     Masuk ke aplikasi
+                    <ArrowRight aria-hidden="true" />
                 </Button>
             </form>
         </>

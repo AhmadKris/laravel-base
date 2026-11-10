@@ -162,10 +162,10 @@ Modul Departemen dihapus pada 2026-11-10. Task berikut dibatalkan, dan skemanya 
 | ID | Task | Ukuran | Butuh | Selesai jika | Status |
 |---|---|---|---|---|---|
 | T-1101 | Test yang memastikan setiap route terlindungi memiliki middleware autentikasi dan permission | S | Fase 8 | Route baru tanpa proteksi membuat test gagal | Done |
-| T-1102 | Test privilege escalation dan data scope menyeluruh | M | Fase 8 | Semua skenario di `AUTHORIZATION_MATRIX.md` yang relevan lulus | Todo |
-| T-1103 | Smoke test login dengan Playwright | S | T-1001 | Login sampai halaman awal berhasil | Todo |
+| T-1102 | Test privilege escalation dan data scope menyeluruh | M | Fase 8 | Semua skenario di `AUTHORIZATION_MATRIX.md` yang relevan lulus | Done |
+| T-1103 | Smoke test login dengan Playwright | S | T-1001 | Login sampai halaman awal berhasil | Done |
 | T-1104 | Cocokkan OpenAPI dengan `API_SPECIFICATION.md` | S | Fase 8 | Tidak ada perbedaan yang belum dicatat | Done |
-| T-1105 | Periksa Security Acceptance Criteria yang relevan | M | Fase 10 | Setiap kriteria memiliki bukti atau catatan | Todo |
+| T-1105 | Periksa Security Acceptance Criteria yang relevan | M | Fase 10 | Setiap kriteria memiliki bukti atau catatan | Done |
 
 ## Fase 12: Deployment
 

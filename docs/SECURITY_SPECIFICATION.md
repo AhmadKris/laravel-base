@@ -1293,22 +1293,28 @@ Satu orang dapat menjalankan beberapa peran pada tim kecil, tetapi approval untu
 
 # 21. Security Acceptance Criteria
 
-Sistem atau fitur dapat dinyatakan memenuhi security baseline apabila:
+Sistem atau fitur dapat dinyatakan memenuhi security baseline apabila setiap kriteria di bawah memiliki bukti.
 
-- [ ] Authentication menggunakan mekanisme yang aman.
-- [ ] Authorization diterapkan di backend.
-- [ ] Input validation diterapkan.
-- [ ] SQL injection prevention diterapkan.
-- [ ] XSS prevention diterapkan.
-- [ ] CSRF protection sesuai mekanisme authentication.
-- [ ] Sensitive data dilindungi.
-- [ ] File upload dan download aman.
-- [ ] API rate limiting tersedia sesuai risiko.
-- [ ] Audit log untuk aktivitas penting tersedia.
-- [ ] Production configuration aman.
-- [ ] Dependency security diperiksa.
-- [ ] Backup terlindungi.
-- [ ] Tidak terdapat critical security finding yang belum ditangani atau disetujui secara formal.
+## 21.1 Status Base v1
+
+Diperiksa pada T-1105, 10 November 2026. Status ini adalah hasil pemeriksaan internal, bukan klaim kepatuhan OWASP ASVS. Path test relatif terhadap `backend/tests/Feature`, kecuali yang diawali `frontend/`.
+
+| Kriteria | Status | Bukti | Catatan |
+|---|---|---|---|
+| Authentication menggunakan mekanisme yang aman. | Terbukti | Cookie session HttpOnly dan password Argon2id: `Core/SessionSecurityTest`. Regenerasi session saat login, pembatasan percobaan, dan rotasi token remember: `Core/Authentication/LoginTest`. Password minimal 12 karakter dan cek kebocoran: `ChangePasswordTest`, `PasswordResetTest`, `CreateUserTest`. Token reset di URL fragment, berlaku 60 menit, sekali pakai: `PasswordResetTest`. Login sampai logout di browser: `frontend/e2e/authentication/login.spec.ts`. | MFA ditunda sesuai `README.md` dan wajib sebelum go-live, minimal untuk akun privileged. |
+| Authorization diterapkan di backend. | Terbukti | Setiap route sesuai tabel akses: `Core/RouteProtectionTest`. 401 dan 403 untuk setiap endpoint, serta permission role sesuai matriks: `Core/AuthorizationMatrixTest`. Skenario lain di `AUTHORIZATION_MATRIX.md` 14.2. | |
+| Input validation diterapkan. | Terbukti | Form Request untuk setiap endpoint yang menerima input, dengan test 422 per endpoint. Allowlist sort dan filter: `Core/ListRequestTest`. Field di luar kontrak diabaikan: `CreateUserTest`, `UpdateUserTest`. | |
+| SQL injection prevention diterapkan. | Terbukti | Semua query memakai query builder dengan parameter binding. Pencarian SQL mentah di `app/` dan `database/` hanya menemukan `version + 1` pada optimistic lock dan DDL migration dengan nama kolom internal, tanpa input pengguna. Kolom sort hanya dari allowlist. | Pemeriksaan kode, bukan pengujian penetrasi. |
+| XSS prevention diterapkan. | Sebagian | React meng-escape output, dan tidak ada `dangerouslySetInnerHTML` di `frontend/src`. API hanya mengembalikan JSON. Logo dan favicon menolak SVG dan disajikan dengan `nosniff` serta CSP `sandbox`: `Modules/SystemConfiguration/BrandingEndpointsTest`. | Header CSP untuk halaman SPA dipasang di Nginx pada T-1203. |
+| CSRF protection sesuai mekanisme authentication. | Terbukti | Request yang memakai session pengguna dari situs lain ditolak dengan 419, dan origin lain tidak mendapat session: `frontend/e2e/security/csrf.spec.ts`. Cookie session `SameSite=Lax` (`config/session.php`). CORS tertutup untuk semua origin: `Core/SessionSecurityTest`. | Laravel menerima request tanpa token jika browser mengirim `Sec-Fetch-Site: same-origin`. Header itu diatur browser dan tidak dapat diubah script dari situs lain. |
+| Sensitive data dilindungi. | Terbukti | Password dan token tidak ikut serialisasi: `Database/SchemaTest`. Nilai sensitif di audit log disamarkan: `Core/AuditLoggerTest`, `Core/Audit/AuditCoverageTest`. Konfigurasi sensitif disimpan terenkripsi dan tidak pernah dikembalikan: `Modules/SystemConfiguration/SystemConfigurationEndpointsTest`. Error tidak menampilkan detail internal, juga saat debug: `Core/ApiExceptionRendererTest`. Variabel `VITE_*` hanya `VITE_API_BASE_URL`. | Enkripsi transport (HTTPS) dipasang pada T-1203. |
+| File upload dan download aman. | Terbukti untuk branding | Ekstensi dan tipe isi file, ukuran, batas piksel, penulisan ulang gambar, nama acak di private storage, dan validasi path: `Modules/SystemConfiguration/BrandingEndpointsTest`. Route `/storage` yang membuka private disk dimatikan: `Core/RouteProtectionTest`. | Upload dokumen, otorisasi download, dan malware scanning berlaku saat modul Document dibangun. ICO disimpan tanpa ditulis ulang, dan disajikan sebagai `image/x-icon` dengan `nosniff`. |
+| API rate limiting tersedia sesuai risiko. | Terbukti | Login, permintaan reset, dan ubah password 5 per menit, upload 20 per menit, API umum 120 per menit: `Core/RateLimitsTest`, `LoginTest`, `PasswordResetTest`, `ChangePasswordTest`, `BrandingEndpointsTest`. | |
+| Audit log untuk aktivitas penting tersedia. | Terbukti | Setiap aksi sensitif tercatat tepat sekali tanpa secret: `Core/Audit/AuditCoverageTest`. Daftar dan detail hanya baca, dengan data scope: `Core/Audit/AuditLogEndpointsTest`. | |
+| Production configuration aman. | Belum | Nilai yang dibutuhkan tercatat di `DEPLOYMENT_GUIDE.md`, seperti `APP_DEBUG=false` dan `SESSION_SECURE_COOKIE=true`. | Diverifikasi di server pada T-1208. |
+| Dependency security diperiksa. | Terbukti | CI menjalankan `composer audit` dan `npm audit --audit-level=high`. Hasil 10 November 2026: tidak ada advisory Composer dan 0 kerentanan pada dependency produksi npm. | Dependency dev memiliki 2 temuan low dan 13 moderate dari `minimatch` dan `deepmerge` lewat ESLint, typescript-eslint, dan CLI shadcn. Paket ini tidak masuk bundle produksi, dan perbaikan yang ditawarkan menurunkan versi major. Dipantau di setiap pembaruan dependency. Scan image Docker ditunda sesuai `README.md`. |
+| Backup terlindungi. | Belum | | Backup terenkripsi dan uji restore pada T-1206. |
+| Tidak terdapat critical security finding yang belum ditangani atau disetujui secara formal. | Terbukti | Temuan selama Fase 11 sudah diperbaiki: route `/storage` yang membuka private disk, dan CORS yang mengizinkan semua origin. | Item terbuka bukan critical dan sudah dijadwalkan: MFA sebelum go-live, header keamanan dan HTTPS (T-1203), konfigurasi produksi (T-1208), dan backup (T-1206). |
 
 ---
 

@@ -864,18 +864,25 @@ Jangan mencatat password, session token, API secret, atau credential.
 
 ## 14.2 Mandatory Test Scenarios
 
-- [ ] Unauthenticated user tidak dapat mengakses protected endpoint.
-- [ ] User tanpa permission menerima 403.
-- [ ] User tidak dapat melihat transaksi pengguna lain tanpa hak.
-- [ ] Staff tidak dapat mengubah transaksi user lain tanpa izin.
-- [ ] Viewer tidak dapat membuat transaksi.
-- [ ] User yang bukan approver tidak dapat melakukan approval.
-- [ ] Requester tidak dapat melakukan self-approval jika dilarang.
-- [ ] Requester tidak dapat membatalkan pengajuan yang sudah memiliki keputusan approve atau reject.
-- [ ] User selain requester tidak dapat mengajukan ulang pengajuan.
-- [ ] User tidak dapat menetapkan Super Admin jika tidak memiliki kewenangan.
-- [ ] Permission change menginvalidasi cache.
-- [ ] Direct API request tetap ditolak walaupun frontend dimanipulasi.
+Status untuk Base v1. Base v1 belum memiliki transaksi, sehingga skenario transaksi diuji pada data pengguna. Skenario approval berlaku saat modul workflow dibangun. Path test relatif terhadap `backend/tests/Feature`.
+
+| Skenario | Status | Bukti |
+|---|---|---|
+| Unauthenticated user tidak dapat mengakses protected endpoint. | Lulus | `Core/AuthorizationMatrixTest` menguji setiap endpoint Login dan permission di `API_SPECIFICATION.md` 16.4 |
+| User tanpa permission menerima 403. | Lulus | `Core/AuthorizationMatrixTest` menguji setiap endpoint ber-permission, sebelum resource dicari |
+| Permission setiap role bawaan sesuai matriks bagian 5. | Lulus | `Core/AuthorizationMatrixTest` membandingkan seeder dengan tabel bagian 5 |
+| User tidak dapat melihat data pengguna lain tanpa hak. | Lulus | `Modules/UserManagement/UserEndpointsTest` (daftar dan detail), `UserRolesTest` (role), `DeactivateUserTest` |
+| Staff tidak dapat mengubah data user lain tanpa izin. | Lulus | `Modules/UserManagement/UpdateUserTest`: "hides other users from a scoped actor with update permission" |
+| Viewer tidak dapat membuat data. | Lulus | `Core/AuthorizationMatrixTest`: Viewer hanya memiliki `user.view`, dan setiap endpoint pembuatan menolak user tanpa permission |
+| Konfigurasi dan audit log mengikuti scope Admin (bagian 5.8 dan 5.9). | Lulus | `Modules/SystemConfiguration/SystemConfigurationEndpointsTest`, `Core/Audit/AuditLogEndpointsTest` |
+| User yang bukan approver tidak dapat melakukan approval. | Fase 2 | Modul workflow |
+| Requester tidak dapat melakukan self-approval jika dilarang. | Fase 2 | Modul workflow |
+| Requester tidak dapat membatalkan pengajuan yang sudah memiliki keputusan approve atau reject. | Fase 2 | Modul workflow |
+| User selain requester tidak dapat mengajukan ulang pengajuan. | Fase 2 | Modul workflow |
+| User tidak dapat menetapkan Super Admin jika tidak memiliki kewenangan. | Lulus | `Modules/UserManagement/UserRolesTest`, `CreateUserTest`, `UpdateUserTest` (ketiga jalur pemberian role), `Core/Authorization/RoleAssignmentServiceTest` |
+| User tidak dapat memberikan permission yang tidak dimilikinya. | Lulus | `Core/Authorization/AssignRolePermissionsTest`: "blocks granting a permission the actor does not hold" |
+| Permission change menginvalidasi cache. | Lulus | `Core/Authorization/AssignRolePermissionsTest`: "applies the change to existing users immediately", `UserRolesTest`: "applies the new permissions immediately" |
+| Direct API request tetap ditolak walaupun frontend dimanipulasi. | Lulus | Semua test di atas memanggil API langsung tanpa frontend. `Core/RouteProtectionTest` memastikan setiap route memiliki proteksi sesuai 16.4 |
 
 ## 14.3 Definition of Done
 

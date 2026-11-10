@@ -34,3 +34,12 @@ it('starts a session for api requests from the spa only', function () {
     expect(sessionCookie($fromSpa))->not->toBeNull()
         ->and(sessionCookie($fromElsewhere))->toBeNull();
 });
+
+it('does not allow other origins to read the api', function (string $method) {
+    $response = $this->call($method, '/api/v1/system-configurations/public', server: [
+        'HTTP_ORIGIN' => 'https://evil.example',
+        'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => 'GET',
+    ]);
+
+    expect($response->headers->has('Access-Control-Allow-Origin'))->toBeFalse();
+})->with(['GET', 'OPTIONS']);
