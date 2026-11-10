@@ -15,7 +15,7 @@ import { roleKeys, roleService } from '../services/roleService';
 
 export function RoleCreatePage() {
     return (
-        <CenteredPage>
+        <CenteredPage width="wide">
             <BackLink to="/roles" label="Daftar role" />
             <PageHeader title="Tambah role" description="Tentukan nama dan permission role." />
             <RoleForm />
@@ -33,7 +33,7 @@ export function RoleEditPage() {
 
     if (query.isPending) {
         return (
-            <CenteredPage>
+            <CenteredPage width="wide">
                 <PageSkeleton label="Memuat data role" />
             </CenteredPage>
         );
@@ -41,7 +41,7 @@ export function RoleEditPage() {
 
     if (query.isError) {
         return (
-            <CenteredPage>
+            <CenteredPage width="wide">
                 <BackLink to="/roles" label="Daftar role" />
                 <Card className="py-0">
                     {query.error instanceof ApiError && query.error.status === 404 ? (
@@ -69,7 +69,7 @@ export function RoleEditPage() {
     const role = query.data;
 
     return (
-        <CenteredPage>
+        <CenteredPage width="wide">
             <BackLink to={`/roles/${role.id}`} label={role.name} />
             <PageHeader title="Ubah role" description={role.name} />
             {role.name === SUPER_ADMIN_ROLE ? (

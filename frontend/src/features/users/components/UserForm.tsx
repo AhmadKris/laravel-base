@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { cn } from 'cn';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
@@ -220,22 +221,37 @@ export function UserForm({ user }: UserFormProps) {
                                         </p>
                                     )}
                                     {roleOptions.isSuccess && filteredRoles.length > 0 && (
-                                        <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="grid gap-2.5 sm:grid-cols-2">
                                             {filteredRoles.map((role) => {
                                                 const id = `user-role-${role.id}`;
+                                                const descId = `${id}-description`;
+                                                const isLocked = !role.can_assign;
 
                                                 return (
                                                     <div
                                                         key={role.id}
-                                                        className="flex items-center gap-2"
+                                                        className={cn(
+                                                            'flex items-start gap-2.5 rounded-md border p-3 transition-colors',
+                                                            field.value.includes(role.name)
+                                                                ? 'border-primary/40 bg-primary/5'
+                                                                : 'border-border/80',
+                                                            isLocked && 'opacity-75',
+                                                        )}
                                                     >
                                                         <Checkbox
                                                             id={id}
                                                             checked={field.value.includes(
                                                                 role.name,
                                                             )}
+                                                            disabled={isLocked}
+                                                            aria-describedby={descId}
+                                                            className="mt-0.5"
                                                             onBlur={field.onBlur}
-                                                            onCheckedChange={(checked) =>
+                                                            onCheckedChange={(checked) => {
+                                                                if (isLocked) {
+                                                                    return;
+                                                                }
+
                                                                 field.onChange(
                                                                     checked === true
                                                                         ? [
@@ -247,10 +263,38 @@ export function UserForm({ user }: UserFormProps) {
                                                                                   name !==
                                                                                   role.name,
                                                                           ),
-                                                                )
-                                                            }
+                                                                );
+                                                            }}
                                                         />
-                                                        <Label htmlFor={id}>{role.name}</Label>
+                                                        <div className="grid min-w-0 gap-0.5 leading-snug">
+                                                            <Label
+                                                                htmlFor={id}
+                                                                className={
+                                                                    isLocked
+                                                                        ? 'cursor-not-allowed'
+                                                                        : 'cursor-pointer'
+                                                                }
+                                                            >
+                                                                {role.name}
+                                                            </Label>
+                                                            <p
+                                                                id={descId}
+                                                                className="text-xs text-muted-foreground tabular-nums"
+                                                            >
+                                                                {role.is_protected
+                                                                    ? 'Role bawaan'
+                                                                    : 'Role kustom'}{' '}
+                                                                - {role.permissions_count ?? 0} hak
+                                                                akses
+                                                            </p>
+                                                            {isLocked && (
+                                                                <p className="text-xs text-warning">
+                                                                    Di luar kewenangan Anda untuk
+                                                                    menetapkan atau mencabut role
+                                                                    ini.
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 );
                                             })}

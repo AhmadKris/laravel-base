@@ -62,7 +62,7 @@ it('lets an admin read roles and permissions', function () {
     $this->actingAs($admin)->getJson('/api/v1/roles/'.role('Staff')->id)->assertOk();
 });
 
-it('lists roles with pagination, search, and user counts', function () {
+it('lists roles with pagination, search, user counts, and permission counts', function () {
     userWithRole('Staff');
 
     $this->actingAs($this->superAdmin)
@@ -71,8 +71,28 @@ it('lists roles with pagination, search, and user counts', function () {
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.name', 'Staff')
         ->assertJsonPath('data.0.users_count', 1)
+        ->assertJsonPath('data.0.permissions_count', 1)
+        ->assertJsonPath('data.0.can_assign', true)
         ->assertJsonPath('data.0.is_protected', true)
         ->assertJsonPath('meta.pagination.total', 1);
+});
+
+it('reports whether the actor may assign each role', function () {
+    Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
+    $admin = userWithRole('Admin');
+
+    $rows = $this->actingAs($admin)
+        ->getJson('/api/v1/roles')
+        ->assertOk()
+        ->json('data');
+
+    $byName = collect($rows)->pluck('can_assign', 'name')->all();
+
+    expect($byName['Staff'])->toBeTrue()
+        ->and($byName['Viewer'])->toBeTrue()
+        ->and($byName['Admin'])->toBeFalse()
+        ->and($byName['Super Admin'])->toBeFalse()
+        ->and($byName['Auditor'])->toBeFalse();
 });
 
 it('sorts roles only by allowed fields', function () {

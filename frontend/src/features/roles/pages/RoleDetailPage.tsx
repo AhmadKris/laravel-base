@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
@@ -15,7 +16,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { ApiError, toApiError } from '@/lib/api-error';
 import { formatDateTime } from '@/lib/format';
 import { DeleteRoleDialog } from '../components/DeleteRoleDialog';
-import { groupPermissions, SUPER_ADMIN_ROLE } from '../permissionGroups';
+import { describePermission, groupPermissions, SUPER_ADMIN_ROLE } from '../permissionGroups';
 import { roleKeys, roleService } from '../services/roleService';
 
 export function RoleDetailPage() {
@@ -31,7 +32,7 @@ export function RoleDetailPage() {
 
     if (query.isPending) {
         return (
-            <CenteredPage>
+            <CenteredPage width="wide">
                 <PageSkeleton label="Memuat detail role" />
             </CenteredPage>
         );
@@ -39,7 +40,7 @@ export function RoleDetailPage() {
 
     if (query.isError) {
         return (
-            <CenteredPage>
+            <CenteredPage width="wide">
                 <BackLink to="/roles" label="Daftar role" />
                 <Card className="py-0">
                     {query.error instanceof ApiError && query.error.status === 404 ? (
@@ -67,9 +68,10 @@ export function RoleDetailPage() {
     const role = query.data;
     const permissions = role.permissions ?? [];
     const groups = groupPermissions(permissions);
+    const usersCount = role.users_count ?? 0;
 
     return (
-        <CenteredPage>
+        <CenteredPage width="wide">
             <BackLink to="/roles" label="Daftar role" />
             <PageHeader
                 title={role.name}
@@ -90,7 +92,7 @@ export function RoleDetailPage() {
                 }
             />
             <DetailCard title="Ringkasan role">
-                <dl className="grid gap-y-3 text-sm sm:grid-cols-[9rem_1fr]">
+                <dl className="grid gap-y-3 text-sm sm:grid-cols-[10rem_1fr]">
                     <dt className="text-muted-foreground">Jenis</dt>
                     <dd>
                         <Badge variant={role.is_protected ? 'info' : 'secondary'}>
@@ -98,37 +100,70 @@ export function RoleDetailPage() {
                         </Badge>
                     </dd>
                     <dt className="text-muted-foreground">Jumlah pengguna</dt>
-                    <dd className="tabular-nums">{role.users_count ?? 0}</dd>
-                    <dt className="text-muted-foreground">Total permission</dt>
-                    <dd className="tabular-nums">{permissions.length}</dd>
+                    <dd className="tabular-nums">
+                        {usersCount > 0 && can('user.view') ? (
+                            <Link
+                                to={`/users?role=${encodeURIComponent(role.name)}`}
+                                className="text-primary hover:underline"
+                            >
+                                {usersCount} pengguna
+                            </Link>
+                        ) : (
+                            <span>{usersCount}</span>
+                        )}
+                    </dd>
+                    <dt className="text-muted-foreground">Total hak akses</dt>
+                    <dd className="tabular-nums">{permissions.length} izin</dd>
                     <dt className="text-muted-foreground">Dibuat</dt>
                     <dd className="tabular-nums">
                         {role.created_at ? formatDateTime(role.created_at) : '-'}
                     </dd>
                 </dl>
             </DetailCard>
-            <DetailCard title="Permission">
-                <div className="flex flex-col gap-3">
-                    {groups.length === 0 && (
-                        <p className="text-sm text-muted-foreground">
-                            Role ini belum memiliki permission.
-                        </p>
-                    )}
-                    {groups.map((group) => (
-                        <div key={group.label} className="grid gap-1.5">
-                            <p className="text-xs font-medium text-muted-foreground">
-                                {group.label}
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                                {group.permissions.map((name) => (
-                                    <Badge key={name} variant="secondary">
-                                        {name}
+            <DetailCard title="Hak akses">
+                {groups.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        Role ini belum memiliki permission.
+                    </p>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {groups.map((group) => (
+                            <section key={group.key} className="rounded-lg border p-3.5">
+                                <div className="mb-2.5 flex items-center justify-between gap-2 border-b pb-2">
+                                    <h3 className="text-sm font-medium">{group.label}</h3>
+                                    <Badge variant="secondary" className="tabular-nums">
+                                        {group.permissions.length} izin
                                     </Badge>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                </div>
+                                <ul className="grid gap-2.5">
+                                    {group.permissions.map((name) => {
+                                        const meta = describePermission(name);
+
+                                        return (
+                                            <li key={name} className="flex items-start gap-2">
+                                                <Check
+                                                    aria-hidden="true"
+                                                    className="mt-0.5 size-4 shrink-0 text-primary"
+                                                />
+                                                <div className="grid min-w-0 gap-0.5">
+                                                    <span className="text-sm font-medium">
+                                                        {meta.label}
+                                                    </span>
+                                                    <code className="font-mono text-xs text-muted-foreground">
+                                                        {name}
+                                                    </code>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {meta.description}
+                                                    </p>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </section>
+                        ))}
+                    </div>
+                )}
             </DetailCard>
             <DeleteRoleDialog
                 role={isDeleting ? role : null}

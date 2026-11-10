@@ -588,7 +588,7 @@ Field yang dapat diubah: `name`, `email`, `username`, dan `status`. Password tid
 - Role selain Super Admin, System Admin, dan Admin hanya dapat melihat akunnya sendiri; pengguna lain mengembalikan HTTP 404.
 - `GET /users/{id}/roles` mengembalikan `data.roles` berupa daftar nama role.
 - `PUT /users/{id}/roles` menerima `roles` berupa daftar nama role dan mengganti seluruh role user. Actor tidak dapat mengubah role-nya sendiri.
-- `GET /users` mendukung `search` pada nama dan email, filter `status`, serta `sort_by` untuk `name`, `email`, dan `created_at`.
+- `GET /users` mendukung `search` pada nama dan email, filter `status` serta `role`, dan `sort_by` untuk `name`, `email`, dan `created_at`.
 
 ---
 
@@ -642,7 +642,7 @@ Aturan tambahan:
 
 - Body `POST /roles` adalah `name` dan `permissions` (opsional). Body `PATCH /roles/{id}` adalah `name` dan `permissions`, keduanya opsional, dan `version` wajib jika `permissions` dikirim.
 - `permissions` pada `POST /roles` dan `PATCH /roles/{id}` memerlukan permission `permission.assign`. Nama dan permission disimpan dalam satu transaksi, sehingga permission yang ditolak atau `version` yang usang membatalkan seluruh perubahan.
-- `GET /roles/{id}` memuat `permissions`, sedangkan `GET /roles` tidak.
+- `GET /roles/{id}` memuat `permissions`, sedangkan `GET /roles` memuat `permissions_count` tanpa daftar `permissions`. Kedua response menyertakan `can_assign` untuk menandai apakah actor berwenang menetapkan role tersebut ke pengguna lain.
 - `GET /roles` mendukung `search` pada nama serta `sort_by` untuk `name` dan `created_at`.
 - Role bawaan (Super Admin, Admin, Staff, Viewer) tidak dapat diganti nama atau dihapus, dengan code `ROLE_PROTECTED`. Permission role Super Admin tidak dapat diubah melalui API.
 - Role yang masih terpasang pada user, termasuk user yang di-soft delete, tidak dapat dihapus, dengan code `ROLE_IN_USE`.

@@ -23,6 +23,7 @@ import { UserStatusDialog } from '../components/UserStatusDialog';
 import { userKeys, userService } from '../services/userService';
 
 const ALL_STATUSES = 'all';
+const ALL_ROLES = 'all';
 export function UserListPage() {
     const {
         params,
@@ -36,7 +37,18 @@ export function UserListPage() {
     const navigate = useNavigate();
     const currentUserId = useAuthStore((state) => state.user?.id);
     const [statusTarget, setStatusTarget] = useState<User | null>(null);
-    const filters = { ...tableFilters, status: params.get('status') ?? undefined };
+    const filters = {
+        ...tableFilters,
+        status: params.get('status') ?? undefined,
+        role: params.get('role') ?? undefined,
+    };
+
+    const canViewRoles = can('role.view');
+    const roleOptions = useQuery({
+        queryKey: userKeys.roleOptions,
+        queryFn: userService.listRoleOptions,
+        enabled: canViewRoles,
+    });
 
     const users = useQuery({
         queryKey: userKeys.list(filters),
@@ -60,10 +72,20 @@ export function UserListPage() {
         [currentUserId, canUpdate, canDelete],
     );
 
-    const hasFilters = filters.search !== undefined || filters.status !== undefined;
+    const roleNames = [
+        ...new Set([
+            ...(roleOptions.data ?? []).map((role) => role.name),
+            ...(filters.role !== undefined ? [filters.role] : []),
+        ]),
+    ];
+
+    const hasFilters =
+        filters.search !== undefined || filters.status !== undefined || filters.role !== undefined;
+    const activeFilterCount =
+        (filters.status === undefined ? 0 : 1) + (filters.role === undefined ? 0 : 1);
 
     const clearFilters = () => {
-        updateParams({ search: undefined, status: undefined, page: undefined });
+        updateParams({ search: undefined, status: undefined, role: undefined, page: undefined });
     };
 
     return (
@@ -89,7 +111,7 @@ export function UserListPage() {
                     value={searchInput}
                     onChange={changeSearch}
                 />
-                <FilterBar activeCount={filters.status === undefined ? 0 : 1}>
+                <FilterBar activeCount={activeFilterCount}>
                     <Select
                         value={filters.status ?? ALL_STATUSES}
                         onValueChange={(value) =>
@@ -108,6 +130,29 @@ export function UserListPage() {
                             <SelectItem value="inactive">Nonaktif</SelectItem>
                         </SelectContent>
                     </Select>
+                    {(canViewRoles || filters.role !== undefined) && (
+                        <Select
+                            value={filters.role ?? ALL_ROLES}
+                            onValueChange={(value) =>
+                                updateParams({
+                                    role: value === ALL_ROLES ? undefined : value,
+                                    page: undefined,
+                                })
+                            }
+                        >
+                            <SelectTrigger aria-label="Filter role" className="w-full sm:w-44">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL_ROLES}>Semua role</SelectItem>
+                                {roleNames.map((name) => (
+                                    <SelectItem key={name} value={name}>
+                                        {name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                     {hasFilters && (
                         <Button type="button" variant="ghost" onClick={clearFilters}>
                             Hapus filter

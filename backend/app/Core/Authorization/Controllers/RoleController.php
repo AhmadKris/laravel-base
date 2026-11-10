@@ -29,7 +29,7 @@ final class RoleController
     {
         Gate::authorize('viewAny', Role::class);
 
-        $roles = $request->applySorting(Role::query()->withCount('users'))
+        $roles = $request->applySorting(Role::query()->withCount(['users', 'permissions']))
             ->when(
                 $request->searchPattern(),
                 fn (Builder $query, string $pattern) => $query->where('name', 'like', $pattern),
@@ -115,7 +115,7 @@ final class RoleController
 
     private function detail(Role $role): RoleResource
     {
-        return new RoleResource($role->refresh()->load('permissions')->loadCount('users'));
+        return new RoleResource($role->refresh()->load('permissions')->loadCount(['users', 'permissions']));
     }
 
     private function actor(Request $request): User

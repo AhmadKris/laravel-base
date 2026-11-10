@@ -21,6 +21,7 @@ final class UserListRequest extends ListRequest
     {
         return [
             'status' => ['sometimes', Rule::enum(ActiveStatus::class)],
+            'role' => ['sometimes', 'string', 'max:150'],
         ];
     }
 
@@ -37,6 +38,8 @@ final class UserListRequest extends ListRequest
                     ->orWhere('email', 'like', $pattern)))
             ->when($this->validated('status'), fn (Builder $users, string $status) => $users
                 ->where('is_active', ActiveStatus::from($status)->toBoolean()))
+            ->when($this->validated('role'), fn (Builder $users, string $role) => $users
+                ->whereHas('roles', fn (Builder $roles) => $roles->where('name', $role)))
             ->orderBy('name')
             ->orderBy('id');
     }

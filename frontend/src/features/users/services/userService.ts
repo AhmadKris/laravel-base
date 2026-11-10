@@ -15,6 +15,7 @@ export interface UserListFilters {
     per_page?: number;
     search?: string;
     status?: string;
+    role?: string;
     sort_by?: string;
     sort_direction?: string;
 }

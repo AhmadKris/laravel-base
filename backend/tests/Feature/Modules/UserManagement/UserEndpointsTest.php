@@ -70,9 +70,15 @@ it('limits the list to the own account for other roles', function () {
 
 it('filters and sorts the list', function () {
     $this->itUser->forceFill(['is_active' => false])->save();
+    $this->financeUser->assignRole('Staff');
 
     $this->actingAs($this->admin)->getJson('/api/v1/users?status=inactive')
         ->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Budi');
+    $this->actingAs($this->admin)->getJson('/api/v1/users?role=Staff')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Ani');
+    $this->actingAs($this->admin)->getJson('/api/v1/users?role='.str_repeat('a', 151))
+        ->assertUnprocessable()->assertJsonValidationErrors('role');
     $this->actingAs($this->admin)->getJson('/api/v1/users?sort_by=password')
         ->assertUnprocessable()->assertJsonValidationErrors('sort_by');
 });
