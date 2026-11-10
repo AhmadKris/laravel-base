@@ -35,7 +35,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // No route serves this disk; files leave it only through endpoints that check access.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
