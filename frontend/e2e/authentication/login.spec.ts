@@ -16,7 +16,12 @@ test('a user logs in, reaches the home page, and logs out', async ({ page }) => 
 
     await expect(page.getByRole('heading', { name: 'Beranda' })).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('link', { name: 'Pengguna' })).toBeVisible();
+    // Scoped to the sidebar, since links on the home page also mention users.
+    await expect(
+        page
+            .getByRole('navigation', { name: 'Menu utama' })
+            .getByRole('link', { name: 'Pengguna', exact: true }),
+    ).toBeVisible();
 
     await page.getByRole('button', { name: /Menu akun/ }).click();
     await page.getByRole('menuitem', { name: 'Keluar' }).click();
