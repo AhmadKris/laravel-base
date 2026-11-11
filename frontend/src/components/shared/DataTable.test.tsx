@@ -133,6 +133,10 @@ describe('pagination', () => {
         renderTable({ pagination, onPageChange });
 
         expect(screen.getByText('Menampilkan 21 sampai 40 dari 45 data')).toBeVisible();
+        expect(screen.getByText('Menampilkan 21 sampai 40 dari 45 data')).toHaveAttribute(
+            'aria-live',
+            'polite',
+        );
         expect(screen.getByText('Halaman 2 dari 3')).toBeVisible();
 
         await user.click(screen.getByRole('button', { name: 'Berikutnya' }));

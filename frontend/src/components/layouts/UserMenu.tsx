@@ -25,7 +25,8 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
 ];
 
 export function UserMenu() {
-    const userName = useAuthStore((state) => state.user?.name);
+    const user = useAuthStore((state) => state.user);
+    const userName = user?.name;
     const setSignedOut = useAuthStore((state) => state.setSignedOut);
     const themePreference = useThemeStore((state) => state.preference);
     const setThemePreference = useThemeStore((state) => state.setPreference);
@@ -49,7 +50,25 @@ export function UserMenu() {
                     <ChevronDown aria-hidden="true" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
+                {user !== null && (
+                    <>
+                        <DropdownMenuLabel className="grid gap-0.5 font-normal">
+                            <span className="truncate text-sm font-medium text-foreground">
+                                {user.name}
+                            </span>
+                            <span className="truncate text-xs text-muted-foreground">
+                                {user.email}
+                            </span>
+                            {user.roles.length > 0 && (
+                                <span className="truncate text-xs text-muted-foreground">
+                                    {user.roles.join(', ')}
+                                </span>
+                            )}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                    </>
+                )}
                 <DropdownMenuItem asChild>
                     <Link to="/change-password">Ubah password</Link>
                 </DropdownMenuItem>

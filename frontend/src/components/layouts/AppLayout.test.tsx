@@ -307,6 +307,16 @@ it('closes the mobile menu after choosing a page', async () => {
     window.innerWidth = desktopWidth;
 });
 
+it('shows account details in the user menu dropdown', async () => {
+    const user = userEvent.setup();
+    renderLayout([]);
+
+    await user.click(screen.getByRole('button', { name: /Menu akun/ }));
+
+    expect(await screen.findByText('ani@example.com')).toBeVisible();
+    expect(screen.getByText('Staff')).toBeVisible();
+});
+
 it('removes cached data when the user logs out', async () => {
     server.use(http.post('*/logout', () => new HttpResponse(null, { status: 204 })));
     const queryClient = new QueryClient();

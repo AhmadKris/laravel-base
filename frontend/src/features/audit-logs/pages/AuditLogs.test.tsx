@@ -365,6 +365,7 @@ describe('audit log detail', () => {
 
         const changes = screen.getByRole('heading', { name: 'Detail perubahan' })
             .parentElement as HTMLElement;
+        expect(within(changes).getByText('Sebelum diubah')).toBeVisible();
         expect(within(changes).getByText('old')).toBeVisible();
         expect(within(changes).getByText(/"name": "Sari Dewi"/)).toBeVisible();
         expect(within(changes).queryByText('context')).not.toBeInTheDocument();

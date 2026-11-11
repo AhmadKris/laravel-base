@@ -80,6 +80,15 @@ it('shows record totals from the backend', async () => {
     expect(await tileValue('Pengguna aktif')).toBe('1.280');
     expect(await tileValue('Role')).toBe('4');
     expect(await tileValue('Aktivitas 7 hari terakhir')).toBe('37');
+    expect(screen.getByRole('link', { name: 'Lihat pengguna aktif' })).toHaveAttribute(
+        'href',
+        '/users?status=active',
+    );
+    expect(screen.getByRole('link', { name: 'Lihat role' })).toHaveAttribute('href', '/roles');
+    expect(screen.getByRole('link', { name: 'Lihat aktivitas 7 hari terakhir' })).toHaveAttribute(
+        'href',
+        '/audit-logs?period=7d',
+    );
 });
 
 it('counts only active users and asks for one row', async () => {
@@ -119,6 +128,14 @@ it('describes recent activity in Indonesian, also for an unknown event', async (
 
     expect(await screen.findByText('Rina Hartono')).toBeVisible();
     expect(screen.getByText(/menonaktifkan pengguna/)).toBeVisible();
+    expect(screen.getByRole('link', { name: /Rina Hartono/ })).toHaveAttribute(
+        'href',
+        '/audit-logs/1',
+    );
+    expect(screen.getByRole('link', { name: 'Lihat semua' })).toHaveAttribute(
+        'href',
+        '/audit-logs',
+    );
     expect(screen.getByText('Akun tidak dikenal')).toBeVisible();
     expect(screen.getByText(/melakukan perubahan/)).toBeVisible();
     expect(screen.queryByText(/module\.unknown/)).not.toBeInTheDocument();

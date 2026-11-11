@@ -67,7 +67,7 @@ export function SettingsPage() {
 
     if (query.isPending) {
         return (
-            <CenteredPage>
+            <CenteredPage width="wide">
                 <PageSkeleton label="Memuat pengaturan" />
             </CenteredPage>
         );
@@ -75,7 +75,7 @@ export function SettingsPage() {
 
     if (query.isError) {
         return (
-            <CenteredPage>
+            <CenteredPage width="wide">
                 {header}
                 <Card className="py-0">
                     <ErrorState
@@ -165,7 +165,7 @@ export function SettingsPage() {
     };
 
     return (
-        <CenteredPage>
+        <CenteredPage width="wide">
             {header}
             {tabs.length === 0 ? (
                 <Card className="py-0">
@@ -177,18 +177,37 @@ export function SettingsPage() {
             ) : (
                 <Tabs value={activeTab} onValueChange={changeTab}>
                     <TabsList variant="line" aria-label="Kategori pengaturan">
-                        {tabs.map((tab) => (
-                            <TabsTrigger key={tab.id} value={tab.id}>
-                                {tab.label}
-                                {tab.isDirty && (
-                                    <span
-                                        aria-hidden="true"
-                                        className="size-1.5 rounded-full bg-primary"
-                                    />
-                                )}
-                            </TabsTrigger>
-                        ))}
+                        {tabs.map((tab) => {
+                            const dirtyHintId = `${tab.id}-dirty-hint`;
+
+                            return (
+                                <TabsTrigger
+                                    key={tab.id}
+                                    value={tab.id}
+                                    aria-describedby={tab.isDirty ? dirtyHintId : undefined}
+                                >
+                                    {tab.label}
+                                    {tab.isDirty && (
+                                        <span
+                                            aria-hidden="true"
+                                            className="size-1.5 rounded-full bg-primary"
+                                        />
+                                    )}
+                                </TabsTrigger>
+                            );
+                        })}
                     </TabsList>
+                    {tabs.some((tab) => tab.isDirty) && (
+                        <div className="sr-only">
+                            {tabs
+                                .filter((tab) => tab.isDirty)
+                                .map((tab) => (
+                                    <span key={tab.id} id={`${tab.id}-dirty-hint`}>
+                                        Ada perubahan belum disimpan pada bagian {tab.label}
+                                    </span>
+                                ))}
+                        </div>
+                    )}
                     {tabs.map((tab) => (
                         // Keep inactive tabs mounted so switching tabs preserves unsaved edits and dirty state.
                         <TabsContent key={tab.id} value={tab.id} forceMount>
