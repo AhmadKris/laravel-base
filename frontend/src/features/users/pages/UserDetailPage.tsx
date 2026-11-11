@@ -35,6 +35,14 @@ export function UserDetailPage() {
         queryFn: () => userService.get(userId),
     });
 
+    const canViewRoles = can('role.view');
+    const rolesCount = query.data?.roles?.length ?? 0;
+    const roleOptions = useQuery({
+        queryKey: userKeys.roleOptions,
+        queryFn: userService.listRoleOptions,
+        enabled: canViewRoles && rolesCount > 0,
+    });
+
     if (query.isPending) {
         return (
             <CenteredPage>
@@ -131,11 +139,30 @@ export function UserDetailPage() {
                     <dd className="min-w-0">
                         {roles.length > 0 ? (
                             <div className="flex flex-wrap gap-1.5">
-                                {roles.map((role) => (
-                                    <Badge key={role} variant="secondary">
-                                        {role}
-                                    </Badge>
-                                ))}
+                                {roles.map((roleName) => {
+                                    if (!canViewRoles) {
+                                        return (
+                                            <Badge key={roleName} variant="secondary">
+                                                {roleName}
+                                            </Badge>
+                                        );
+                                    }
+
+                                    const matchedRole = roleOptions.data?.find(
+                                        (option) => option.name === roleName,
+                                    );
+                                    const target = matchedRole
+                                        ? `/roles/${matchedRole.id}`
+                                        : `/roles?search=${encodeURIComponent(roleName)}`;
+
+                                    return (
+                                        <Badge key={roleName} asChild variant="secondary">
+                                            <Link to={target} className="hover:underline">
+                                                {roleName}
+                                            </Link>
+                                        </Badge>
+                                    );
+                                })}
                             </div>
                         ) : (
                             NOT_SET

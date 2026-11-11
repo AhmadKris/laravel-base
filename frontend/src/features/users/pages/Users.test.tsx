@@ -495,6 +495,21 @@ describe('user detail', () => {
         expect(screen.getByText('Staff')).toBeVisible();
     });
 
+    it('links user role badges to role detail when viewer can view roles', async () => {
+        asUser(['user.view', 'role.view']);
+        serveDetail(makeTarget({ roles: ['Staff'] }));
+        server.use(http.get('*/api/v1/roles', () => page([makeRole(12, 'Staff')])));
+
+        renderApp('/users/user-1');
+
+        await waitFor(() =>
+            expect(screen.getByRole('link', { name: 'Staff' })).toHaveAttribute(
+                'href',
+                '/roles/12',
+            ),
+        );
+    });
+
     it('hides actions the user may not perform', async () => {
         asUser(['user.view']);
         serveDetail(makeTarget());

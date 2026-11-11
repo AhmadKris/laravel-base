@@ -35,7 +35,7 @@ export function PaginationControls({
             className="flex flex-wrap items-center justify-between gap-2 text-sm"
         >
             <div className="flex flex-wrap items-center gap-3">
-                <p className="text-muted-foreground">
+                <p aria-live="polite" className="text-muted-foreground">
                     {total === 0
                         ? 'Tidak ada data'
                         : `Menampilkan ${from} sampai ${to} dari ${total} data`}

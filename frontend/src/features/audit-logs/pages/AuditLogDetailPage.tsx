@@ -23,6 +23,22 @@ const CONTEXT_LABELS: Record<string, string> = {
     request_id: 'ID permintaan',
 };
 
+const CHANGE_LABELS: Record<string, string> = {
+    old: 'Sebelum diubah',
+    new: 'Sesudah diubah',
+    old_name: 'Nama sebelumnya',
+    new_name: 'Nama baru',
+    name: 'Nama',
+    roles: 'Role',
+    permissions: 'Permission',
+    status: 'Status',
+    email: 'Email',
+    username: 'Username',
+    key: 'Kunci konfigurasi',
+    value: 'Nilai',
+    file: 'File',
+};
+
 function subjectPath(subject: NonNullable<AuditLog['subject']>): string | undefined {
     if (subject.id === null) {
         return undefined;
@@ -59,15 +75,32 @@ function ValueView({ value }: { value: JsonValue }) {
 
 function DetailList({ entries }: { entries: [string, JsonValue][] }) {
     return (
-        <dl className="grid gap-3 text-sm sm:grid-cols-[9rem_1fr]">
-            {entries.map(([key, value]) => (
-                <div key={key} className="contents">
-                    <dt className="font-mono text-xs text-muted-foreground sm:pt-0.5">{key}</dt>
-                    <dd className="min-w-0">
-                        <ValueView value={value} />
-                    </dd>
-                </div>
-            ))}
+        <dl className="grid gap-3 text-sm sm:grid-cols-[11rem_1fr]">
+            {entries.map(([key, value]) => {
+                const label = CHANGE_LABELS[key];
+
+                return (
+                    <div key={key} className="contents">
+                        <dt className="min-w-0 sm:pt-0.5">
+                            {label !== undefined ? (
+                                <div className="grid gap-0.5">
+                                    <span className="text-muted-foreground">{label}</span>
+                                    <code className="font-mono text-xs text-muted-foreground/80">
+                                        {key}
+                                    </code>
+                                </div>
+                            ) : (
+                                <code className="font-mono text-xs text-muted-foreground">
+                                    {key}
+                                </code>
+                            )}
+                        </dt>
+                        <dd className="min-w-0">
+                            <ValueView value={value} />
+                        </dd>
+                    </div>
+                );
+            })}
         </dl>
     );
 }

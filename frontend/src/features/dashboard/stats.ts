@@ -6,6 +6,7 @@ export interface DashboardStat {
     label: string;
     permission: string;
     path: string;
+    href: string;
     filters: StatFilters;
 }
 
@@ -23,13 +24,15 @@ export function getDashboardStats(): DashboardStat[] {
             label: 'Pengguna aktif',
             permission: 'user.view',
             path: '/users',
+            href: '/users?status=active',
             filters: { status: 'active' },
         },
-        { label: 'Role', permission: 'role.view', path: '/roles', filters: {} },
+        { label: 'Role', permission: 'role.view', path: '/roles', href: '/roles', filters: {} },
         {
             label: `Aktivitas ${ACTIVITY_WINDOW_DAYS} hari terakhir`,
             permission: 'audit.view',
             path: '/audit-logs',
+            href: '/audit-logs?period=7d',
             filters: { date_from: daysAgo(ACTIVITY_WINDOW_DAYS) },
         },
     ];

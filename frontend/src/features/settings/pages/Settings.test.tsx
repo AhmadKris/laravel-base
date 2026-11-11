@@ -427,6 +427,10 @@ describe('saving settings', () => {
         const name = await screen.findByLabelText('Nama perusahaan');
         await userEvent.type(name, ' Nusantara');
 
+        expect(screen.getByRole('tab', { name: 'Perusahaan' })).toHaveAccessibleDescription(
+            'Ada perubahan belum disimpan pada bagian Perusahaan',
+        );
+
         await openTab('Lokalisasi');
         expect(router.state.location.search).toBe('?tab=localization');
         expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
