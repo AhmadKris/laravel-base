@@ -1,3 +1,4 @@
+import { cn } from 'cn';
 import { CalendarDays, Check, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { id as idLocale } from 'react-day-picker/locale';
@@ -5,6 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { DATE_PRESETS, type DateRange, rangeDays, rangeLabel, todayIn } from '@/lib/date-range';
 
 interface DateRangeFilterProps {
@@ -34,9 +45,12 @@ function fromCalendarDay(date: Date): string {
 }
 
 /**
- * One field for a date range: common presets first, then a calendar for any other range.
+ * One field for a date range: common presets first, then a calendar for any other range. On a
+ * phone it opens a bottom sheet, since a popover anchored inside the filter sheet would cover the
+ * page and scroll inside another scrolling panel.
  */
 export function DateRangeFilter({ value, onChange, timeZone }: DateRangeFilterProps) {
+    const isMobile = useIsMobile();
     const [open, setOpen] = useState(false);
     const today = todayIn(timeZone);
     const current = rangeDays(value, timeZone);
@@ -74,30 +88,114 @@ export function DateRangeFilter({ value, onChange, timeZone }: DateRangeFilterPr
     };
 
     const complete = draft?.to !== undefined ? { from: draft.from, to: draft.to } : undefined;
+    const status =
+        complete !== undefined
+            ? rangeLabel({ preset: 'custom', ...complete })
+            : draft !== undefined
+              ? 'Pilih tanggal akhir'
+              : 'Pilih tanggal mulai';
+    const apply = () => {
+        if (complete !== undefined) {
+            choose({ preset: 'custom', ...complete });
+        }
+    };
+
+    const trigger = (
+        <Button
+            variant="outline"
+            className="w-full justify-between font-normal sm:w-auto sm:min-w-52"
+            aria-label={`Rentang waktu: ${label}`}
+        >
+            <span className="flex min-w-0 items-center gap-2">
+                <CalendarDays aria-hidden="true" className="text-muted-foreground" />
+                <span className="truncate">{label}</span>
+            </span>
+            <ChevronDown aria-hidden="true" className="text-muted-foreground" />
+        </Button>
+    );
+
+    const calendar = (
+        <Calendar
+            mode="range"
+            locale={idLocale}
+            showOutsideDays={false}
+            className={cn(
+                'mx-auto p-0',
+                // On a phone the days fill the sheet width, up to a comfortable touch size.
+                isMobile
+                    ? '[--cell-size:min(--spacing(11),calc((100vw_-_2rem)/7))]'
+                    : '[--cell-size:--spacing(9)]',
+            )}
+            // A shaded today reads as part of the range, so today is marked by text.
+            classNames={{ today: 'font-semibold text-primary' }}
+            month={month}
+            onMonthChange={setMonth}
+            today={toCalendarDay(today)}
+            endMonth={toCalendarDay(today)}
+            disabled={{ after: toCalendarDay(today) }}
+            selected={
+                draft && {
+                    from: toCalendarDay(draft.from),
+                    to: draft.to === undefined ? undefined : toCalendarDay(draft.to),
+                }
+            }
+            onSelect={(_range, day) => pick(fromCalendarDay(day))}
+        />
+    );
+
+    if (isMobile) {
+        return (
+            <Sheet open={open} onOpenChange={openChange}>
+                <SheetTrigger asChild>{trigger}</SheetTrigger>
+                <SheetContent side="bottom" className="max-h-[90svh] gap-0">
+                    <SheetHeader className="pr-12">
+                        <SheetTitle>Rentang waktu</SheetTitle>
+                        <SheetDescription aria-live="polite">{status}</SheetDescription>
+                    </SheetHeader>
+                    <div className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-4">
+                        <div
+                            role="group"
+                            aria-label="Pilihan cepat"
+                            className="flex flex-wrap gap-2"
+                        >
+                            {DATE_PRESETS.map((preset) => (
+                                <Button
+                                    key={preset.value}
+                                    variant={value.preset === preset.value ? 'default' : 'outline'}
+                                    className="font-normal"
+                                    aria-pressed={value.preset === preset.value}
+                                    onClick={() => choose({ preset: preset.value })}
+                                >
+                                    {preset.label}
+                                </Button>
+                            ))}
+                        </div>
+                        <Separator />
+                        <div role="group" aria-label="Rentang lain">
+                            {calendar}
+                        </div>
+                    </div>
+                    <SheetFooter>
+                        <Button size="lg" disabled={complete === undefined} onClick={apply}>
+                            Terapkan rentang
+                        </Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
+        );
+    }
 
     return (
         <Popover open={open} onOpenChange={openChange}>
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    className="w-full justify-between font-normal sm:w-auto sm:min-w-52"
-                    aria-label={`Rentang waktu: ${label}`}
-                >
-                    <span className="flex min-w-0 items-center gap-2">
-                        <CalendarDays aria-hidden="true" className="text-muted-foreground" />
-                        <span className="truncate">{label}</span>
-                    </span>
-                    <ChevronDown aria-hidden="true" className="text-muted-foreground" />
-                </Button>
-            </PopoverTrigger>
+            <PopoverTrigger asChild>{trigger}</PopoverTrigger>
             <PopoverContent
                 align="start"
-                className="flex max-h-(--radix-popover-content-available-height) w-[min(20rem,calc(100vw-2rem))] flex-col gap-2 overflow-y-auto p-2 sm:w-auto sm:flex-row"
+                className="flex max-h-(--radix-popover-content-available-height) w-auto flex-row gap-2 overflow-y-auto p-2"
             >
                 <div
                     role="group"
                     aria-label="Pilihan cepat"
-                    className="grid content-start gap-0.5 sm:w-44"
+                    className="grid w-44 content-start gap-0.5"
                 >
                     {DATE_PRESETS.map((preset) => {
                         const isActive = value.preset === preset.value;
@@ -116,44 +214,13 @@ export function DateRangeFilter({ value, onChange, timeZone }: DateRangeFilterPr
                         );
                     })}
                 </div>
-                <Separator className="sm:hidden" />
-                <Separator orientation="vertical" className="hidden sm:block" />
+                <Separator orientation="vertical" />
                 <div role="group" aria-label="Rentang lain" className="grid gap-2">
-                    <Calendar
-                        mode="range"
-                        locale={idLocale}
-                        className="mx-auto p-0 [--cell-size:--spacing(9)]"
-                        // A shaded today reads as part of the range, so today is marked by text.
-                        classNames={{ today: 'font-semibold text-primary' }}
-                        month={month}
-                        onMonthChange={setMonth}
-                        today={toCalendarDay(today)}
-                        endMonth={toCalendarDay(today)}
-                        disabled={{ after: toCalendarDay(today) }}
-                        selected={
-                            draft && {
-                                from: toCalendarDay(draft.from),
-                                to: draft.to === undefined ? undefined : toCalendarDay(draft.to),
-                            }
-                        }
-                        onSelect={(_range, day) => pick(fromCalendarDay(day))}
-                    />
+                    {calendar}
                     <p aria-live="polite" className="px-1 text-sm text-muted-foreground">
-                        {complete !== undefined
-                            ? rangeLabel({ preset: 'custom', ...complete })
-                            : draft !== undefined
-                              ? 'Pilih tanggal akhir'
-                              : 'Pilih tanggal mulai'}
+                        {status}
                     </p>
-                    <Button
-                        size="sm"
-                        disabled={complete === undefined}
-                        onClick={() => {
-                            if (complete !== undefined) {
-                                choose({ preset: 'custom', ...complete });
-                            }
-                        }}
-                    >
+                    <Button size="sm" disabled={complete === undefined} onClick={apply}>
                         Terapkan rentang
                     </Button>
                 </div>
