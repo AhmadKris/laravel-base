@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Core\Authorization\Models\Role;
+use App\Core\Authorization\Permissions\PermissionCatalog;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
+use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
 
@@ -56,7 +58,7 @@ it('lets an admin read roles and permissions', function () {
     $this->actingAs($admin)->getJson('/api/v1/permissions')
         ->assertOk()
         ->assertJsonCount(15, 'data')
-        ->assertJsonStructure(['data' => [['id', 'name']]]);
+        ->assertJsonStructure(['data' => [['id', 'name', 'label', 'description', 'group', 'group_label', 'requires']]]);
 
     $this->actingAs($admin)->getJson('/api/v1/roles')->assertOk();
     $this->actingAs($admin)->getJson('/api/v1/roles/'.role('Staff')->id)->assertOk();
@@ -106,6 +108,57 @@ it('sorts roles only by allowed fields', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('sort_by');
 });
+
+it('lists the permissions in catalog order with their descriptions', function () {
+    $response = $this->actingAs($this->superAdmin)->getJson('/api/v1/permissions')->assertOk();
+
+    expect($response->json('data.*.name'))->toBe(app(PermissionCatalog::class)->names());
+    $response->assertJsonPath('data.4', [
+        'id' => Permission::findByName('user.assign_role', 'web')->id,
+        'name' => 'user.assign_role',
+        'label' => 'Tetapkan role pengguna',
+        'description' => 'Mengatur role yang dimiliki pengguna lain.',
+        'group' => 'user',
+        'group_label' => 'Pengguna',
+        'requires' => ['user.view', 'role.view'],
+    ]);
+});
+
+it('leaves a permission outside the catalog out of the options', function () {
+    Permission::create(['name' => 'legacy.run', 'guard_name' => 'web']);
+
+    $this->actingAs($this->superAdmin)->getJson('/api/v1/permissions')
+        ->assertOk()
+        ->assertJsonCount(15, 'data')
+        ->assertJsonMissing(['name' => 'legacy.run']);
+});
+
+it('still shows a role permission that is no longer in the catalog', function () {
+    $role = Role::create(['name' => 'Legacy', 'guard_name' => 'web']);
+    $role->givePermissionTo([Permission::create(['name' => 'legacy.run', 'guard_name' => 'web']), 'audit.view', 'user.view']);
+
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/roles/'.$role->id.'/permissions')
+        ->assertOk()
+        ->assertJsonPath('data.*.name', ['user.view', 'audit.view', 'legacy.run'])
+        ->assertJsonPath('data.2.label', 'legacy.run')
+        ->assertJsonPath('data.2.group', 'legacy');
+});
+
+it('rejects permissions without their prerequisites when creating or updating', function (string $method) {
+    $role = Role::create(['name' => 'Auditor', 'guard_name' => 'web']);
+    $request = $method === 'POST'
+        ? ['/api/v1/roles', ['name' => 'Gudang', 'permissions' => ['role.delete']]]
+        : ['/api/v1/roles/'.$role->id, ['permissions' => ['role.delete'], 'version' => 1]];
+
+    $this->actingAs($this->superAdmin)
+        ->json($method, ...$request)
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.permissions', ['Hapus role membutuhkan Lihat role.']);
+
+    expect(Role::query()->where('name', 'Gudang')->exists())->toBeFalse()
+        ->and($role->permissions()->count())->toBe(0);
+})->with(['POST', 'PATCH']);
 
 it('returns the permissions of a role', function () {
     $this->actingAs($this->superAdmin)
@@ -157,6 +210,86 @@ it('renames a custom role and records the change', function () {
 
     expect($properties['old_name'])->toBe('Auditor')
         ->and($properties['new_name'])->toBe('Internal Auditor');
+});
+
+it('creates a role with a description and records it', function () {
+    $this->actingAs($this->superAdmin)
+        ->postJson('/api/v1/roles', ['name' => 'Gudang', 'description' => 'Staf gudang pusat.'])
+        ->assertCreated()
+        ->assertJsonPath('data.description', 'Staf gudang pusat.');
+
+    expect(Activity::query()->where('event', 'role.created')->sole()->properties['description'])
+        ->toBe('Staf gudang pusat.');
+});
+
+it('rejects a description longer than 500 characters', function () {
+    $this->actingAs($this->superAdmin)
+        ->postJson('/api/v1/roles', ['name' => 'Gudang', 'description' => str_repeat('a', 501)])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('description');
+});
+
+it('changes the description of a built-in role and records the change', function () {
+    $staff = role('Staff');
+    $previous = $staff->description;
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$staff->id, ['name' => 'Staff', 'description' => 'Staf operasional gudang.'])
+        ->assertOk()
+        ->assertJsonPath('data.description', 'Staf operasional gudang.');
+
+    $properties = Activity::query()->where('event', 'role.updated')->sole()->properties;
+
+    expect($properties['old_description'])->toBe($previous)
+        ->and($properties['new_description'])->toBe('Staf operasional gudang.')
+        ->and($properties->has('old_name'))->toBeFalse();
+});
+
+it('clears a description and records nothing when nothing changed', function () {
+    $role = Role::create(['name' => 'Gudang', 'description' => 'Lama', 'guard_name' => 'web']);
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$role->id, ['description' => ''])
+        ->assertOk()
+        ->assertJsonPath('data.description', null);
+
+    $this->actingAs($this->superAdmin)
+        ->patchJson('/api/v1/roles/'.$role->id, ['name' => 'Gudang', 'description' => null])
+        ->assertOk();
+
+    expect(Activity::query()->where('event', 'role.updated')->count())->toBe(1);
+});
+
+it('filters roles by type', function (string $type, array $expected) {
+    Role::create(['name' => 'Gudang', 'guard_name' => 'web']);
+
+    $response = $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/roles?sort_by=name&type='.$type)
+        ->assertOk();
+
+    expect($response->json('data.*.name'))->toBe($expected);
+})->with([
+    'built in' => ['built_in', ['Admin', 'Staff', 'Super Admin', 'Viewer']],
+    'custom' => ['custom', ['Gudang']],
+]);
+
+it('rejects an unknown role type', function () {
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/roles?type=system')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('type');
+});
+
+it('sorts roles by the number of users', function () {
+    userWithRole('Staff');
+    userWithRole('Staff');
+    userWithRole('Viewer');
+
+    $response = $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/roles?sort_by=users_count&sort_direction=desc')
+        ->assertOk();
+
+    expect(array_slice($response->json('data.*.name'), 0, 2))->toBe(['Staff', 'Super Admin']);
 });
 
 it('allows keeping the same name when updating', function () {

@@ -16,12 +16,14 @@ import { SUPER_ADMIN_ROLE } from '../permissionGroups';
 interface ColumnOptions {
     canUpdate: boolean;
     canDelete: boolean;
+    canDuplicate: boolean;
     onDelete: (role: Role) => void;
 }
 
 export function roleColumns({
     canUpdate,
     canDelete,
+    canDuplicate,
     onDelete,
 }: ColumnOptions): DataTableColumn<Role>[] {
     const columns: DataTableColumn<Role>[] = [
@@ -31,9 +33,16 @@ export function roleColumns({
             accessorKey: 'name',
             enableSorting: true,
             cell: ({ row }) => (
-                <Link to={`/roles/${row.original.id}`} className="font-medium hover:underline">
-                    {row.original.name}
-                </Link>
+                <div className="grid min-w-0 gap-0.5">
+                    <Link to={`/roles/${row.original.id}`} className="font-medium hover:underline">
+                        {row.original.name}
+                    </Link>
+                    {row.original.description && (
+                        <span className="line-clamp-1 text-xs text-muted-foreground">
+                            {row.original.description}
+                        </span>
+                    )}
+                </div>
             ),
         },
         {
@@ -49,6 +58,8 @@ export function roleColumns({
         {
             id: 'users_count',
             header: 'Jumlah pengguna',
+            accessorKey: 'users_count',
+            enableSorting: true,
             cell: ({ row }) => (
                 <span className="tabular-nums">{row.original.users_count ?? 0}</span>
             ),
@@ -71,7 +82,7 @@ export function roleColumns({
         },
     ];
 
-    if (!canUpdate && !canDelete) {
+    if (!canUpdate && !canDelete && !canDuplicate) {
         return columns;
     }
 
@@ -83,8 +94,10 @@ export function roleColumns({
             cell: ({ row }) => {
                 const canEditRow = canUpdate && row.original.name !== SUPER_ADMIN_ROLE;
                 const canDeleteRow = canDelete && !row.original.is_protected;
+                // A copy of Super Admin would be an ordinary role holding every permission.
+                const canDuplicateRow = canDuplicate && row.original.name !== SUPER_ADMIN_ROLE;
 
-                if (!canEditRow && !canDeleteRow) {
+                if (!canEditRow && !canDeleteRow && !canDuplicateRow) {
                     return null;
                 }
 
@@ -104,6 +117,13 @@ export function roleColumns({
                             {canEditRow && (
                                 <DropdownMenuItem asChild>
                                     <Link to={`/roles/${row.original.id}/edit`}>Ubah role</Link>
+                                </DropdownMenuItem>
+                            )}
+                            {canDuplicateRow && (
+                                <DropdownMenuItem asChild>
+                                    <Link to={`/roles/new?copy=${row.original.id}`}>
+                                        Duplikat role
+                                    </Link>
                                 </DropdownMenuItem>
                             )}
                             {canDeleteRow && (

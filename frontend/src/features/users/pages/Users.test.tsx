@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { permissionFixtures } from '@/features/roles/permissionFixtures';
 import { useAuthStore } from '@/stores/auth-store';
 import { server } from '@/test/server';
 import { makeUser, renderApp } from '@/test/utils';
@@ -34,6 +35,7 @@ function makeRole(id: number, name: string, overrides: Partial<Role> = {}): Role
     return {
         id,
         name,
+        description: null,
         is_protected: false,
         can_assign: true,
         permissions_count: 1,
@@ -508,6 +510,48 @@ describe('user detail', () => {
                 '/roles/12',
             ),
         );
+    });
+
+    it('lists the effective permissions with the roles that grant them', async () => {
+        asUser(['user.view']);
+        serveDetail(makeTarget({ roles: ['Auditor', 'Staff'] }));
+        const [userView, auditView] = permissionFixtures(['user.view', 'audit.view']);
+        server.use(
+            http.get('*/api/v1/users/user-1/permissions', () =>
+                HttpResponse.json({
+                    success: true,
+                    message: '',
+                    data: [
+                        { ...userView, granted_by: ['Auditor', 'Staff'] },
+                        { ...auditView, granted_by: ['Auditor'] },
+                    ],
+                    meta: null,
+                }),
+            ),
+        );
+
+        renderApp('/users/user-1');
+
+        expect(await screen.findByText('dari Auditor, Staff')).toBeVisible();
+        expect(
+            screen.getByText('Pengguna', { selector: 'dt' }).nextElementSibling,
+        ).toHaveTextContent('Lihat pengguna');
+        expect(
+            screen.getByText('Audit Log', { selector: 'dt' }).nextElementSibling,
+        ).toHaveTextContent('Lihat audit logdari Auditor');
+    });
+
+    it('explains that a user without roles has no access', async () => {
+        asUser(['user.view']);
+        serveDetail(makeTarget({ roles: [] }));
+
+        renderApp('/users/user-1');
+
+        expect(
+            await screen.findByText(
+                'Pengguna ini belum memiliki role, sehingga tidak memiliki hak akses.',
+            ),
+        ).toBeVisible();
     });
 
     it('hides actions the user may not perform', async () => {

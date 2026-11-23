@@ -12,5 +12,6 @@ Route::middleware('auth:sanctum')->prefix('users')->controller(UserController::c
     Route::patch('{user}', 'update')->middleware('permission:user.update');
     Route::delete('{user}', 'destroy')->middleware('permission:user.delete');
     Route::get('{user}/roles', 'roles')->middleware('permission:user.view');
+    Route::get('{user}/permissions', 'permissions')->middleware('permission:user.view');
     Route::put('{user}/roles', 'assignRoles')->middleware('permission:user.assign_role');
 });

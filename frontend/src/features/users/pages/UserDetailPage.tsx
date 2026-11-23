@@ -19,6 +19,7 @@ import { ApiError, toApiError } from '@/lib/api-error';
 import { formatDateTime } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth-store';
 import type { User } from '@/types/api-response';
+import { EffectivePermissionsCard } from '../components/EffectivePermissionsCard';
 import { UserStatusDialog } from '../components/UserStatusDialog';
 import { userKeys, userService } from '../services/userService';
 
@@ -174,6 +175,7 @@ export function UserDetailPage() {
                     </dd>
                 </dl>
             </DetailCard>
+            <EffectivePermissionsCard userId={user.id} hasRoles={roles.length > 0} />
             <UserStatusDialog user={statusTarget} onClose={() => setStatusTarget(null)} />
         </CenteredPage>
     );

@@ -6,6 +6,7 @@ import type {
     StoreUserPayload,
     UpdateUserPayload,
     User,
+    UserPermission,
 } from '@/types/api-response';
 
 const MAX_ROLE_OPTIONS = 100;
@@ -24,6 +25,7 @@ export const userKeys = {
     all: ['users'] as const,
     list: (filters: UserListFilters) => ['users', 'list', filters] as const,
     detail: (id: string) => ['users', 'detail', id] as const,
+    permissions: (id: string) => ['users', 'detail', id, 'permissions'] as const,
     roleOptions: ['users', 'role-options'] as const,
 };
 
@@ -60,6 +62,14 @@ export const userService = {
 
     async assignRoles(id: string, roles: string[]): Promise<User> {
         const response = await apiClient.put<ApiEnvelope<User>>(`/users/${id}/roles`, { roles });
+
+        return response.data.data;
+    },
+
+    async listPermissions(id: string): Promise<UserPermission[]> {
+        const response = await apiClient.get<ApiEnvelope<UserPermission[]>>(
+            `/users/${id}/permissions`,
+        );
 
         return response.data.data;
     },

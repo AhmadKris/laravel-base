@@ -16,6 +16,7 @@ final class StoreRoleRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150', Rule::unique('roles', 'name')->where('guard_name', 'web')],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
             ...AssignRolePermissionsRequest::permissionRules('sometimes'),
         ];
     }

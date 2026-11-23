@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Core\Authorization\Permissions\PermissionCatalog;
 use App\Core\Security\RateLimits;
 use App\Modules\UserManagement\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -17,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PermissionCatalog::class, fn (): PermissionCatalog => PermissionCatalog::fromFiles([
+            ...glob(app_path('Core/*/permissions.php')) ?: [],
+            ...glob(app_path('Modules/*/permissions.php')) ?: [],
+        ]));
     }
 
     /**

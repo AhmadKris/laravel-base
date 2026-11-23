@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { cn } from 'cn';
 import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,27 +13,28 @@ import { SearchInput } from '@/components/shared/SearchInput';
 import { ListSkeleton } from '@/components/shared/skeletons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { usePermission } from '@/hooks/usePermission';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { ApiError } from '@/lib/api-error';
 import { applyFormError } from '@/lib/form-errors';
-import type { Role } from '@/types/api-response';
+import type { Permission, Role } from '@/types/api-response';
 import {
     addPermissionsWithPrerequisites,
-    describePermission,
     diffPermissions,
-    findSelectedDependents,
     groupPermissions,
     type PermissionGroup,
     removePermissionsWithDependents,
+    toCatalog,
 } from '../permissionGroups';
 import { roleSchema, type RoleFormValues } from '../schemas';
 import { roleKeys, roleService } from '../services/roleService';
+import { PermissionMatrix } from './PermissionMatrix';
 
 interface RoleFormProps {
     role?: Role;
+    /** A role to copy into a new one. Only permissions the actor may grant are copied. */
+    source?: Role;
 }
 
 type PermissionFilterMode = 'all' | 'selected';
@@ -43,19 +43,9 @@ function isSameSelection(first: string[], second: string[]): boolean {
     return first.length === second.length && first.every((name) => second.includes(name));
 }
 
-function matchesPermissionSearch(name: string, groupLabel: string, query: string): boolean {
-    if (query === '') {
-        return true;
-    }
-
-    if (groupLabel.toLowerCase().includes(query) || name.toLowerCase().includes(query)) {
-        return true;
-    }
-
-    const meta = describePermission(name);
-
-    return (
-        meta.label.toLowerCase().includes(query) || meta.description.toLowerCase().includes(query)
+function matchesPermissionSearch(permission: Permission, query: string): boolean {
+    return [permission.group_label, permission.name, permission.label, permission.description].some(
+        (text) => text.toLowerCase().includes(query),
     );
 }
 
@@ -64,9 +54,12 @@ function saveRole(
     values: RoleFormValues,
     canEditPermissions: boolean,
 ): Promise<Role> {
+    const description = values.description === '' ? null : values.description;
+
     if (role === undefined) {
         return roleService.create({
             name: values.name,
+            ...(description !== null ? { description } : {}),
             ...(canEditPermissions && values.permissions.length > 0
                 ? { permissions: values.permissions }
                 : {}),
@@ -75,165 +68,14 @@ function saveRole(
 
     return roleService.update(role.id, {
         ...(role.is_protected ? {} : { name: values.name }),
+        ...(description !== (role.description ?? null) ? { description } : {}),
         ...(canEditPermissions && !isSameSelection(values.permissions, role.permissions ?? [])
             ? { permissions: values.permissions, version: role.version }
             : {}),
     });
 }
 
-interface PermissionOptionRowProps {
-    name: string;
-    selected: string[];
-    canGrant: (name: string) => boolean;
-    onBlur: () => void;
-    onToggle: (name: string, checked: boolean) => void;
-}
-
-function PermissionOptionRow({
-    name,
-    selected,
-    canGrant,
-    onBlur,
-    onToggle,
-}: PermissionOptionRowProps) {
-    const id = `role-permission-${name}`;
-    const descId = `${id}-description`;
-    const meta = describePermission(name);
-    const isChecked = selected.includes(name);
-    const isLockedByAuthority = !isChecked && !canGrant(name);
-    const prerequisiteLabels = (meta.requires ?? []).map((req) => describePermission(req).label);
-    const activeDependents = isChecked ? findSelectedDependents(name, selected) : [];
-
-    return (
-        <div
-            className={cn(
-                'flex items-start gap-2.5 rounded-md border p-3 transition-colors',
-                isChecked ? 'border-primary/40 bg-primary/5' : 'border-border/80',
-                isLockedByAuthority && 'opacity-75',
-            )}
-        >
-            <Checkbox
-                id={id}
-                checked={isChecked}
-                disabled={isLockedByAuthority}
-                aria-describedby={descId}
-                className="mt-0.5"
-                onBlur={onBlur}
-                onCheckedChange={(checked) => onToggle(name, checked === true)}
-            />
-            <div className="grid min-w-0 gap-1 leading-snug">
-                <Label
-                    htmlFor={id}
-                    className={cn(
-                        'flex flex-col items-start gap-0.5 font-normal',
-                        isLockedByAuthority ? 'cursor-not-allowed' : 'cursor-pointer',
-                    )}
-                >
-                    <span className="text-sm font-medium text-foreground">{meta.label}</span>
-                    <code className="font-mono text-xs text-muted-foreground">{name}</code>
-                </Label>
-                <p id={descId} className="text-xs text-muted-foreground">
-                    {meta.description}
-                </p>
-                {isLockedByAuthority && (
-                    <p className="text-xs text-warning">
-                        Di luar kewenangan Anda (akun Anda tidak memiliki izin ini).
-                    </p>
-                )}
-                {!isLockedByAuthority && prerequisiteLabels.length > 0 && !isChecked && (
-                    <p className="text-xs text-muted-foreground">
-                        Otomatis mengaktifkan: {prerequisiteLabels.join(', ')}.
-                    </p>
-                )}
-                {activeDependents.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                        Dibutuhkan oleh: {activeDependents.map((item) => item.label).join(', ')}.
-                    </p>
-                )}
-            </div>
-        </div>
-    );
-}
-
-interface PermissionModuleProps {
-    group: PermissionGroup;
-    selected: string[];
-    canGrant: (name: string) => boolean;
-    onBlur: () => void;
-    onToggleOne: (name: string, checked: boolean) => void;
-    onToggleGroup: (group: PermissionGroup, selectAll: boolean) => void;
-}
-
-function PermissionModule({
-    group,
-    selected,
-    canGrant,
-    onBlur,
-    onToggleOne,
-    onToggleGroup,
-}: PermissionModuleProps) {
-    const selectedInGroup = group.permissions.filter((name) => selected.includes(name)).length;
-    const controllable = group.permissions.filter(
-        (name) => selected.includes(name) || canGrant(name),
-    );
-    const allGroupSelected =
-        controllable.length > 0 && controllable.every((name) => selected.includes(name));
-    const someGroupSelected = selectedInGroup > 0 && !allGroupSelected;
-    const groupCheckboxId = `role-module-${group.key}`;
-
-    return (
-        <section className="overflow-hidden rounded-lg border">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2.5">
-                <div className="flex items-center gap-2.5">
-                    <Checkbox
-                        id={groupCheckboxId}
-                        checked={
-                            allGroupSelected ? true : someGroupSelected ? 'indeterminate' : false
-                        }
-                        disabled={controllable.length === 0}
-                        aria-label={`Pilih semua modul ${group.label}`}
-                        onCheckedChange={() => onToggleGroup(group, !allGroupSelected)}
-                    />
-                    <Label htmlFor={groupCheckboxId} className="cursor-pointer text-sm font-medium">
-                        {group.label}
-                    </Label>
-                    <Badge variant="secondary" className="tabular-nums">
-                        {selectedInGroup}/{group.permissions.length}
-                    </Badge>
-                </div>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={controllable.length === 0}
-                    className="h-auto px-2 py-1 text-xs"
-                    aria-label={
-                        allGroupSelected
-                            ? `Kosongkan permission ${group.label}`
-                            : `Pilih semua permission ${group.label}`
-                    }
-                    onClick={() => onToggleGroup(group, !allGroupSelected)}
-                >
-                    {allGroupSelected ? 'Kosongkan' : 'Pilih semua'}
-                </Button>
-            </div>
-            <div className="grid gap-2.5 p-3 sm:grid-cols-2">
-                {group.permissions.map((name) => (
-                    <PermissionOptionRow
-                        key={name}
-                        name={name}
-                        selected={selected}
-                        canGrant={canGrant}
-                        onBlur={onBlur}
-                        onToggle={onToggleOne}
-                    />
-                ))}
-            </div>
-        </section>
-    );
-}
-
-export function RoleForm({ role }: RoleFormProps) {
+export function RoleForm({ role, source }: RoleFormProps) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { can } = usePermission();
@@ -241,9 +83,16 @@ export function RoleForm({ role }: RoleFormProps) {
     const [permissionQuery, setPermissionQuery] = useState('');
     const [filterMode, setFilterMode] = useState<PermissionFilterMode>('all');
     const initialPermissions = role?.permissions ?? [];
+    const sourcePermissions = canEditPermissions ? (source?.permissions ?? []) : [];
+    const copiedPermissions = sourcePermissions.filter((name) => can(name));
+    const skippedCount = sourcePermissions.length - copiedPermissions.length;
     const form = useForm<RoleFormValues>({
         resolver: zodResolver(roleSchema),
-        defaultValues: { name: role?.name ?? '', permissions: initialPermissions },
+        defaultValues: {
+            name: role?.name ?? (source !== undefined ? `Salinan ${source.name}` : ''),
+            description: role?.description ?? source?.description ?? '',
+            permissions: role !== undefined ? initialPermissions : copiedPermissions,
+        },
     });
     const guard = useUnsavedChangesGuard(form.formState.isDirty);
 
@@ -277,10 +126,11 @@ export function RoleForm({ role }: RoleFormProps) {
         }
     };
 
-    const allPermissions = (permissionOptions.data ?? []).map(({ name }) => name);
-    const availableSet = new Set(allPermissions);
+    const allPermissions = permissionOptions.data ?? [];
+    const catalog = toCatalog(allPermissions);
     const groups = groupPermissions(allPermissions);
     const normalizedQuery = permissionQuery.trim().toLowerCase();
+    const hasLockedPermission = allPermissions.some(({ name }) => !can(name));
 
     return (
         <>
@@ -299,6 +149,16 @@ export function RoleForm({ role }: RoleFormProps) {
                 }
             >
                 <FormAlert message={form.formState.errors.root?.server?.message} />
+                {skippedCount > 0 && (
+                    <p className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
+                        <AlertTriangle
+                            aria-hidden="true"
+                            className="mt-0.5 size-4 shrink-0 text-warning"
+                        />
+                        {skippedCount} izin dari role {source?.name} tidak disalin karena berada di
+                        luar kewenangan Anda.
+                    </p>
+                )}
                 {hasVersionConflict && (
                     <Button
                         type="button"
@@ -321,6 +181,15 @@ export function RoleForm({ role }: RoleFormProps) {
                             role?.is_protected ? 'Nama role bawaan tidak dapat diubah.' : undefined
                         }
                     />
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        label="Deskripsi"
+                        description="Jelaskan untuk siapa role ini, agar mudah dipilih saat menetapkan role pengguna."
+                        renderControl={(field, attributes) => (
+                            <Textarea {...field} {...attributes} rows={3} maxLength={500} />
+                        )}
+                    />
                 </FormSection>
                 {canEditPermissions && (
                     <FormSection
@@ -331,25 +200,16 @@ export function RoleForm({ role }: RoleFormProps) {
                             control={form.control}
                             name="permissions"
                             render={({ field, fieldState }) => {
-                                const visibleGroups = groups
-                                    .map((group) => ({
-                                        ...group,
-                                        permissions: group.permissions.filter((name) => {
-                                            if (
-                                                filterMode === 'selected' &&
-                                                !field.value.includes(name)
-                                            ) {
-                                                return false;
-                                            }
-
-                                            return matchesPermissionSearch(
-                                                name,
-                                                group.label,
-                                                normalizedQuery,
-                                            );
-                                        }),
-                                    }))
-                                    .filter((group) => group.permissions.length > 0);
+                                // A row stays whole when one of its permissions matches, so the
+                                // columns keep their meaning.
+                                const visibleGroups = groups.filter((group) =>
+                                    group.permissions.some(
+                                        (permission) =>
+                                            (filterMode === 'all' ||
+                                                field.value.includes(permission.name)) &&
+                                            matchesPermissionSearch(permission, normalizedQuery),
+                                    ),
+                                );
 
                                 const changes = diffPermissions(initialPermissions, field.value);
                                 const hasPermissionChanges =
@@ -361,10 +221,14 @@ export function RoleForm({ role }: RoleFormProps) {
                                             ? addPermissionsWithPrerequisites(
                                                   field.value,
                                                   [name],
-                                                  availableSet,
+                                                  catalog,
                                                   can,
                                               )
-                                            : removePermissionsWithDependents(field.value, [name]),
+                                            : removePermissionsWithDependents(
+                                                  field.value,
+                                                  [name],
+                                                  catalog,
+                                              ),
                                     );
                                 };
 
@@ -372,17 +236,20 @@ export function RoleForm({ role }: RoleFormProps) {
                                     group: PermissionGroup,
                                     selectAll: boolean,
                                 ) => {
+                                    const names = group.permissions.map(({ name }) => name);
+
                                     field.onChange(
                                         selectAll
                                             ? addPermissionsWithPrerequisites(
                                                   field.value,
-                                                  group.permissions,
-                                                  availableSet,
+                                                  names,
+                                                  catalog,
                                                   can,
                                               )
                                             : removePermissionsWithDependents(
                                                   field.value,
-                                                  group.permissions,
+                                                  names,
+                                                  catalog,
                                               ),
                                     );
                                 };
@@ -494,19 +361,26 @@ export function RoleForm({ role }: RoleFormProps) {
                                                         : 'Tidak ada permission yang cocok dengan pencarian.'}
                                                 </p>
                                             )}
-                                        <div className="grid gap-3">
-                                            {visibleGroups.map((group) => (
-                                                <PermissionModule
-                                                    key={group.key}
-                                                    group={group}
+                                        {visibleGroups.length > 0 && (
+                                            <>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Memilih izin ikut memilih izin yang
+                                                    dibutuhkannya, dan mencabutnya ikut mencabut
+                                                    izin yang bergantung padanya.
+                                                    {hasLockedPermission &&
+                                                        ' Izin yang tidak dapat dipilih berada di luar kewenangan akun Anda.'}
+                                                </p>
+                                                <PermissionMatrix
+                                                    groups={visibleGroups}
+                                                    catalog={catalog}
                                                     selected={field.value}
                                                     canGrant={can}
                                                     onBlur={field.onBlur}
                                                     onToggleOne={toggleOne}
                                                     onToggleGroup={toggleGroup}
                                                 />
-                                            ))}
-                                        </div>
+                                            </>
+                                        )}
                                         {role !== undefined && hasPermissionChanges && (
                                             <div className="flex flex-wrap items-center gap-2 border-t pt-2.5 text-xs text-muted-foreground">
                                                 <span>Perubahan belum disimpan:</span>

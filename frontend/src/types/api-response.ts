@@ -5,6 +5,7 @@ type Schemas = components['schemas'];
 export type AuthenticatedUser = Schemas['AuthenticatedUserResource'];
 export type Role = Schemas['RoleResource'];
 export type Permission = Schemas['PermissionResource'];
+export type UserPermission = Schemas['UserPermissionResource'];
 export type StoreRolePayload = Schemas['StoreRoleRequest'];
 export type UpdateRolePayload = Schemas['UpdateRoleRequest'];
 export type User = Schemas['UserResource'];

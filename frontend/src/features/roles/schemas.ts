@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const roleSchema = z.object({
     name: z.string().trim().min(1, 'Nama wajib diisi.').max(150, 'Nama maksimal 150 karakter.'),
+    description: z.string().trim().max(500, 'Deskripsi maksimal 500 karakter.'),
     permissions: z.array(z.string()),
 });
 

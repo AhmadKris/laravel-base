@@ -10,6 +10,7 @@ use App\Core\Authorization\Actions\CreateRoleAction;
 use App\Core\Authorization\Actions\DeleteRoleAction;
 use App\Core\Authorization\Actions\UpdateRoleAction;
 use App\Core\Authorization\Models\Role;
+use App\Core\Authorization\Permissions\PermissionCatalog;
 use App\Core\Authorization\Requests\AssignRolePermissionsRequest;
 use App\Core\Authorization\Requests\RoleListRequest;
 use App\Core\Authorization\Requests\StoreRoleRequest;
@@ -17,11 +18,11 @@ use App\Core\Authorization\Requests\UpdateRoleRequest;
 use App\Core\Authorization\Resources\PermissionResource;
 use App\Core\Authorization\Resources\RoleResource;
 use App\Modules\UserManagement\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Spatie\Permission\Models\Permission;
 
 final class RoleController
 {
@@ -29,12 +30,7 @@ final class RoleController
     {
         Gate::authorize('viewAny', Role::class);
 
-        $roles = $request->applySorting(Role::query()->withCount(['users', 'permissions']))
-            ->when(
-                $request->searchPattern(),
-                fn (Builder $query, string $pattern) => $query->where('name', 'like', $pattern),
-            )
-            ->orderBy('id')
+        $roles = $request->applyFilters(Role::query()->withCount(['users', 'permissions']))
             ->paginate($request->perPage());
 
         return ApiResponse::paginated($roles, RoleResource::class, 'Roles retrieved successfully');
@@ -50,7 +46,7 @@ final class RoleController
             Gate::authorize('assignPermissions', Role::class);
         }
 
-        $role = $action->execute($request->validated('name'), $permissions, $this->actor($request));
+        $role = $action->execute($request->validated('name'), $request->validated('description'), $permissions, $this->actor($request));
 
         return ApiResponse::success($this->detail($role), 'Role created successfully', 201);
     }
@@ -72,7 +68,7 @@ final class RoleController
             Gate::authorize('assignPermissions', $role);
         }
 
-        $action->execute($role, $request->validated('name'), $permissions, $request->validated('version'), $this->actor($request));
+        $action->execute($role, $request->validated(), $this->actor($request));
 
         return ApiResponse::success($this->detail($role), 'Role updated successfully');
     }
@@ -86,12 +82,16 @@ final class RoleController
         return response()->noContent();
     }
 
-    public function permissions(Role $role): JsonResponse
+    public function permissions(Role $role, PermissionCatalog $catalog): JsonResponse
     {
         Gate::authorize('view', $role);
 
+        $permissions = $role->permissions
+            ->sortBy(fn (Permission $permission): int => $catalog->position($permission->name))
+            ->values();
+
         return ApiResponse::success(
-            PermissionResource::collection($role->permissions()->orderBy('name')->get()),
+            PermissionResource::collection($permissions),
             'Role permissions retrieved successfully',
         );
     }

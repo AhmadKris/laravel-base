@@ -435,7 +435,7 @@ Mengikuti migration resmi Spatie Laravel Permission.
 
 Gunakan satu `guard_name`, yaitu `web`, termasuk untuk request yang memakai Sanctum token.
 
-Tabel `roles` ditambah kolom `version` (INT UNSIGNED, default 1) untuk optimistic locking.
+Tabel `roles` ditambah kolom `version` (INT UNSIGNED, default 1) untuk optimistic locking dan `description` (VARCHAR(500), NULL) untuk menjelaskan kegunaan role kepada pengguna yang menetapkannya. Seeder mengisi deskripsi role bawaan hanya saat role tersebut dibuat.
 
 ## 5.2 Workflow Module
 

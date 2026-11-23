@@ -3,18 +3,37 @@ import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { DataTable } from '@/components/shared/DataTable';
+import { FilterBar } from '@/components/shared/FilterBar';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { usePermission } from '@/hooks/usePermission';
 import { useLastPageCorrection, useTableParams } from '@/hooks/useTableParams';
 import type { Role } from '@/types/api-response';
 import { DeleteRoleDialog } from '../components/DeleteRoleDialog';
 import { roleColumns } from '../components/roleColumns';
+import { DUPLICATE_ROLE_PERMISSIONS } from '../permissionGroups';
 import { roleKeys, roleService } from '../services/roleService';
 
+const ALL_TYPES = 'all';
+
 export function RoleListPage() {
-    const { filters, searchInput, changeSearch, updateParams, tableProps } = useTableParams();
+    const {
+        params,
+        filters: tableFilters,
+        searchInput,
+        changeSearch,
+        updateParams,
+        tableProps,
+    } = useTableParams();
+    const filters = { ...tableFilters, type: params.get('type') ?? undefined };
     const { can } = usePermission();
     const navigate = useNavigate();
     const [pendingDelete, setPendingDelete] = useState<Role | null>(null);
@@ -37,15 +56,16 @@ export function RoleListPage() {
 
     const canUpdate = can('role.update');
     const canDelete = can('role.delete');
+    const canDuplicate = DUPLICATE_ROLE_PERMISSIONS.every((name) => can(name));
     const columns = useMemo(
-        () => roleColumns({ canUpdate, canDelete, onDelete: setPendingDelete }),
-        [canUpdate, canDelete],
+        () => roleColumns({ canUpdate, canDelete, canDuplicate, onDelete: setPendingDelete }),
+        [canUpdate, canDelete, canDuplicate, setPendingDelete],
     );
 
-    const hasSearch = filters.search !== undefined;
+    const hasFilters = filters.search !== undefined || filters.type !== undefined;
 
-    const clearSearch = () => {
-        updateParams({ search: undefined, page: undefined });
+    const clearFilters = () => {
+        updateParams({ search: undefined, type: undefined, page: undefined });
     };
 
     return (
@@ -71,8 +91,28 @@ export function RoleListPage() {
                     value={searchInput}
                     onChange={changeSearch}
                 />
-                {hasSearch && (
-                    <Button type="button" variant="ghost" onClick={clearSearch}>
+                <FilterBar activeCount={filters.type === undefined ? 0 : 1}>
+                    <Select
+                        value={filters.type ?? ALL_TYPES}
+                        onValueChange={(value) =>
+                            updateParams({
+                                type: value === ALL_TYPES ? undefined : value,
+                                page: undefined,
+                            })
+                        }
+                    >
+                        <SelectTrigger aria-label="Filter jenis role" className="w-full sm:w-40">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={ALL_TYPES}>Semua jenis</SelectItem>
+                            <SelectItem value="built_in">Bawaan</SelectItem>
+                            <SelectItem value="custom">Kustom</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </FilterBar>
+                {hasFilters && (
+                    <Button type="button" variant="ghost" onClick={clearFilters}>
                         Hapus filter
                     </Button>
                 )}
@@ -87,15 +127,15 @@ export function RoleListPage() {
                 onRetry={() => void roles.refetch()}
                 loadingLabel="Memuat daftar role"
                 errorTitle="Daftar role tidak dapat dimuat"
-                emptyTitle={hasSearch ? 'Tidak ada role yang cocok' : 'Belum ada role'}
+                emptyTitle={hasFilters ? 'Tidak ada role yang cocok' : 'Belum ada role'}
                 emptyDescription={
-                    hasSearch
-                        ? 'Ubah kata kunci pencarian.'
+                    hasFilters
+                        ? 'Ubah kata kunci pencarian atau filter jenis.'
                         : 'Role yang ditambahkan tampil di sini.'
                 }
                 emptyAction={
-                    hasSearch ? (
-                        <Button type="button" variant="outline" size="sm" onClick={clearSearch}>
+                    hasFilters ? (
+                        <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
                             Hapus filter
                         </Button>
                     ) : can('role.create') ? (

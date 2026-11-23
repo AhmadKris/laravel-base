@@ -529,6 +529,7 @@ Base resource:
 | PATCH | /users/{id} | user.update | Update user data |
 | DELETE | /users/{id} | user.delete | Deactivate/delete user |
 | GET | /users/{id}/roles | user.view | Get user roles |
+| GET | /users/{id}/permissions | user.view | Effective permissions |
 | PUT | /users/{id}/roles | user.assign_role | Assign roles |
 
 ### Create User
@@ -587,6 +588,7 @@ Field yang dapat diubah: `name`, `email`, `username`, dan `status`. Password tid
 - Actor hanya dapat mengubah, menonaktifkan, atau mengatur role user yang seluruh role-nya berada dalam kewenangan actor. Pengecualian: actor boleh mengubah profilnya sendiri.
 - Role selain Super Admin, System Admin, dan Admin hanya dapat melihat akunnya sendiri; pengguna lain mengembalikan HTTP 404.
 - `GET /users/{id}/roles` mengembalikan `data.roles` berupa daftar nama role.
+- `GET /users/{id}/permissions` mengembalikan hak akses efektif pengguna, yaitu gabungan permission dari semua role-nya, dalam urutan katalog. Setiap item memakai field `GET /permissions` ditambah `granted_by`, daftar nama role pengguna yang memberikan permission tersebut. Base v1 tidak memberikan permission langsung ke pengguna, sehingga semua hak akses berasal dari role. Aturan scope sama dengan `GET /users/{id}`.
 - `PUT /users/{id}/roles` menerima `roles` berupa daftar nama role dan mengganti seluruh role user. Actor tidak dapat mengubah role-nya sendiri.
 - `GET /users` mendukung `search` pada nama dan email, filter `status` serta `role`, dan `sort_by` untuk `name`, `email`, dan `created_at`.
 
@@ -633,6 +635,7 @@ Request:
 Backend harus memeriksa:
 
 - Permission yang diminta memang terdaftar.
+- Prasyarat setiap permission ikut dikirim.
 - Actor berwenang mengubah role tersebut.
 - Actor tidak dapat memberikan privilege di luar batasnya.
 - Perubahan tercatat dalam audit log.
@@ -640,14 +643,28 @@ Backend harus memeriksa:
 
 Aturan tambahan:
 
-- Body `POST /roles` adalah `name` dan `permissions` (opsional). Body `PATCH /roles/{id}` adalah `name` dan `permissions`, keduanya opsional, dan `version` wajib jika `permissions` dikirim.
+- Body `POST /roles` adalah `name`, `description` (opsional), dan `permissions` (opsional). Body `PATCH /roles/{id}` adalah `name`, `description`, dan `permissions`, semuanya opsional, dan `version` wajib jika `permissions` dikirim. `description` boleh `null` atau teks maksimal 500 karakter, dan dapat diubah juga pada role bawaan.
 - `permissions` pada `POST /roles` dan `PATCH /roles/{id}` memerlukan permission `permission.assign`. Nama dan permission disimpan dalam satu transaksi, sehingga permission yang ditolak atau `version` yang usang membatalkan seluruh perubahan.
 - `GET /roles/{id}` memuat `permissions`, sedangkan `GET /roles` memuat `permissions_count` tanpa daftar `permissions`. Kedua response menyertakan `can_assign` untuk menandai apakah actor berwenang menetapkan role tersebut ke pengguna lain.
-- `GET /roles` mendukung `search` pada nama serta `sort_by` untuk `name` dan `created_at`.
+- `GET /roles` mendukung `search` pada nama, filter `type` (`built_in` untuk role bawaan atau `custom`), serta `sort_by` untuk `name`, `users_count`, dan `created_at`. `GET /roles` dan `GET /roles/{id}` menyertakan `description`.
 - Role bawaan (Super Admin, Admin, Staff, Viewer) tidak dapat diganti nama atau dihapus, dengan code `ROLE_PROTECTED`. Permission role Super Admin tidak dapat diubah melalui API.
 - Role yang masih terpasang pada user, termasuk user yang di-soft delete, tidak dapat dihapus, dengan code `ROLE_IN_USE`.
 - Actor hanya dapat menambahkan permission yang dimilikinya sendiri. Pelanggaran mengembalikan HTTP 403 dengan code `AUTH_PRIVILEGE_ESCALATION`.
-- `GET /permissions` mengembalikan seluruh permission tanpa pagination agar dapat dipakai sebagai daftar pilihan.
+- `GET /permissions` mengembalikan seluruh permission yang terdaftar di katalog modul, tanpa pagination, dalam urutan tampilan (grup sesuai `position`, lalu urutan penulisan di grup). Permission di database yang tidak ada di katalog tidak ditawarkan.
+- `GET /permissions` dan `GET /roles/{id}/permissions` mengembalikan field yang sama:
+
+| Field | Tipe | Keterangan |
+|---|---|---|
+| `id` | integer | ID bawaan paket |
+| `name` | string | Nama permission, misalnya `user.create` |
+| `label` | string | Nama untuk pengguna, misalnya `Tambah pengguna` |
+| `description` | string | Penjelasan singkat; kosong untuk permission yang tidak ada di katalog |
+| `group` | string | Key grup, sama dengan bagian `{resource}` dari nama |
+| `group_label` | string | Nama grup untuk pengguna |
+| `requires` | string[] | Permission yang wajib ikut dimiliki role |
+
+- `GET /roles/{id}/permissions` memakai urutan yang sama. Permission role yang tidak lagi ada di katalog tetap ditampilkan di akhir dengan `label` berisi nama permission, karena role tersebut masih memberikannya.
+- `permissions` pada `PUT /roles/{id}/permissions`, `POST /roles`, dan `PATCH /roles/{id}` harus menyertakan semua `requires` dari setiap permission yang dikirim. Pelanggaran mengembalikan HTTP 422 `VALIDATION_FAILED` dengan pesan pada `errors.permissions`, satu pesan per permission, misalnya `Tambah pengguna membutuhkan Lihat pengguna.`
 - Permission diperiksa sebelum resource dicari, sehingga user tanpa izin selalu menerima HTTP 403.
 
 ---
@@ -1709,6 +1726,7 @@ Nama parameter path tidak dibandingkan, sehingga `{id}` di tabel cocok dengan `{
 | PATCH | /users/{id} | user.update |
 | DELETE | /users/{id} | user.delete |
 | GET | /users/{id}/roles | user.view |
+| GET | /users/{id}/permissions | user.view |
 | PUT | /users/{id}/roles | user.assign_role |
 | GET | /roles | role.view |
 | POST | /roles | role.create |

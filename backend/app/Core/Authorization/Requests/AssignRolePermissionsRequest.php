@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Core\Authorization\Requests;
 
+use App\Core\Authorization\Permissions\PermissionCatalog;
+use App\Core\Authorization\Rules\PermissionPrerequisites;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +28,7 @@ final class AssignRolePermissionsRequest extends FormRequest
     public static function permissionRules(string $presence): array
     {
         return [
-            'permissions' => [$presence, 'array'],
+            'permissions' => [$presence, 'array', new PermissionPrerequisites(app(PermissionCatalog::class))],
             'permissions.*' => ['string', 'distinct', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ];
     }
