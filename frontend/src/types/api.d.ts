@@ -1448,7 +1448,7 @@ export interface operations {
                         data:
                             | unknown[]
                             | {
-                                  email: string;
+                                  email: string | null;
                                   /** Format: date-time */
                                   expires_at: string | null;
                               };
