@@ -194,6 +194,9 @@ function featureSection(configurations: SystemConfiguration[]): SettingSection {
 // These keys hold uploaded files, which have their own section instead of a text field.
 const BRANDING_KEYS = ['company.logo', 'company.logo_dark', 'company.favicon'];
 
+// Edited in the Menu and Modul tabs, which validate them against the registered modules.
+const MANAGED_KEYS = ['navigation.layout', 'modules.disabled'];
+
 export interface ArrangedSettings {
     sections: { section: SettingSection; items: SystemConfiguration[] }[];
     others: SystemConfiguration[];
@@ -204,7 +207,9 @@ export interface ArrangedSettings {
  * Places known keys in their sections. Sensitive and unknown keys are listed read-only.
  */
 export function arrangeSettings(all: SystemConfiguration[]): ArrangedSettings {
-    const configurations = all.filter((item) => !BRANDING_KEYS.includes(item.key));
+    const configurations = all.filter(
+        (item) => !BRANDING_KEYS.includes(item.key) && !MANAGED_KEYS.includes(item.key),
+    );
     const editable = configurations.filter((item) => !item.is_sensitive);
     const byKey = new Map(editable.map((item) => [item.key, item]));
     const placed = new Set<string>();

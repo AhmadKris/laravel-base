@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermission } from '@/hooks/usePermission';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import { MenuSettingsSection } from '@/features/navigation/components/MenuSettingsSection';
+import { ModuleSettingsSection } from '@/features/navigation/components/ModuleSettingsSection';
 import { toApiError } from '@/lib/api-error';
 import { BrandingSection } from '../components/BrandingSection';
 import { LogoPreview } from '../components/LogoPreview';
@@ -57,11 +59,16 @@ export function SettingsPage() {
         });
     }, []);
     const guard = useUnsavedChangesGuard(dirtyParts.size > 0);
+    const markMenuDirty = useCallback((dirty: boolean) => markDirty('menu', dirty), [markDirty]);
+    const markModulesDirty = useCallback(
+        (dirty: boolean) => markDirty('modules', dirty),
+        [markDirty],
+    );
 
     const header = (
         <PageHeader
             title="Pengaturan sistem"
-            description="Data perusahaan, lokalisasi, dan fitur aplikasi."
+            description="Data perusahaan, lokalisasi, menu, dan modul aplikasi."
         />
     );
 
@@ -136,6 +143,24 @@ export function SettingsPage() {
                 content: renderSection(entry),
             });
         }
+    }
+
+    if (canUpdate) {
+        tabs.push({
+            id: 'menu',
+            label: 'Menu',
+            isDirty: dirtyParts.has('menu'),
+            content: <MenuSettingsSection onDirtyChange={markMenuDirty} />,
+        });
+    }
+
+    if (can('system_config.feature_flags')) {
+        tabs.push({
+            id: 'modules',
+            label: 'Modul',
+            isDirty: dirtyParts.has('modules'),
+            content: <ModuleSettingsSection onDirtyChange={markModulesDirty} />,
+        });
     }
 
     if (others.length > 0) {

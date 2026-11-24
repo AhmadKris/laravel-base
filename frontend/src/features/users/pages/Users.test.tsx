@@ -658,10 +658,14 @@ describe('user form', () => {
         const router = renderApp('/users/new');
         await userEvent.type(await screen.findByLabelText('Nama'), 'Dewi');
         expect(screen.getByText('Ada perubahan belum disimpan')).toBeVisible();
+        // The menu loads after the page, so the link is awaited.
         await userEvent.click(
-            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
-                name: 'Pengguna',
-            }),
+            await within(screen.getByRole('navigation', { name: 'Menu utama' })).findByRole(
+                'link',
+                {
+                    name: 'Pengguna',
+                },
+            ),
         );
 
         const dialog = await screen.findByRole('alertdialog', { name: 'Tinggalkan halaman ini?' });
@@ -670,10 +674,14 @@ describe('user form', () => {
         expect(router.state.location.pathname).toBe('/users/new');
         expect(screen.getByLabelText('Nama')).toHaveValue('Dewi');
 
+        // The menu loads after the page, so the link is awaited.
         await userEvent.click(
-            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
-                name: 'Pengguna',
-            }),
+            await within(screen.getByRole('navigation', { name: 'Menu utama' })).findByRole(
+                'link',
+                {
+                    name: 'Pengguna',
+                },
+            ),
         );
         await userEvent.click(
             within(
@@ -690,10 +698,14 @@ describe('user form', () => {
 
         const router = renderApp('/users/new');
         await screen.findByLabelText('Nama');
+        // The menu loads after the page, so the link is awaited.
         await userEvent.click(
-            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
-                name: 'Pengguna',
-            }),
+            await within(screen.getByRole('navigation', { name: 'Menu utama' })).findByRole(
+                'link',
+                {
+                    name: 'Pengguna',
+                },
+            ),
         );
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/users'));

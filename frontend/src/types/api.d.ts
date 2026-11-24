@@ -148,6 +148,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/v1/modules': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['module.index'];
+        put: operations['module.update'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/navigation': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['navigation.index'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/navigation/layout': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['navigation.layout'];
+        put: operations['navigation.updateLayout'];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/v1/notifications': {
         parameters: {
             query?: never;
@@ -560,6 +608,98 @@ export interface components {
         /** UpdateConfigurationRequest */
         UpdateConfigurationRequest: {
             value: string;
+            version: number;
+        };
+        /** UpdateModulesRequest */
+        UpdateModulesRequest: {
+            disabled: 'notification'[];
+            version: number;
+        };
+        /** UpdateNavigationLayoutRequest */
+        UpdateNavigationLayoutRequest: {
+            sections: {
+                key: string;
+                label: string | null;
+                items: {
+                    key: string;
+                    label?: string | null;
+                    /** @enum {string|null} */
+                    icon:
+                        | 'activity'
+                        | 'archive'
+                        | 'banknote'
+                        | 'barcode'
+                        | 'bell'
+                        | 'book-open'
+                        | 'box'
+                        | 'boxes'
+                        | 'briefcase'
+                        | 'building'
+                        | 'building-2'
+                        | 'calculator'
+                        | 'calendar'
+                        | 'calendar-days'
+                        | 'car'
+                        | 'chart-column'
+                        | 'chart-line'
+                        | 'chart-pie'
+                        | 'clipboard-check'
+                        | 'clipboard-list'
+                        | 'clock'
+                        | 'contact'
+                        | 'credit-card'
+                        | 'database'
+                        | 'factory'
+                        | 'file-text'
+                        | 'files'
+                        | 'folder'
+                        | 'folder-open'
+                        | 'gauge'
+                        | 'globe'
+                        | 'graduation-cap'
+                        | 'hammer'
+                        | 'handshake'
+                        | 'heart-pulse'
+                        | 'house'
+                        | 'id-card'
+                        | 'inbox'
+                        | 'key'
+                        | 'landmark'
+                        | 'layers'
+                        | 'layout-dashboard'
+                        | 'list-checks'
+                        | 'lock'
+                        | 'mail'
+                        | 'map'
+                        | 'map-pin'
+                        | 'megaphone'
+                        | 'message-square'
+                        | 'package'
+                        | 'percent'
+                        | 'phone'
+                        | 'printer'
+                        | 'qr-code'
+                        | 'receipt'
+                        | 'scroll-text'
+                        | 'server'
+                        | 'settings'
+                        | 'shield-check'
+                        | 'shopping-bag'
+                        | 'shopping-cart'
+                        | 'store'
+                        | 'tag'
+                        | 'tags'
+                        | 'truck'
+                        | 'user'
+                        | 'user-cog'
+                        | 'users'
+                        | 'wallet'
+                        | 'warehouse'
+                        | 'wrench'
+                        | null;
+                    hidden: boolean;
+                }[];
+            }[];
             version: number;
         };
         /** UpdateRoleRequest */
@@ -995,6 +1135,186 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    'module.index': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Modules retrieved successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  modules: unknown[];
+                                  version: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'module.update': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['UpdateModulesRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Modules updated successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  modules: unknown[];
+                                  version: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            422: components['responses']['ValidationException'];
+        };
+    };
+    'navigation.index': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Navigation retrieved successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  sections: {
+                                      key: string;
+                                      label: string;
+                                      items: {
+                                          key: string;
+                                          label: string;
+                                          path: string;
+                                          icon: string;
+                                      }[];
+                                  }[];
+                                  modules: string[];
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'navigation.layout': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Navigation layout retrieved successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  sections: unknown[];
+                                  items: unknown[];
+                                  icons: string[];
+                                  default: unknown[];
+                                  version: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'navigation.updateLayout': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['UpdateNavigationLayoutRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Navigation layout updated successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  sections: unknown[];
+                                  items: unknown[];
+                                  icons: string[];
+                                  default: unknown[];
+                                  version: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            422: components['responses']['ValidationException'];
         };
     };
     'notification.index': {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
     SidebarGroup,
@@ -9,18 +10,35 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSkeleton,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { usePermission } from '@/hooks/usePermission';
+import { useNavigation } from '@/features/navigation/hooks/useNavigation';
 import { readCollapsedSections, saveCollapsedSections } from '@/lib/sidebar-state';
-import { type NavigationItem, type NavigationSection, navigationSections } from './navigation';
+import type { MenuSection } from '@/types/api-response';
+import { NavigationIcon } from './navigationIcons';
+
+interface NavigationItem {
+    key: string;
+    label: string;
+    to: string;
+    icon: string;
+}
+
+// Home is always reachable and always first, so it is not part of the arranged menu.
+const HOME_ITEM: NavigationItem = { key: 'home', label: 'Beranda', to: '/', icon: 'house' };
+
+function toItems(section: MenuSection): NavigationItem[] {
+    return section.items.map((item) => ({
+        key: item.key,
+        label: item.label,
+        to: item.path,
+        icon: item.icon,
+    }));
+}
 
 function isItemActive(to: string, pathname: string): boolean {
     return to === '/' ? pathname === '/' : pathname.startsWith(to);
-}
-
-function sectionKey(section: NavigationSection): string {
-    return section.id ?? section.items[0].to;
 }
 
 function SectionMenu({
@@ -36,14 +54,14 @@ function SectionMenu({
         <SidebarGroupContent>
             <SidebarMenu>
                 {items.map((item) => (
-                    <SidebarMenuItem key={item.to}>
+                    <SidebarMenuItem key={item.key}>
                         <SidebarMenuButton
                             asChild
                             tooltip={item.label}
                             isActive={isItemActive(item.to, pathname)}
                         >
                             <NavLink to={item.to} end={item.to === '/'} onClick={onNavigate}>
-                                <item.icon aria-hidden="true" />
+                                <NavigationIcon name={item.icon} />
                                 <span>{item.label}</span>
                             </NavLink>
                         </SidebarMenuButton>
@@ -55,27 +73,22 @@ function SectionMenu({
 }
 
 export function MainNavigation() {
-    const { can } = usePermission();
+    const navigation = useNavigation();
     const { pathname } = useLocation();
     const { state, isMobile, setOpenMobile } = useSidebar();
     const isIconCollapsed = state === 'collapsed' && !isMobile;
 
-    const visibleSections = navigationSections
-        .map((section) => ({
-            ...section,
-            items: section.items.filter(
-                (item) => item.permission === undefined || can(item.permission),
-            ),
-        }))
-        .filter((section) => section.items.length > 0);
+    const visibleSections = (navigation.data?.sections ?? []).map((section) => ({
+        key: section.key,
+        label: section.label,
+        items: toItems(section),
+    }));
 
-    const activeSection = visibleSections.find(
-        (section) =>
-            section.label !== undefined &&
-            section.items.some((item) => isItemActive(item.to, pathname)),
+    const activeSection = visibleSections.find((section) =>
+        section.items.some((item) => isItemActive(item.to, pathname)),
     );
     const activeItem = activeSection?.items.find((item) => isItemActive(item.to, pathname));
-    const activeKey = activeSection ? sectionKey(activeSection) : undefined;
+    const activeKey = activeSection?.key;
     const activeTarget = activeKey && activeItem ? `${activeKey}:${activeItem.to}` : undefined;
 
     const [collapsedSections, setCollapsedSections] = useState<string[]>(() => {
@@ -107,8 +120,31 @@ export function MainNavigation() {
 
     return (
         <nav aria-label="Menu utama">
+            <SidebarGroup>
+                <SectionMenu items={[HOME_ITEM]} pathname={pathname} onNavigate={closeMobile} />
+            </SidebarGroup>
+            {navigation.isPending && (
+                <SidebarGroup role="status" aria-label="Memuat menu">
+                    {[0, 1, 2].map((row) => (
+                        <SidebarMenuSkeleton key={row} showIcon />
+                    ))}
+                </SidebarGroup>
+            )}
+            {navigation.isError && (
+                <SidebarGroup className="gap-1 group-data-[collapsible=icon]:hidden">
+                    <p className="px-2 text-xs text-muted-foreground">Menu tidak dapat dimuat.</p>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="justify-start"
+                        onClick={() => void navigation.refetch()}
+                    >
+                        Muat ulang menu
+                    </Button>
+                </SidebarGroup>
+            )}
             {visibleSections.map((section) => {
-                const key = sectionKey(section);
+                const key = section.key;
                 const menu = (
                     <SectionMenu
                         items={section.items}
@@ -117,7 +153,7 @@ export function MainNavigation() {
                     />
                 );
 
-                if (section.label === undefined) {
+                if (section.label === null) {
                     return <SidebarGroup key={key}>{menu}</SidebarGroup>;
                 }
 

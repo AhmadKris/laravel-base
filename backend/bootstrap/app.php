@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Core\Api\Exceptions\ApiException;
 use App\Core\Api\Exceptions\ApiExceptionRenderer;
 use App\Core\Logging\AssignRequestId;
+use App\Core\Modules\EnsureModuleEnabled;
 use App\Core\Routing\ModuleRoutes;
 use App\Modules\UserManagement\Console\CreateSuperAdminCommand;
 use Illuminate\Foundation\Application;
@@ -30,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->throttleApi();
         $middleware->redirectGuestsTo('/login');
-        $middleware->alias(['permission' => PermissionMiddleware::class]);
+        $middleware->alias(['permission' => PermissionMiddleware::class, 'module' => EnsureModuleEnabled::class]);
         $middleware->prependToPriorityList(SubstituteBindings::class, PermissionMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\SystemConfiguration\Controllers\BrandingController;
+use App\Modules\SystemConfiguration\Controllers\ModuleController;
+use App\Modules\SystemConfiguration\Controllers\NavigationController;
 use App\Modules\SystemConfiguration\Controllers\SystemConfigurationController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +16,19 @@ Route::prefix('system-configurations')->controller(SystemConfigurationController
         Route::get('/', 'index')->middleware('permission:system_config.view');
         Route::get('{configuration}', 'show')->middleware('permission:system_config.view');
         Route::patch('{configuration}', 'update')->middleware('permission:system_config.update');
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('navigation')->controller(NavigationController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('layout', 'layout')->middleware('permission:system_config.update');
+        Route::put('layout', 'updateLayout')->middleware('permission:system_config.update');
+    });
+
+    Route::prefix('modules')->controller(ModuleController::class)->group(function () {
+        Route::get('/', 'index')->middleware('permission:system_config.feature_flags');
+        Route::put('/', 'update')->middleware('permission:system_config.feature_flags');
     });
 });
 

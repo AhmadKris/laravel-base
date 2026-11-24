@@ -52,6 +52,75 @@ export interface Branding {
     display: LogoDisplay;
 }
 
+// Scramble types the menu and module arrays built in services as unknown, so they are written by hand.
+export interface MenuItem {
+    key: string;
+    label: string;
+    path: string;
+    icon: string;
+}
+
+export interface MenuSection {
+    key: string;
+    /** Null for a section whose items show without a heading. */
+    label: string | null;
+    items: MenuItem[];
+}
+
+export interface Navigation {
+    sections: MenuSection[];
+    /** Keys of the enabled modules. */
+    modules: string[];
+}
+
+export interface LayoutItem {
+    key: string;
+    /** A replacement label, or null for the label the module registers. */
+    label: string | null;
+    /** A replacement icon, or null for the icon the module registers. */
+    icon: string | null;
+    hidden: boolean;
+}
+
+export interface LayoutSection {
+    key: string;
+    /** Null for a section whose items show without a heading. */
+    label: string | null;
+    items: LayoutItem[];
+}
+
+export interface RegisteredMenuItem {
+    key: string;
+    module: string;
+    label: string;
+    path: string;
+    icon: string;
+    can_hide: boolean;
+    module_enabled: boolean;
+}
+
+export interface NavigationLayout {
+    sections: LayoutSection[];
+    items: RegisteredMenuItem[];
+    /** Icon names administrators may choose. */
+    icons: string[];
+    default: LayoutSection[];
+    version: number;
+}
+
+export interface ModuleState {
+    key: string;
+    label: string;
+    description: string;
+    is_core: boolean;
+    enabled: boolean;
+}
+
+export interface ModuleSettings {
+    modules: ModuleState[];
+    version: number;
+}
+
 export interface UpdateConfigurationPayload {
     value: string | boolean | null;
     version: number;

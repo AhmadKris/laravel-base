@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Modules\Notification\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')
+Route::middleware(['auth:sanctum', 'module:notification'])
     ->prefix('notifications')
     ->controller(NotificationController::class)
     ->group(function () {
