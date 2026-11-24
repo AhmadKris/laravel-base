@@ -5,6 +5,7 @@
 
 # Dependencies
 vendor/
+!backend/resources/views/vendor/
 node_modules/
 
 # Build and test output

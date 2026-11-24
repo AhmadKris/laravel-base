@@ -490,7 +490,8 @@ Mengelola konfigurasi global aplikasi dan pengaturan sistem.
 6. Menu memiliki dua tingkat, yaitu bagian lalu item, dan berlaku sama untuk semua user. Item hanya tampil bagi user yang memiliki permission-nya.
 7. Bagian menu tanpa nama tidak memiliki judul, dan itemnya tampil langsung sejajar dengan Beranda. Bagian tanpa item yang terlihat tidak ditampilkan.
 8. Menyembunyikan item menu tidak menutup akses ke halamannya. Pengaturan tidak dapat disembunyikan agar admin tidak terkunci.
-9. Modul inti tidak dapat dinonaktifkan. Modul opsional yang nonaktif tidak dapat diakses melalui API dan tidak membuat data baru, tetapi datanya tetap tersimpan.
+9. Email dari sistem memakai nama perusahaan sebagai nama pengirim dan di kepala serta hak cipta email. Alamat dan telepon perusahaan tampil di bagian bawah email jika diisi, dan email perusahaan menjadi alamat balasan. Alamat pengirim tetap diatur di server melalui `MAIL_FROM_ADDRESS`.
+10. Modul inti tidak dapat dinonaktifkan. Modul opsional yang nonaktif tidak dapat diakses melalui API dan tidak membuat data baru, tetapi datanya tetap tersimpan.
 
 ---
 

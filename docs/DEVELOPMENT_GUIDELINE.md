@@ -652,6 +652,13 @@ Aturan:
 6. `can_hide` bernilai `true` jika tidak diisi. Isi `false` untuk halaman yang dibutuhkan admin agar tidak terkunci dari pengaturan.
 7. Route frontend milik modul opsional dibungkus `ModuleRoute` (`frontend/src/app/guards/ModuleRoute.tsx`), sehingga membuka URL modul yang nonaktif menampilkan halaman "Modul tidak aktif". Bagian UI di luar halamannya, seperti lonceng notifikasi, memakai `useModuleEnabled`.
 
+## 6.5 Email dari Sistem
+
+1. Email dibuat sebagai Markdown mail atau notifikasi `MailMessage`, sehingga memakai template di `backend/resources/views/vendor/mail` dan `backend/resources/views/vendor/notifications`.
+2. Nama perusahaan, alamat, telepon, dan email dibaca melalui contract `App\Shared\Contracts\CompanyProfile`, bukan dari `config('app.name')` atau langsung dari `system_configurations`.
+3. Jangan mengisi pengirim di setiap email. `UseCompanyAsSender` memberi nama perusahaan sebagai nama pengirim dan `company.email` sebagai Reply-To jika diisi. Alamat pengirim tetap `MAIL_FROM_ADDRESS`, karena hanya domain yang diizinkan server email yang lolos pemeriksaan SPF dan DKIM.
+4. Markdown pada teks dari pengguna tidak dirender menjadi tautan atau HTML, karena `Markdown::withSecuredEncoding()` aktif.
+
 ---
 
 # 7. Frontend Development Guideline
