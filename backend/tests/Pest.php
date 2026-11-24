@@ -11,7 +11,7 @@ pest()->extend(TestCase::class)->in('Feature');
 const UNKNOWN_USER = '01932f5e-1234-7000-8000-123456789abc';
 
 // Datasets are built before the application boots, so the path cannot come from base_path().
-const DOCS_PATH = __DIR__.'/../../docs';
+const STANDARDS_PATH = __DIR__.'/../../STANDARDS.md';
 
 /**
  * @param  array<string, mixed>  $attributes
@@ -25,17 +25,26 @@ function userWithRole(string $role, array $attributes = []): User
 }
 
 /**
- * Endpoints listed in API_SPECIFICATION.md section 16.4, as "METHOD /path" => access.
+ * The body of a "## {number}. {title}" section of STANDARDS.md, up to the next section.
+ */
+function standardsSection(string $title): string
+{
+    $document = str_replace("\r\n", "\n", (string) file_get_contents(STANDARDS_PATH));
+
+    preg_match('/^## \d+\. '.preg_quote($title, '/').'\n(.*?)(?=^## |\z)/ms', $document, $section);
+
+    return $section[1] ?? '';
+}
+
+/**
+ * Endpoints listed in the "Daftar Endpoint" section of STANDARDS.md, as "METHOD /path" => access.
  * Path parameters are reduced to "{}" because the table and the routes name them differently.
  *
  * @return array<string, string>
  */
 function documentedEndpoints(): array
 {
-    $section = Str::before(
-        Str::after(str_replace("\r\n", "\n", (string) file_get_contents(DOCS_PATH.'/API_SPECIFICATION.md')), '## 16.4 Endpoint Base v1'),
-        "\n# ",
-    );
+    $section = standardsSection('Daftar Endpoint');
 
     $endpoints = [];
 

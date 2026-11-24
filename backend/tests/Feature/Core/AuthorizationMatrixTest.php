@@ -6,7 +6,6 @@ use App\Core\Authorization\Models\Role;
 use App\Modules\UserManagement\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
@@ -34,17 +33,15 @@ function protectedEndpoints(bool $withPermissionOnly): array
 }
 
 /**
- * Whether each role holds each permission according to the tables in AUTHORIZATION_MATRIX.md section 5.
+ * Whether each role holds each permission according to the "Matriks Permission" section of STANDARDS.md.
  *
  * @return array<string, array<string, bool>> permission => role => granted
  */
 function matrixGrants(): array
 {
-    $document = str_replace("\r\n", "\n", (string) file_get_contents(DOCS_PATH.'/AUTHORIZATION_MATRIX.md'));
-    $section = Str::before(Str::after($document, '# 5. Permission Matrix'), "\n# 6.");
     $grants = [];
 
-    foreach (explode("\n## ", $section) as $table) {
+    foreach (explode("\n### ", standardsSection('Matriks Permission')) as $table) {
         if (! preg_match('/^\| Permission \|(.+)\|$/m', $table, $header)) {
             continue;
         }

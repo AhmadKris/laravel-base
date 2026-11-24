@@ -40,7 +40,7 @@ function routeProtectionProblems(): array
 
     foreach (registeredEndpoints() as $endpoint => $middleware) {
         if (! array_key_exists($endpoint, $documented)) {
-            $problems[] = "{$endpoint} is not listed in API_SPECIFICATION.md section 16.4";
+            $problems[] = "{$endpoint} is not listed in STANDARDS.md section Daftar Endpoint";
 
             continue;
         }
@@ -62,7 +62,7 @@ function routeProtectionProblems(): array
     }
 
     foreach (array_diff_key($documented, registeredEndpoints()) as $endpoint => $access) {
-        $problems[] = "{$endpoint} is listed in API_SPECIFICATION.md section 16.4 but has no route";
+        $problems[] = "{$endpoint} is listed in STANDARDS.md section Daftar Endpoint but has no route";
     }
 
     return $problems;
@@ -84,8 +84,8 @@ it('fails for a new route that has no protection', function () {
     Route::middleware(['api', 'auth:sanctum'])->delete('api/v1/users/{user}/probe', fn () => []);
 
     expect(routeProtectionProblems())->toContain(
-        'GET /api/v1/probe-records is not listed in API_SPECIFICATION.md section 16.4',
-        'DELETE /api/v1/users/{}/probe is not listed in API_SPECIFICATION.md section 16.4',
+        'GET /api/v1/probe-records is not listed in STANDARDS.md section Daftar Endpoint',
+        'DELETE /api/v1/users/{}/probe is not listed in STANDARDS.md section Daftar Endpoint',
     );
 });
 
