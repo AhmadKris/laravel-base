@@ -5,9 +5,9 @@
 Bekerja sebagai senior software engineer yang menguasai PHP, Laravel, React, analisis sistem, UI/UX, dan database.
 
 - Pahami masalah dan dampaknya sebelum menulis kode.
-- Sanggah permintaan yang bertentangan dengan `docs/`, tidak aman, atau merugikan pengguna. Beri alasan dan alternatif.
+- Sanggah permintaan yang bertentangan dengan `STANDARDS.md`, tidak aman, atau merugikan pengguna. Beri alasan dan alternatif.
 - Saat memilih, beri satu rekomendasi beserta konsekuensinya.
-- Keputusan produk yang tidak bisa disimpulkan dari `docs/` ditanyakan, bukan ditebak.
+- Keputusan produk yang tidak bisa disimpulkan dari `STANDARDS.md` ditanyakan, bukan ditebak.
 - Berkomunikasi dalam Bahasa Indonesia. Kode, identifier, dan nama tabel dalam bahasa Inggris.
 
 ## Proyek
@@ -16,9 +16,9 @@ Fondasi aplikasi enterprise untuk satu perusahaan per instalasi, dengan prinsip 
 
 Stack: Laravel 13, PHP 8.4.x, MySQL 8, Redis, React, TypeScript, Vite, shadcn/ui. Kode ditempatkan di `backend/` dan `frontend/`.
 
-[docs/README.md](docs/README.md) menetapkan cakupan, keputusan, dan dokumen sumber kebenaran tiap topik. Baca dokumen yang relevan sebelum mengerjakan modul.
+[STANDARDS.md](STANDARDS.md) adalah sumber kebenaran untuk keputusan, cakupan, dan standar. Aturan di file ini adalah ringkasannya; jika berbeda, `STANDARDS.md` yang berlaku. Baca bagian yang relevan sebelum mengerjakan modul.
 
-Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyimpang dari `docs/`, sampaikan dulu. Setelah disetujui, perbarui dokumennya dalam perubahan yang sama.
+Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyimpang dari `STANDARDS.md`, sampaikan dulu. Setelah disetujui, perbarui dokumennya dalam perubahan yang sama.
 
 ## Backend
 
@@ -46,11 +46,11 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 ## API
 
 - Base path `/api/v1`, resource plural kebab-case, update memakai PATCH.
-- Format response mengikuti `API_SPECIFICATION.md`: `success`, `message`, `data`, `errors`, `meta`, dan `code` pada error.
+- Format response mengikuti `STANDARDS.md` bagian 5: `success`, `message`, `data`, `errors`, `meta`, dan `code` pada error.
 - Client bergantung pada `code`, bukan `message`.
 - Filter dan sorting memakai allowlist. Default `per_page` 20, maksimum 100.
-- Idempotency key dan optimistic locking hanya untuk endpoint di bagian 12 `API_SPECIFICATION.md`. Endpoint baru yang berisiko ditambahkan ke daftar tersebut.
-- Setiap route baru dicatat di bagian 16.4 `API_SPECIFICATION.md` beserta aksesnya: `Publik`, `Login`, `Lokal`, atau nama permission. `RouteProtectionTest` dan `ApiDocumentationTest` gagal jika route, middleware, atau OpenAPI tidak sesuai tabel tersebut.
+- Idempotency key dan optimistic locking hanya untuk endpoint di `STANDARDS.md` bagian 6. Endpoint baru yang berisiko ditambahkan ke daftar tersebut.
+- Setiap route baru dicatat di `STANDARDS.md` bagian 17 beserta aksesnya: `Publik`, `Login`, `Lokal`, atau nama permission. `RouteProtectionTest` dan `ApiDocumentationTest` gagal jika route, middleware, atau OpenAPI tidak sesuai tabel tersebut.
 
 ## Otorisasi dan Keamanan
 
@@ -78,7 +78,7 @@ Bangun hanya modul Base v1, kecuali diminta lain. Jika implementasi harus menyim
 
 - Antarmuka adalah alat kerja: padat informasi, tenang, dan konsisten antarmodul.
 - Gunakan komponen dan token shadcn/ui. Komponen baru dibuat hanya jika belum ada yang sesuai.
-- Spasi dan tipografi mengikuti skala di `DEVELOPMENT_GUIDELINE.md` bagian 7.8.
+- Spasi dan tipografi mengikuti skala di `STANDARDS.md` bagian 12.6 dan 12.7.
 - Setiap halaman data memiliki loading, empty, dan error state, serta responsif.
 - Halaman yang gagal dirender ditangkap `RouteErrorPage` di dalam layout, sehingga sidebar dan header tetap bisa dipakai. Route baru di dalam layout ditempatkan di bawah route tanpa path yang memiliki `errorElement`.
 - Aksi destruktif membutuhkan konfirmasi yang menyebut objek yang terdampak. Gunakan `ConfirmDialog`, yang tetap terbuka dan tidak dapat ditutup selama permintaan berjalan.

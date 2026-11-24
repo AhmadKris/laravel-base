@@ -2,7 +2,7 @@
 
 Fondasi aplikasi enterprise untuk satu perusahaan per instalasi. Prinsipnya: ruang lingkup kecil, standar tidak diturunkan. Modul bisnis dibangun di atas fondasi ini.
 
-Cakupan, keputusan, dan dokumen sumber kebenaran tiap topik ada di [docs/README.md](docs/README.md). Aturan kerja untuk developer dan AI agent ada di [CLAUDE.md](CLAUDE.md).
+Keputusan, cakupan, dan standar pengembangan ada di [STANDARDS.md](STANDARDS.md). Ringkasan aturan kerja untuk developer dan AI agent ada di [CLAUDE.md](CLAUDE.md).
 
 ## Isi Base v1
 
@@ -16,7 +16,7 @@ Cakupan, keputusan, dan dokumen sumber kebenaran tiap topik ada di [docs/README.
 | In-App Notification | `app/Modules/Notification` | `features/notifications` |
 | Health check `/api/v1/health` | `app/Modules/Monitoring` | - |
 
-Status per task ada di [docs/DEVELOPMENT_TASKS.md](docs/DEVELOPMENT_TASKS.md). Fase deployment (Docker, Nginx, backup) belum dikerjakan.
+Fase deployment (Docker, Nginx, backup) belum dikerjakan. Baseline yang wajib dipenuhi ada di [STANDARDS.md](STANDARDS.md) bagian 15.
 
 ## Stack
 
@@ -41,7 +41,7 @@ frontend/             React SPA
   src/components/     layouts, shared (DataTable, FormCard, ConfirmDialog, dll.), ui (shadcn/ui)
   src/hooks/ src/lib/ src/stores/
   e2e/                Test Playwright
-docs/                 Spesifikasi dan keputusan proyek
+STANDARDS.md          Standar dan keputusan proyek
 dev.mjs               Menjalankan backend dan frontend sekaligus
 ```
 
@@ -119,11 +119,11 @@ Vite meneruskan `/api`, `/sanctum`, serta `POST /login` dan `POST /logout` ke La
 Setelah mengubah route, request, atau resource:
 
 ```bash
-cd backend && php artisan scramble:export --path=storage/app/openapi.json
+cd backend && DB_DATABASE=laravel_base_test php artisan scramble:export --path=storage/app/openapi.json
 cd ../frontend && npm run api:types
 ```
 
-CI gagal jika `frontend/src/types/api.d.ts` tidak sesuai dengan OpenAPI terbaru. Route baru juga wajib dicatat di bagian 16.4 [docs/API_SPECIFICATION.md](docs/API_SPECIFICATION.md); `RouteProtectionTest` dan `ApiDocumentationTest` memeriksanya.
+Scramble membaca tipe kolom dari database, jadi export memakai database test yang sudah dimigrasi oleh `php artisan test`. CI gagal jika `frontend/src/types/api.d.ts` tidak sesuai dengan OpenAPI terbaru. Route baru juga wajib dicatat di [STANDARDS.md](STANDARDS.md) bagian 17; `RouteProtectionTest` dan `ApiDocumentationTest` memeriksanya.
 
 ### Test E2E
 
@@ -160,7 +160,7 @@ npm run build
 
 CI juga menjalankan `composer audit`, `npm audit --audit-level=high`, pengecekan tipe API, dan Playwright.
 
-Commit memakai Conventional Commits, misalnya `feat(user): add user deactivation`. Checklist review dan Definition of Done ada di [docs/DEVELOPMENT_GUIDELINE.md](docs/DEVELOPMENT_GUIDELINE.md) bagian 14 dan 19.
+Commit memakai Conventional Commits, misalnya `feat(user): add user deactivation`. Definition of Done ada di [STANDARDS.md](STANDARDS.md) bagian 14.5.
 
 ## Konvensi Singkat
 
@@ -171,19 +171,5 @@ Commit memakai Conventional Commits, misalnya `feat(user): add user deactivation
 - Frontend berbasis fitur di `src/features/*`; HTTP lewat satu Axios instance di `src/lib/api-client.ts`.
 - Halaman daftar memakai `DataTable`, `SearchInput`, dan `FilterBar`; form memakai `FormCard` dan `useUnsavedChangesGuard`; aksi destruktif memakai `ConfirmDialog`.
 
-Aturan lengkap ada di [CLAUDE.md](CLAUDE.md) dan [docs/DEVELOPMENT_GUIDELINE.md](docs/DEVELOPMENT_GUIDELINE.md).
+Aturan lengkap ada di [STANDARDS.md](STANDARDS.md).
 
-## Dokumen
-
-| Dokumen | Isi |
-|---|---|
-| [SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md) | Arsitektur dan stack |
-| [MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) | Tanggung jawab modul dan business rule |
-| [DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) | Tabel, relasi, index |
-| [API_SPECIFICATION.md](docs/API_SPECIFICATION.md) | Endpoint, format response, error code, daftar akses route |
-| [AUTHORIZATION_MATRIX.md](docs/AUTHORIZATION_MATRIX.md) | Role, permission, data scope |
-| [SECURITY_SPECIFICATION.md](docs/SECURITY_SPECIFICATION.md) | Kontrol keamanan |
-| [DEVELOPMENT_GUIDELINE.md](docs/DEVELOPMENT_GUIDELINE.md) | Coding standard, struktur folder, skala UI |
-| [TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md) | Strategi pengujian |
-| [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | Deployment dan operasional |
-| [DEVELOPMENT_TASKS.md](docs/DEVELOPMENT_TASKS.md) | Pecahan pekerjaan dan status |

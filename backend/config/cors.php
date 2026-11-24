@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * The SPA and the API share one origin (API_SPECIFICATION.md section 11.5), so no path allows
+ * The SPA and the API share one origin (STANDARDS.md section 1), so no path allows
  * cross-origin requests. Opening the API to another origin needs an allowlist per environment.
  */
 return [

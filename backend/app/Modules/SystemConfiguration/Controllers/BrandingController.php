@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Logo and favicon are the only files served without login, as allowed by SECURITY_SPECIFICATION.md section 10.5.
+ * Logo and favicon are the only files served without login, as allowed by STANDARDS.md section 9.2.
  */
 final class BrandingController
 {
