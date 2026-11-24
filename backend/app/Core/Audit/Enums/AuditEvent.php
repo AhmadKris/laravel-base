@@ -11,6 +11,10 @@ enum AuditEvent: string
     case Logout = 'auth.logout';
     case PasswordChanged = 'auth.password_changed';
     case PasswordReset = 'auth.password_reset';
+    case EmailChangeRequested = 'auth.email_change_requested';
+    case EmailChanged = 'auth.email_changed';
+    case SessionRevoked = 'auth.session_revoked';
+    case OtherSessionsRevoked = 'auth.other_sessions_revoked';
     case PermissionAssigned = 'permission.assigned';
     case PermissionRevoked = 'permission.revoked';
     case RoleCreated = 'role.created';
@@ -24,6 +28,8 @@ enum AuditEvent: string
     case UserDeactivated = 'user.deactivated';
     case UserRoleAssigned = 'user.role_assigned';
     case UserRoleRemoved = 'user.role_removed';
+    case UserAvatarUpdated = 'user.avatar_updated';
+    case UserAvatarRemoved = 'user.avatar_removed';
 
     /**
      * What the actor did, written to follow their name, as in "Budi masuk ke aplikasi".
@@ -36,6 +42,10 @@ enum AuditEvent: string
             self::Logout => 'keluar dari aplikasi',
             self::PasswordChanged => 'mengubah password',
             self::PasswordReset => 'mereset password',
+            self::EmailChangeRequested => 'meminta perubahan email akun',
+            self::EmailChanged => 'mengubah email akun',
+            self::SessionRevoked => 'mengakhiri sesi di perangkat lain',
+            self::OtherSessionsRevoked => 'mengakhiri semua sesi di perangkat lain',
             self::PermissionAssigned => 'memberikan permission',
             self::PermissionRevoked => 'mencabut permission',
             self::RoleCreated => 'membuat role',
@@ -49,6 +59,8 @@ enum AuditEvent: string
             self::UserDeactivated => 'menonaktifkan pengguna',
             self::UserRoleAssigned => 'memberikan role kepada pengguna',
             self::UserRoleRemoved => 'mencabut role pengguna',
+            self::UserAvatarUpdated => 'mengganti foto profil',
+            self::UserAvatarRemoved => 'menghapus foto profil',
         };
     }
 

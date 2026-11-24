@@ -137,7 +137,9 @@ describe('notification bell popover', () => {
         expect(await screen.findByText('Password akun diubah')).toBeVisible();
         await user.click(screen.getByRole('button', { name: /Password akun diubah/ }));
 
-        await waitFor(() => expect(router.state.location.pathname).toBe('/change-password'));
+        // Older notifications link to the former password page, which now opens the account security tab.
+        await waitFor(() => expect(router.state.location.pathname).toBe('/account'));
+        expect(router.state.location.search).toBe('?tab=security');
         expect(await screen.findByRole('button', { name: 'Notifikasi' })).toBeInTheDocument();
     });
 

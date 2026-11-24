@@ -44,7 +44,7 @@ it('allows any authenticated user without permissions to read and count only the
             'category' => NotificationCategory::Security->value,
             'title' => 'Password diubah',
             'message' => 'Pesan keamanan milik viewer.',
-            'action_url' => '/change-password',
+            'action_url' => '/account?tab=security',
         ],
     ]);
     Notification::factory()->forUser($viewer)->read()->create([
@@ -80,7 +80,7 @@ it('lists newest notifications first and supports filtering, searching, and sort
             'category' => 'security',
             'title' => 'Password akun diubah',
             'message' => 'Persen 100% aman.',
-            'action_url' => '/change-password',
+            'action_url' => '/account?tab=security',
         ],
     ]);
 
@@ -259,7 +259,7 @@ it('creates an in-app security notification when a user changes or resets their 
     $changed = Notification::query()->visibleTo($user)->sole();
     expect($changed->type)->toBe('security.password_changed')
         ->and($changed->data['category'])->toBe('security')
-        ->and($changed->data['action_url'])->toBe('/change-password')
+        ->and($changed->data['action_url'])->toBe('/account?tab=security')
         ->and(json_encode($changed->data))->not->toContain($oldPassword)
         ->and(json_encode($changed->data))->not->toContain($newPassword);
 

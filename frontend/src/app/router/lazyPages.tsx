@@ -18,9 +18,15 @@ export const ResetPasswordPage = lazy(() =>
     })),
 );
 
-export const ChangePasswordPage = lazy(() =>
-    import('@/features/authentication/pages/ChangePasswordPage').then((module) => ({
-        default: module.ChangePasswordPage,
+export const AccountPage = lazy(() =>
+    import('@/features/account/pages/AccountPage').then((module) => ({
+        default: module.AccountPage,
+    })),
+);
+
+export const ConfirmEmailPage = lazy(() =>
+    import('@/features/account/pages/ConfirmEmailPage').then((module) => ({
+        default: module.ConfirmEmailPage,
     })),
 );
 

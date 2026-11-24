@@ -408,13 +408,15 @@ Authentication menggunakan Laravel Sanctum.
 
 ## 7.1 Authentication Endpoints
 
-Sesi aktif, verifikasi email, dan token API ditunda sesuai `README.md`. Endpoint yang terpasang tercantum di bagian 16.4.
+Verifikasi email saat pendaftaran dan token API ditunda sesuai `README.md`. Endpoint yang terpasang tercantum di bagian 16.4.
 
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
 | GET | /auth/user | Current user | Required |
 | GET | /auth/sessions | List own active sessions | Required |
+| DELETE | /auth/sessions | Revoke own sessions except the current one | Required |
 | DELETE | /auth/sessions/{id} | Revoke own session | Required |
+| POST | /auth/email-change/confirm | Confirm a new email | Public |
 | POST | /auth/email/verification-notification | Resend email verification | Required |
 | GET | /auth/email/verify/{id}/{hash} | Verify email (signed URL) | Required |
 | POST | /auth/tokens | Create API token | Required |
@@ -507,6 +509,48 @@ Response harus mengikuti scope dan informasi yang boleh dilihat oleh user terseb
 - Reset password mengakhiri semua session user. Ubah password mengakhiri session lain dan meregenerasi session yang sedang dipakai.
 - Login, permintaan reset, dan ubah password dibatasi 5 percobaan per menit.
 
+## 7.4 Sesi Aktif
+
+| Endpoint | Response |
+|---|---|
+| GET /auth/sessions | 200, daftar `id`, `ip_address`, `user_agent`, `last_active_at`, dan `is_current`, terbaru lebih dulu, tanpa pagination |
+| DELETE /auth/sessions/{id} | 204; 404 jika bukan sesi milik user; 409 `AUTH_CURRENT_SESSION` untuk sesi yang sedang dipakai |
+| DELETE /auth/sessions | 200, `ended` berisi jumlah sesi yang diakhiri. Sesi yang sedang dipakai tetap berjalan |
+
+- `id` adalah hash SHA-256 dari ID sesi. ID sesi asli tidak pernah dikirim karena dapat dipakai untuk mengambil alih sesi.
+- Mengakhiri sesi juga merotasi token "ingat saya", sehingga perangkat yang dicabut tidak masuk kembali secara otomatis. Perangkat lain tetap masuk selama sesinya berjalan.
+- Kedua penghapusan tercatat di audit log sebagai `auth.session_revoked` dan `auth.other_sessions_revoked`.
+
+## 7.5 Akun Sendiri
+
+Endpoint `/account` selalu bekerja pada user yang sedang login, sehingga tidak membutuhkan permission selain login.
+
+| Method | Endpoint | Body | Response |
+|---|---|---|---|
+| GET | /account | - | 200, data akun |
+| PATCH | /account | `name`, `phone` (opsional) | 200, data akun |
+| GET | /account/avatar | - | Gambar PNG; 404 jika belum ada foto |
+| POST | /account/avatar | `file` (multipart) | 200, data akun |
+| DELETE | /account/avatar | - | 200, data akun |
+| POST | /account/email | `email`, `current_password` | 200, `email` dan `expires_at` email yang menunggu konfirmasi |
+| DELETE | /account/email | - | 204, membatalkan perubahan email |
+| POST | /auth/email-change/confirm | `id`, `token` | 200; 422 `AUTH_EMAIL_CHANGE_INVALID` |
+
+Data akun berisi `id`, `name`, `email`, `username`, `phone`, `avatar`, `pending_email`, `roles`, `last_login_at`, dan `created_at`. `avatar` berisi `version` atau `null`, dan `pending_email` berisi `email` serta `expires_at` atau `null`.
+
+- `name` wajib jika dikirim, maksimal 150 karakter. `phone` boleh `null`, maksimal 30 karakter, berisi angka, spasi, tanda kurung, titik, tanda hubung, dan `+` di awal.
+- `email`, `username`, status, dan role tidak dapat diubah melalui `PATCH /account`.
+- Foto mengikuti `SECURITY_SPECIFICATION.md` bagian 10.6: PNG, JPG, atau WebP sampai 2 MB dan maksimal 40 megapiksel. Server memotongnya menjadi persegi di tengah, mengecilkannya ke 256 x 256 piksel, lalu menulisnya ulang sebagai PNG. Upload dan penghapusan dibatasi 20 permintaan per menit dan tercatat di audit log sebagai `user.avatar_updated` dan `user.avatar_removed`.
+- Client menambahkan `avatar.version` ke URL foto, sehingga foto baru langsung tampil walaupun foto lama tersimpan di cache.
+
+### Perubahan Email
+
+1. `POST /account/email` memeriksa `current_password`, menyimpan email baru sebagai email yang menunggu konfirmasi, lalu mengirim tautan konfirmasi ke email baru dan pemberitahuan ke email lama. Email login belum berubah.
+2. Tautan berbentuk `/confirm-email#id={uuid}&token={token}`, berlaku 60 menit, dan hanya dapat dipakai sekali. Token berada di URL fragment agar tidak tercatat di log server. Server hanya menyimpan hash token.
+3. `POST /auth/email-change/confirm` tidak membutuhkan login, karena tautan dapat dibuka di perangkat lain. Setelah berhasil, email login berganti, `email_verified_at` diisi, dan email lama menerima pemberitahuan bahwa email telah diubah.
+4. Permintaan baru menggantikan permintaan sebelumnya. Email yang sudah dipakai akun lain ditolak saat permintaan dan saat konfirmasi. Email yang diubah admin melalui `PATCH /users/{id}` membatalkan perubahan yang sedang menunggu.
+5. Permintaan dibatasi 5 per menit per user dan konfirmasi 10 per menit per IP. Permintaan dan perubahan tercatat di audit log sebagai `auth.email_change_requested` dan `auth.email_changed`.
+
 ---
 
 # 8. Core Module API Specification
@@ -528,6 +572,7 @@ Base resource:
 | GET | /users/{id} | user.view | User detail |
 | PATCH | /users/{id} | user.update | Update user data |
 | DELETE | /users/{id} | user.delete | Deactivate/delete user |
+| GET | /users/{id}/avatar | user.view | Profile photo |
 | GET | /users/{id}/roles | user.view | Get user roles |
 | GET | /users/{id}/permissions | user.view | Effective permissions |
 | PUT | /users/{id}/roles | user.assign_role | Assign roles |
@@ -1211,6 +1256,8 @@ AUTH_UNAUTHENTICATED
 AUTH_FORBIDDEN
 AUTH_INVALID_CREDENTIALS
 AUTH_PASSWORD_RESET_INVALID
+AUTH_EMAIL_CHANGE_INVALID
+AUTH_CURRENT_SESSION
 AUTH_PRIVILEGE_ESCALATION
 ROLE_PROTECTED
 ROLE_IN_USE
@@ -1775,11 +1822,23 @@ Nama parameter path tidak dibandingkan, sehingga `{id}` di tabel cocok dengan `{
 | POST | /auth/forgot-password | Publik |
 | POST | /auth/reset-password | Publik |
 | POST | /auth/change-password | Login |
+| GET | /auth/sessions | Login |
+| DELETE | /auth/sessions | Login |
+| DELETE | /auth/sessions/{id} | Login |
+| POST | /auth/email-change/confirm | Publik |
+| GET | /account | Login |
+| PATCH | /account | Login |
+| GET | /account/avatar | Login |
+| POST | /account/avatar | Login |
+| DELETE | /account/avatar | Login |
+| POST | /account/email | Login |
+| DELETE | /account/email | Login |
 | GET | /users | user.view |
 | POST | /users | user.create |
 | GET | /users/{id} | user.view |
 | PATCH | /users/{id} | user.update |
 | DELETE | /users/{id} | user.delete |
+| GET | /users/{id}/avatar | user.view |
 | GET | /users/{id}/roles | user.view |
 | GET | /users/{id}/permissions | user.view |
 | PUT | /users/{id}/roles | user.assign_role |

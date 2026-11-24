@@ -175,7 +175,7 @@ describe('change password page', () => {
             }),
         );
 
-        renderApp('/change-password');
+        renderApp('/account?tab=security');
         await submitChange('password-lama-123');
 
         expect(await screen.findByText(/Password berhasil diubah/)).toBeVisible();
@@ -205,7 +205,7 @@ describe('change password page', () => {
             ),
         );
 
-        renderApp('/change-password');
+        renderApp('/account?tab=security');
         await submitChange('password-lama-123');
 
         expect(await screen.findByText('Password saat ini salah.')).toBeVisible();
@@ -220,9 +220,9 @@ describe('change password page', () => {
 
         const router = renderApp('/');
         await userEvent.click(await screen.findByRole('button', { name: /Menu akun/ }));
-        await userEvent.click(await screen.findByRole('menuitem', { name: 'Ubah password' }));
+        await userEvent.click(await screen.findByRole('menuitem', { name: 'Akun saya' }));
 
-        expect(await screen.findByRole('heading', { name: 'Ubah password' })).toBeVisible();
-        expect(router.state.location.pathname).toBe('/change-password');
+        expect(await screen.findByRole('heading', { name: 'Akun saya' })).toBeVisible();
+        expect(router.state.location.pathname).toBe('/account');
     });
 });

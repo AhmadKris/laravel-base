@@ -22,6 +22,12 @@ final class RateLimits
         RateLimiter::for('password-change', fn (Request $request): Limit => Limit::perMinute(5)
             ->by((string) $request->user()?->getAuthIdentifier()));
 
+        // Each request sends two emails, so it is limited like a password change.
+        RateLimiter::for('email-change', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by((string) $request->user()?->getAuthIdentifier()));
+
+        RateLimiter::for('email-change-confirm', fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->ip()));
+
         RateLimiter::for('uploads', fn (Request $request): Limit => Limit::perMinute(20)
             ->by((string) $request->user()?->getAuthIdentifier()));
 

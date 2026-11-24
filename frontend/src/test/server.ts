@@ -72,6 +72,44 @@ export const server = setupServer(
             meta: null,
         });
     }),
+    // The account page reads the signed-in user, so tests that open it get that user's account.
+    http.get('*/api/v1/account', () => {
+        const user = useAuthStore.getState().user;
+
+        return HttpResponse.json({
+            success: true,
+            message: '',
+            data: {
+                id: user?.id ?? '',
+                name: user?.name ?? '',
+                email: user?.email ?? '',
+                username: null,
+                phone: null,
+                avatar: user?.avatar ?? null,
+                pending_email: null,
+                roles: user?.roles ?? [],
+                last_login_at: null,
+                created_at: '2026-11-01T03:00:00Z',
+            },
+            meta: null,
+        });
+    }),
+    http.get('*/api/v1/auth/sessions', () =>
+        HttpResponse.json({
+            success: true,
+            message: '',
+            data: [
+                {
+                    id: 'a'.repeat(64),
+                    ip_address: '127.0.0.1',
+                    user_agent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/120.0',
+                    last_active_at: '2026-11-24T03:00:00Z',
+                    is_current: true,
+                },
+            ],
+            meta: null,
+        }),
+    ),
     http.get('*/api/v1/notifications/unread-count', () =>
         HttpResponse.json({
             success: true,

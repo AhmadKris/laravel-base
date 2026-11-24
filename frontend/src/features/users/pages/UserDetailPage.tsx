@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { usePermission } from '@/hooks/usePermission';
 import { ApiError, toApiError } from '@/lib/api-error';
+import { userAvatarUrl } from '@/lib/avatar';
 import { formatDateTime } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth-store';
 import type { User } from '@/types/api-response';
@@ -90,7 +91,13 @@ export function UserDetailPage() {
         <CenteredPage>
             <BackLink to="/users" label="Daftar pengguna" />
             <PageHeader
-                leading={<UserAvatar name={user.name} size="lg" />}
+                leading={
+                    <UserAvatar
+                        name={user.name}
+                        src={userAvatarUrl(user.id, user.avatar)}
+                        size="lg"
+                    />
+                }
                 title={user.name}
                 description={user.email}
                 descriptionAction={<CopyButton value={user.email} label="Salin email" />}
@@ -136,6 +143,8 @@ export function UserDetailPage() {
                             NOT_SET
                         )}
                     </dd>
+                    <dt className="text-muted-foreground">Telepon</dt>
+                    <dd className="break-all">{user.phone ?? NOT_SET}</dd>
                     <dt className="text-muted-foreground">Role</dt>
                     <dd className="min-w-0">
                         {roles.length > 0 ? (

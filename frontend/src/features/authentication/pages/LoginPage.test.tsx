@@ -101,11 +101,11 @@ describe('login page', () => {
         asGuest();
         server.use(http.post('*/login', () => envelope(makeUser())));
 
-        const router = renderApp('/change-password');
+        const router = renderApp('/account');
         await submitLogin('ani@example.com', 'rahasia');
 
-        expect(await screen.findByRole('heading', { name: 'Ubah password' })).toBeVisible();
-        expect(router.state.location.pathname).toBe('/change-password');
+        expect(await screen.findByRole('heading', { name: 'Akun saya' })).toBeVisible();
+        expect(router.state.location.pathname).toBe('/account');
     });
 
     it('shows the message for the backend code and stays on the page', async () => {
@@ -245,7 +245,7 @@ describe('after signing out', () => {
             http.post('*/login', () => envelope(makeUser())),
         );
 
-        const router = renderApp('/change-password');
+        const router = renderApp('/account');
         await userEvent.click(await screen.findByRole('button', { name: /Menu akun/ }));
         await userEvent.click(await screen.findByRole('menuitem', { name: 'Keluar' }));
         await screen.findByRole('heading', { name: 'Masuk ke Enterprise System' });

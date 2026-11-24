@@ -8,6 +8,9 @@ const MESSAGES_BY_CODE: Record<string, string> = {
     AUTH_FORBIDDEN: 'Anda tidak memiliki izin untuk melakukan tindakan ini.',
     AUTH_INVALID_CREDENTIALS: 'Email atau password salah.',
     AUTH_PASSWORD_RESET_INVALID: 'Tautan reset password tidak valid atau sudah kedaluwarsa.',
+    AUTH_EMAIL_CHANGE_INVALID:
+        'Tautan konfirmasi tidak berlaku. Tautan hanya berlaku 60 menit dan sekali pakai, atau sudah diganti permintaan yang lebih baru. Minta perubahan email lagi dari halaman Akun saya.',
+    AUTH_CURRENT_SESSION: 'Sesi di perangkat ini diakhiri dengan tombol Keluar.',
     AUTH_PRIVILEGE_ESCALATION: 'Anda tidak dapat memberikan akses melebihi kewenangan Anda.',
     CSRF_TOKEN_MISMATCH: 'Sesi formulir telah berakhir. Muat ulang halaman lalu coba lagi.',
     VALIDATION_FAILED: 'Periksa kembali data yang Anda isi.',

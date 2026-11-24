@@ -18,17 +18,17 @@ it('names the browser tab after the current page', async () => {
 
     expect(document.title).toBe('Beranda - Enterprise System');
 
-    await act(() => router.navigate('/change-password'));
-    await screen.findByRole('heading', { name: 'Ubah password' });
+    await act(() => router.navigate('/account'));
+    await screen.findByRole('heading', { name: 'Akun saya' });
 
-    expect(document.title).toBe('Ubah password - Enterprise System');
+    expect(document.title).toBe('Akun saya - Enterprise System');
 });
 
 it('moves focus to the content after navigating', async () => {
     const router = renderApp('/');
     await screen.findByRole('heading', { name: 'Beranda' });
 
-    await act(() => router.navigate('/change-password'));
+    await act(() => router.navigate('/account'));
 
     await waitFor(() => expect(document.getElementById('main-content')).toHaveFocus());
 });

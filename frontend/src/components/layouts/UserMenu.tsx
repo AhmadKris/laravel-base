@@ -14,6 +14,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { authService } from '@/features/authentication/services/authService';
+import { ownAvatarUrl } from '@/lib/avatar';
 import { notifyError } from '@/lib/notify';
 import { useAuthStore } from '@/stores/auth-store';
 import { type ThemePreference, useThemeStore } from '@/stores/theme-store';
@@ -45,7 +46,7 @@ export function UserMenu() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" aria-label={`Menu akun ${userName ?? ''}`}>
-                    <UserAvatar name={userName ?? ''} size="sm" />
+                    <UserAvatar name={userName ?? ''} src={ownAvatarUrl(user?.avatar)} size="sm" />
                     <span className="max-w-40 truncate">{userName}</span>
                     <ChevronDown aria-hidden="true" />
                 </Button>
@@ -70,7 +71,7 @@ export function UserMenu() {
                     </>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link to="/change-password">Ubah password</Link>
+                    <Link to="/account">Akun saya</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Tema</DropdownMenuLabel>

@@ -17,6 +17,7 @@ use App\Modules\UserManagement\Requests\UpdateUserRequest;
 use App\Modules\UserManagement\Requests\UserListRequest;
 use App\Modules\UserManagement\Resources\UserPermissionResource;
 use App\Modules\UserManagement\Resources\UserResource;
+use App\Modules\UserManagement\Services\AvatarStorage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Permission;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class UserController
 {
@@ -79,6 +81,13 @@ final class UserController
         $action->execute($user, $this->actor($request));
 
         return response()->noContent();
+    }
+
+    public function avatar(User $user, AvatarStorage $storage): StreamedResponse
+    {
+        Gate::authorize('view', $user);
+
+        return $storage->response($user);
     }
 
     public function roles(User $user): JsonResponse

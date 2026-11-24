@@ -1,4 +1,4 @@
-import { Outlet, type Params, type RouteObject } from 'react-router';
+import { Navigate, Outlet, type Params, type RouteObject } from 'react-router';
 import { GuestRoute } from '@/app/guards/GuestRoute';
 import { ModuleRoute } from '@/app/guards/ModuleRoute';
 import { ProtectedRoute } from '@/app/guards/ProtectedRoute';
@@ -8,9 +8,10 @@ import { AppLayout } from '@/components/layouts/AppLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { HomePage } from '@/features/dashboard/pages/HomePage';
 import {
+    AccountPage,
     AuditLogDetailPage,
     AuditLogListPage,
-    ChangePasswordPage,
+    ConfirmEmailPage,
     ForgotPasswordPage,
     LoginPage,
     NotificationsPage,
@@ -46,9 +47,14 @@ export const routes: RouteObject[] = [
                         children: [
                             { index: true, element: <HomePage />, handle: { title: 'Beranda' } },
                             {
+                                path: 'account',
+                                element: <AccountPage />,
+                                handle: { title: 'Akun saya' },
+                            },
+                            // Older notifications still link here.
+                            {
                                 path: 'change-password',
-                                element: <ChangePasswordPage />,
-                                handle: { title: 'Ubah password' },
+                                element: <Navigate to="/account?tab=security" replace />,
                             },
                             {
                                 path: 'notifications',
@@ -200,6 +206,12 @@ export const routes: RouteObject[] = [
                         path: 'reset-password',
                         element: <ResetPasswordPage />,
                         handle: { title: 'Buat password baru' },
+                    },
+                    // Not guest-only either: the link may be opened on any device, signed in or not.
+                    {
+                        path: 'confirm-email',
+                        element: <ConfirmEmailPage />,
+                        handle: { title: 'Konfirmasi email baru' },
                     },
                 ],
             },

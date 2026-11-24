@@ -23,6 +23,7 @@ it('returns the profile, roles, and permissions', function () {
                 'id' => $user->uuid,
                 'name' => $user->name,
                 'email' => $user->email,
+                'avatar' => null,
                 'roles' => ['Staff'],
                 'permissions' => ['user.view'],
             ],
