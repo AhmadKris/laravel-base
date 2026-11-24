@@ -24,6 +24,8 @@ function makeTarget(overrides: Partial<User> = {}): User {
         name: 'Budi Santoso',
         email: 'budi@example.com',
         username: 'budi.santoso',
+        phone: null,
+        avatar: null,
         status: 'active',
         roles: ['Staff'],
         created_at: '2026-11-01T03:00:00Z',

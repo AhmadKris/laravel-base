@@ -66,6 +66,10 @@ it('records each sensitive action exactly once without secrets', function (strin
             ...newPasswordFields(),
         ])
         ->assertOk()],
+    'email change request' => ['auth.email_change_requested', fn ($test) => $test
+        ->actingAs($test->superAdmin)
+        ->postJson('/api/v1/account/email', ['email' => 'changed@example.com', 'current_password' => AUDIT_SECRET])
+        ->assertOk()],
     'user creation' => ['user.created', fn ($test) => $test
         ->actingAs($test->superAdmin)
         ->postJson('/api/v1/users', ['name' => 'New', 'email' => 'new@example.com', 'password' => AUDIT_NEW_SECRET])

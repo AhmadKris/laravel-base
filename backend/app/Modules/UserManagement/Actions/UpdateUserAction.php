@@ -32,6 +32,12 @@ final class UpdateUserAction
             $user->forceFill($attributes);
             $changes = $user->getDirty();
             $original = $user->getRawOriginal();
+
+            // An email set by an administrator replaces one the user was still confirming.
+            if ($user->isDirty('email')) {
+                $user->forceFill(['pending_email' => null, 'pending_email_token' => null, 'pending_email_expires_at' => null]);
+            }
+
             $user->save();
 
             $this->recordChanges($user, $changes, $original, $actor);

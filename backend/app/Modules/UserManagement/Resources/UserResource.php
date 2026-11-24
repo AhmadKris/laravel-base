@@ -24,6 +24,10 @@ final class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'username' => $this->username,
+            /** @var string|null */
+            'phone' => $this->phone,
+            /** @var array{version: string}|null */
+            'avatar' => $this->avatarVersion() === null ? null : ['version' => $this->avatarVersion()],
             'status' => ActiveStatus::fromBoolean($this->is_active)->value,
             /** @var list<string> */
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),

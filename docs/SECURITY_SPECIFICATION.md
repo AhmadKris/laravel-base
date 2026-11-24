@@ -748,6 +748,13 @@ Logo perusahaan, logo untuk latar gelap, dan favicon adalah satu-satunya file ya
 - Response memakai `Content-Type` dari ekstensi yang tersimpan, `X-Content-Type-Options: nosniff`, dan `Content-Security-Policy: default-src 'none'; sandbox`.
 - Upload dan penghapusan membutuhkan `system_config.update`, dibatasi 20 permintaan per menit per pengguna, dan tercatat di audit log.
 
+## 10.6 Foto Profil
+
+- Foto disimpan di private storage dengan nama acak dan disajikan lewat `GET /api/v1/account/avatar` untuk pemiliknya, atau `GET /api/v1/users/{id}/avatar` dengan `user.view` dan scope data yang sama dengan detail pengguna.
+- Upload menerima PNG, JPG, atau WebP sampai 2 MB dan 40 megapiksel. Ekstensi dan tipe dari isi file harus sama-sama diizinkan. SVG ditolak.
+- Server memotong foto menjadi persegi, mengecilkannya ke 256 x 256 piksel, lalu menulisnya ulang sebagai PNG, sehingga data yang disisipkan di file asli terbuang.
+- Response memakai `Content-Type: image/png`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`, dan `Cache-Control: private`.
+
 ---
 
 # 11. Redis & Queue Security

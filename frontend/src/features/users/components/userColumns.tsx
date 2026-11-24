@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import type { DataTableColumn } from '@/components/shared/dataTableColumns';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { UserAvatar } from '@/components/shared/UserAvatar';
+import { userAvatarUrl } from '@/lib/avatar';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -36,7 +37,10 @@ export function userColumns(options: ColumnOptions): DataTableColumn<User>[] {
             enableSorting: true,
             cell: ({ row }) => (
                 <div className="flex items-center gap-2.5">
-                    <UserAvatar name={row.original.name} />
+                    <UserAvatar
+                        name={row.original.name}
+                        src={userAvatarUrl(row.original.id, row.original.avatar)}
+                    />
                     <div className="flex min-w-0 flex-col">
                         <Link
                             to={`/users/${row.original.id}`}

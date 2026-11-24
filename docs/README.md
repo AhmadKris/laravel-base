@@ -37,7 +37,8 @@ Service hanya dibuat jika logikanya dipakai ulang. Repository, Contract, dan DTO
 
 | Area | Ditunda | Ditambahkan saat |
 |---|---|---|
-| Autentikasi | Token API, daftar sesi aktif, email verification | Ada klien eksternal atau kebutuhan bisnis |
+| Autentikasi | Token API, verifikasi email saat akun dibuat | Ada klien eksternal atau kebutuhan bisnis |
+| Data karyawan | Alamat, NIK, jabatan, atasan, dan data HR lain. Tabel `users` hanya menyimpan data akun | Modul HRM dibangun; `employees` memakai `user_id` yang boleh kosong |
 | MFA | Enrollment dan recovery | Sebelum aplikasi nyata go-live, minimal untuk akun privileged |
 | Workflow | Builder, delegasi, eskalasi, UI versioning | Setelah approval berurutan terpakai |
 | Document | Versioning, preview, malware scanning | Setelah upload dasar terpakai |

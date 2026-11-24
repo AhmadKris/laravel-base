@@ -287,6 +287,7 @@ Mengelola informasi pengguna dan status akun dalam sistem.
 | Create User | Membuat pengguna |
 | Edit User | Mengubah informasi pengguna |
 | User Profile | Informasi profil |
+| Akun Saya | User mengubah nama, telepon, foto, dan email sendiri, serta melihat dan mengakhiri sesi aktif |
 | User Status | Active / Inactive |
 | Assign Role | Menetapkan role |
 | Bulk Import | Import pengguna |
@@ -334,6 +335,9 @@ Mengelola informasi pengguna dan status akun dalam sistem.
 2. User yang sudah memiliki histori bisnis sebaiknya dinonaktifkan, bukan dihapus permanen.
 3. Setiap perubahan role harus melalui validasi authorization.
 4. User hanya dapat dikelola oleh pihak yang memiliki permission.
+5. User dapat mengubah nama, telepon, dan foto miliknya tanpa permission. Username, status, dan role hanya dapat diubah admin.
+6. Email baru berlaku setelah user membuka tautan yang dikirim ke email baru. Permintaan perubahan membutuhkan password saat ini, dan email lama menerima pemberitahuan saat perubahan diminta dan setelah berhasil.
+7. Pengguna berbeda dengan karyawan. Data karyawan seperti alamat dikelola modul HRM.
 
 ---
 
@@ -702,11 +706,17 @@ user.created
 user.updated
 user.deactivated
 user.role_assigned
+user.avatar_updated
+user.avatar_removed
 
 auth.login
 auth.logout
 auth.login_failed
 auth.password_changed
+auth.email_change_requested
+auth.email_changed
+auth.session_revoked
+auth.other_sessions_revoked
 
 workflow.started
 workflow.approved

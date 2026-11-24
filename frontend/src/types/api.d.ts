@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    '/v1/account': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['account.show'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations['account.update'];
+        trace?: never;
+    };
+    '/v1/account/avatar': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['account.avatar'];
+        put?: never;
+        post: operations['account.storeAvatar'];
+        delete: operations['account.destroyAvatar'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/v1/audit-logs': {
         parameters: {
             query?: never;
@@ -127,6 +159,42 @@ export interface paths {
         put?: never;
         post: operations['branding.store'];
         delete: operations['branding.destroy'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/account/email': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations['emailChange.store'];
+        delete: operations['emailChange.destroy'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/auth/email-change/confirm': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Public, because the link may be opened on a device where the user is not signed in.
+         *     The token proves the request comes from the new mailbox
+         */
+        post: operations['emailChange.confirm'];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -324,6 +392,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/v1/auth/sessions': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A user has only a handful of sessions, so the list is not paginated */
+        get: operations['session.index'];
+        put?: never;
+        post?: never;
+        /** Ends every session except the one making the request */
+        delete: operations['session.destroyOthers'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    '/v1/auth/sessions/{session}': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations['session.destroy'];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/v1/system-configurations/public': {
         parameters: {
             query?: never;
@@ -420,6 +522,22 @@ export interface paths {
         patch: operations['user.update'];
         trace?: never;
     };
+    '/v1/users/{user}/avatar': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations['user.avatar'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     '/v1/users/{user}/roles': {
         parameters: {
             query?: never;
@@ -457,6 +575,26 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountResource */
+        AccountResource: {
+            id: string;
+            name: string;
+            email: string;
+            username: string | null;
+            phone: string | null;
+            avatar: {
+                version: string;
+            } | null;
+            pending_email: {
+                email: string;
+                expires_at: string;
+            } | null;
+            roles: string[];
+            /** Format: date-time */
+            last_login_at: string | null;
+            /** Format: date-time */
+            created_at: string | null;
+        };
         /**
          * ActiveStatus
          * @enum {string}
@@ -502,6 +640,9 @@ export interface components {
             id: string;
             name: string;
             email: string;
+            avatar: {
+                version: string;
+            } | null;
             roles: string[];
             permissions: string[];
         };
@@ -515,6 +656,12 @@ export interface components {
             current_password: string;
             password: string;
             password_confirmation: string;
+        };
+        /** ConfirmEmailChangeRequest */
+        ConfirmEmailChangeRequest: {
+            /** Format: uuid */
+            id: string;
+            token: string;
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -550,6 +697,13 @@ export interface components {
             group: string;
             group_label: string;
             requires: string[];
+        };
+        /** RequestEmailChangeRequest */
+        RequestEmailChangeRequest: {
+            /** Format: email */
+            email: string;
+            /** @description Someone using a session left open must not be able to move the account to their own address. */
+            current_password: string;
         };
         /** ResetPasswordRequest */
         ResetPasswordRequest: {
@@ -604,6 +758,15 @@ export interface components {
             version: number;
             /** Format: date-time */
             updated_at: string | null;
+        };
+        /**
+         * UpdateAccountRequest
+         * @description The profile fields a user may change on their own account. Email has its own confirmed flow,
+         *     and username, status, and roles stay with administrators.
+         */
+        UpdateAccountRequest: {
+            name?: string;
+            phone?: string | null;
         };
         /** UpdateConfigurationRequest */
         UpdateConfigurationRequest: {
@@ -718,6 +881,14 @@ export interface components {
             status?: components['schemas']['ActiveStatus'];
             roles?: string[];
         };
+        /** UploadAvatarRequest */
+        UploadAvatarRequest: {
+            /**
+             * Format: binary
+             * @description Maximum file size: 2048 kilobytes.
+             */
+            file: string;
+        };
         /** UploadBrandingRequest */
         UploadBrandingRequest: {
             /** Format: binary */
@@ -741,6 +912,10 @@ export interface components {
             name: string;
             email: string;
             username: string | null;
+            phone: string | null;
+            avatar: {
+                version: string;
+            } | null;
             /** @enum {string} */
             status: 'active' | 'inactive';
             roles?: string[];
@@ -809,6 +984,141 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    'account.show': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Account retrieved successfully';
+                        data: unknown[] | components['schemas']['AccountResource'];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'account.update': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                'application/json': components['schemas']['UpdateAccountRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Account updated successfully';
+                        data: unknown[] | components['schemas']['AccountResource'];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            422: components['responses']['ValidationException'];
+        };
+    };
+    'account.avatar': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    'Transfer-Encoding': 'chunked';
+                    [name: string]: unknown;
+                };
+                content: {
+                    'image/png': string;
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'account.storeAvatar': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'multipart/form-data': components['schemas']['UploadAvatarRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Profile photo updated successfully';
+                        data: unknown[] | components['schemas']['AccountResource'];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            422: components['responses']['ValidationException'];
+        };
+    };
+    'account.destroyAvatar': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Profile photo removed successfully';
+                        data: unknown[] | components['schemas']['AccountResource'];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
     'auditLog.index': {
         parameters: {
             query?: {
@@ -1111,6 +1421,92 @@ export interface operations {
             };
             401: components['responses']['AuthenticationException'];
             404: components['responses']['ModelNotFoundException'];
+        };
+    };
+    'emailChange.store': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['RequestEmailChangeRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Confirmation link sent to the new email';
+                        data:
+                            | unknown[]
+                            | {
+                                  email: string;
+                                  /** Format: date-time */
+                                  expires_at: string | null;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            422: components['responses']['ValidationException'];
+        };
+    };
+    'emailChange.destroy': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'emailChange.confirm': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['ConfirmEmailChangeRequest'];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Email has been changed.';
+                        data: unknown[] | null;
+                        meta: null;
+                    };
+                };
+            };
+            422: components['responses']['ValidationException'];
         };
     };
     'monitoring.health': {
@@ -1725,6 +2121,92 @@ export interface operations {
             422: components['responses']['ValidationException'];
         };
     };
+    'session.index': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Sessions retrieved successfully';
+                        data:
+                            | unknown[]
+                            | {
+                                  id: string;
+                                  ip_address: string;
+                                  user_agent: string;
+                                  /** Format: date-time */
+                                  last_active_at: string;
+                                  is_current: boolean;
+                              }[];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'session.destroyOthers': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'Other sessions ended';
+                        data:
+                            | unknown[]
+                            | {
+                                  ended: number;
+                              };
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
+    'session.destroy': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components['responses']['AuthenticationException'];
+        };
+    };
     'systemConfiguration.public': {
         parameters: {
             query?: never;
@@ -1772,12 +2254,7 @@ export interface operations {
                         success: boolean;
                         /** @constant */
                         message: 'Feature flags retrieved successfully';
-                        data:
-                            | unknown[]
-                            | {
-                                  key: string;
-                                  enabled: boolean;
-                              }[];
+                        data: unknown[] | string[];
                         meta: null;
                     };
                 };
@@ -2067,6 +2544,32 @@ export interface operations {
             403: components['responses']['AuthorizationException'];
             404: components['responses']['ModelNotFoundException'];
             422: components['responses']['ValidationException'];
+        };
+    };
+    'user.avatar': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    'Transfer-Encoding': 'chunked';
+                    [name: string]: unknown;
+                };
+                content: {
+                    'image/png': string;
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            403: components['responses']['AuthorizationException'];
+            404: components['responses']['ModelNotFoundException'];
         };
     };
     'user.roles': {

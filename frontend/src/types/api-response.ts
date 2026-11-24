@@ -14,6 +14,21 @@ export type UpdateUserPayload = Schemas['UpdateUserRequest'];
 export type ForgotPasswordPayload = Schemas['ForgotPasswordRequest'];
 export type ResetPasswordPayload = Schemas['ResetPasswordRequest'];
 export type ChangePasswordPayload = Schemas['ChangePasswordRequest'];
+export type Account = Schemas['AccountResource'];
+export type UpdateAccountPayload = Schemas['UpdateAccountRequest'];
+export type RequestEmailChangePayload = Schemas['RequestEmailChangeRequest'];
+export type ConfirmEmailChangePayload = Schemas['ConfirmEmailChangeRequest'];
+export type PendingEmailChange = NonNullable<Account['pending_email']>;
+
+// Scramble cannot infer the rows that SessionService builds from the sessions table.
+export interface ActiveSession {
+    /** A hash of the session ID, never the ID itself. */
+    id: string;
+    ip_address: string | null;
+    user_agent: string | null;
+    last_active_at: string;
+    is_current: boolean;
+}
 
 // Scramble cannot infer JSON columns, so the types below that hold them are written by hand.
 export type JsonValue =

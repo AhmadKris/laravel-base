@@ -22,6 +22,8 @@ final class AuthenticatedUserResource extends JsonResource
             'id' => $this->uuid,
             'name' => $this->name,
             'email' => $this->email,
+            /** @var array{version: string}|null */
+            'avatar' => $this->avatarVersion() === null ? null : ['version' => $this->avatarVersion()],
             /** @var list<string> */
             'roles' => $this->getRoleNames(),
             /** @var list<string> */

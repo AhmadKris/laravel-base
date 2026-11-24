@@ -30,6 +30,6 @@ final class PasswordResetNotification extends InAppNotification
 
     protected function actionUrl(): string
     {
-        return '/change-password';
+        return '/account?tab=security';
     }
 }

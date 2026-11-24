@@ -397,8 +397,13 @@ erDiagram
 | name | VARCHAR(150) | NOT NULL | User name |
 | email | VARCHAR(255) | UNIQUE, CHECK | Login email, ternormalisasi |
 | username | VARCHAR(50) | UNIQUE, CHECK, NULL | Login username, ternormalisasi |
+| phone | VARCHAR(30) | NULL | Telepon yang diisi user sendiri |
+| avatar_path | VARCHAR(100) | NULL | Path foto profil di private storage |
 | password | VARCHAR(255) | NOT NULL | Hashed password |
 | email_verified_at | TIMESTAMP | NULL | Verification timestamp |
+| pending_email | VARCHAR(255) | NULL | Email baru yang menunggu konfirmasi |
+| pending_email_token | CHAR(64) | NULL | Hash SHA-256 token konfirmasi email baru |
+| pending_email_expires_at | TIMESTAMP | NULL | Batas waktu konfirmasi email baru |
 | is_active | BOOLEAN | DEFAULT TRUE | Account status |
 | last_login_at | TIMESTAMP | NULL | Last login |
 | created_at | TIMESTAMP | | Creation time |
@@ -408,6 +413,10 @@ erDiagram
 Migration `users` bawaan Laravel harus ditambah kolom `uuid`, `is_active`, `last_login_at`, dan `deleted_at`.
 
 `email` dan `username` hanya menerima nilai ternormalisasi, yaitu huruf kecil tanpa spasi di awal dan akhir. Constraint `users_email_normalized` dan `users_username_normalized` memakai perbandingan biner karena kolomnya memakai collation yang tidak membedakan huruf besar dan kecil.
+
+`users` hanya menyimpan data akun. Data karyawan seperti alamat dan NIK disimpan modul HRM di tabel tersendiri, karena tidak semua user adalah karyawan dan data tersebut hanya boleh dilihat HR.
+
+`pending_email` tidak unik, karena dua user boleh meminta alamat yang sama. Keunikan diperiksa lagi saat konfirmasi.
 
 Unique `email` juga berlaku untuk user yang di-soft delete. Mengaktifkan kembali akun dilakukan dengan restore, bukan membuat user baru dengan email yang sama.
 

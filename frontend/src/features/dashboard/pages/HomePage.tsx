@@ -2,6 +2,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePermission } from '@/hooks/usePermission';
+import { ownAvatarUrl } from '@/lib/avatar';
 import { useAuthStore } from '@/stores/auth-store';
 import { RecentActivity } from '../components/RecentActivity';
 import { StatTile } from '../components/StatTile';
@@ -32,7 +33,11 @@ export function HomePage() {
                     </CardHeader>
                     <CardContent className="flex flex-col gap-3">
                         <div className="flex items-center gap-3">
-                            <UserAvatar name={user?.name ?? ''} size="lg" />
+                            <UserAvatar
+                                name={user?.name ?? ''}
+                                src={ownAvatarUrl(user?.avatar)}
+                                size="lg"
+                            />
                             <div className="flex min-w-0 flex-col">
                                 <span className="truncate text-sm font-medium">{user?.name}</span>
                                 <span className="text-xs break-all text-muted-foreground">
