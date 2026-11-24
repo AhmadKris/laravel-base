@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Core\Authorization\Permissions\PermissionCatalog;
+use App\Core\Mail\UseCompanyAsSender;
 use App\Core\Modules\ModuleCatalog;
 use App\Core\Security\RateLimits;
+use App\Modules\SystemConfiguration\Services\ConfiguredCompanyProfile;
 use App\Modules\SystemConfiguration\Services\ConfiguredModuleAvailability;
 use App\Modules\UserManagement\Models\User;
+use App\Shared\Contracts\CompanyProfile;
 use App\Shared\Contracts\ModuleAvailability;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Markdown;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         ], config('navigation.sections')));
 
         $this->app->bind(ModuleAvailability::class, ConfiguredModuleAvailability::class);
+        $this->app->scoped(CompanyProfile::class, ConfiguredCompanyProfile::class);
     }
 
     /**
@@ -48,5 +55,9 @@ class AppServiceProvider extends ServiceProvider
             'token' => $token,
             'email' => $user->email,
         ]));
+
+        // Company details set by administrators appear in email, so Markdown in them must not become links or HTML.
+        Markdown::withSecuredEncoding();
+        Event::listen(MessageSending::class, UseCompanyAsSender::class);
     }
 }

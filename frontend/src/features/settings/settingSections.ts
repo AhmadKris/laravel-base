@@ -62,6 +62,7 @@ const FIXED_SECTIONS: SettingSection[] = [
                 inputType: 'text',
                 maxLength: 150,
                 required: true,
+                description: 'Tampil di aplikasi dan menjadi nama pengirim email dari sistem.',
                 schema: requiredText('Nama perusahaan', 150),
             },
             {
@@ -71,6 +72,7 @@ const FIXED_SECTIONS: SettingSection[] = [
                 inputType: 'text',
                 maxLength: 500,
                 required: false,
+                description: 'Tampil di bagian bawah email dari sistem.',
                 schema: optionalText('Alamat', 500),
             },
             {
@@ -80,6 +82,7 @@ const FIXED_SECTIONS: SettingSection[] = [
                 inputType: 'tel',
                 maxLength: 30,
                 required: false,
+                description: 'Tampil di bagian bawah email dari sistem.',
                 schema: optionalText('Telepon', 30),
             },
             {
@@ -89,6 +92,8 @@ const FIXED_SECTIONS: SettingSection[] = [
                 inputType: 'email',
                 maxLength: 255,
                 required: false,
+                description:
+                    'Balasan atas email dari sistem masuk ke alamat ini. Alamat pengirim tetap diatur di server.',
                 schema: optionalText('Email', 255).refine(
                     (value) => value === '' || z.email().safeParse(value).success,
                     'Email harus berupa alamat email yang valid.',
