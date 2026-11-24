@@ -70,7 +70,16 @@ it('validates the payload', function (array $payload, string $field) {
     'missing permissions' => [['version' => 1], 'permissions'],
     'missing version' => [['permissions' => ['user.view']], 'version'],
     'invalid version' => [['permissions' => ['user.view'], 'version' => 0], 'version'],
+    'missing prerequisite' => [['permissions' => ['user.create'], 'version' => 1], 'permissions'],
 ]);
+
+it('names the missing prerequisites in Indonesian', function () {
+    assignPermissions($this, $this->superAdmin, $this->auditor, ['user.assign_role', 'user.view'])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.permissions', ['Tetapkan role pengguna membutuhkan Lihat role.']);
+
+    expect($this->auditor->refresh()->version)->toBe(1);
+});
 
 it('allows removing every permission', function () {
     assignPermissions($this, $this->superAdmin, $this->auditor, [])->assertOk();
@@ -102,11 +111,11 @@ it('blocks granting a permission the actor does not hold', function () {
 
 it('blocks actors from raising the permissions of their own role', function () {
     $delegate = Role::create(['name' => 'Delegate', 'guard_name' => 'web']);
-    $delegate->givePermissionTo('permission.assign');
+    $delegate->givePermissionTo(['permission.assign', 'permission.view', 'role.view']);
     $actor = User::factory()->create();
     $actor->assignRole($delegate);
 
-    assignPermissions($this, $actor, $delegate, ['permission.assign', 'role.delete'])
+    assignPermissions($this, $actor, $delegate, ['permission.assign', 'permission.view', 'role.view', 'role.delete'])
         ->assertForbidden()
         ->assertJsonPath('code', 'AUTH_PRIVILEGE_ESCALATION');
 });

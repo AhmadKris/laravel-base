@@ -9,16 +9,21 @@ import type {
     UpdateRolePayload,
 } from '@/types/api-response';
 
+export interface RoleListFilters extends TableFilters {
+    type?: string;
+}
+
 export const roleKeys = {
     all: ['roles'] as const,
     lists: ['roles', 'list'] as const,
-    list: (filters: TableFilters) => ['roles', 'list', filters] as const,
+    list: (filters: RoleListFilters) => ['roles', 'list', filters] as const,
     detail: (id: string) => ['roles', 'detail', id] as const,
+    detailPermissions: (id: string) => ['roles', 'detail', id, 'permissions'] as const,
     permissions: ['roles', 'permissions'] as const,
 };
 
 export const roleService = {
-    async list(filters: TableFilters): Promise<PaginatedEnvelope<Role>> {
+    async list(filters: RoleListFilters): Promise<PaginatedEnvelope<Role>> {
         const response = await apiClient.get<PaginatedEnvelope<Role>>('/roles', {
             params: filters,
         });
@@ -46,6 +51,12 @@ export const roleService = {
 
     async remove(id: number): Promise<void> {
         await apiClient.delete(`/roles/${id}`);
+    },
+
+    async listRolePermissions(id: string): Promise<Permission[]> {
+        const response = await apiClient.get<ApiEnvelope<Permission[]>>(`/roles/${id}/permissions`);
+
+        return response.data.data;
     },
 
     async listPermissions(): Promise<Permission[]> {

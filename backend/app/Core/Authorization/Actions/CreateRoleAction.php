@@ -19,13 +19,13 @@ final class CreateRoleAction
     /**
      * @param  list<string>|null  $permissions
      */
-    public function execute(string $name, ?array $permissions, User $actor): Role
+    public function execute(string $name, ?string $description, ?array $permissions, User $actor): Role
     {
-        return DB::transaction(function () use ($name, $permissions, $actor): Role {
+        return DB::transaction(function () use ($name, $description, $permissions, $actor): Role {
             /** @var Role $role */
-            $role = Role::create(['name' => $name, 'guard_name' => 'web']);
+            $role = Role::create(['name' => $name, 'description' => $description, 'guard_name' => 'web']);
 
-            $this->auditLogger->record('role.created', $role, ['name' => $name], $actor);
+            $this->auditLogger->record('role.created', $role, ['name' => $name, 'description' => $description], $actor);
 
             if ($permissions !== null) {
                 $this->assignPermissions->execute($role, $permissions, $role->refresh()->version, $actor);

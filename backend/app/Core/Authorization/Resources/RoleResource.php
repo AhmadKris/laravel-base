@@ -25,6 +25,7 @@ final class RoleResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'description' => $this->description,
             'is_protected' => $this->isProtected(),
             'can_assign' => $actor instanceof User && app(RoleAssignmentService::class)->canAssign($actor, $this->name),
             'users_count' => $this->whenCounted('users'),

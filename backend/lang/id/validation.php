@@ -29,6 +29,7 @@ return [
     'password' => [
         'uncompromised' => ':Attribute ini pernah muncul di kebocoran data. Gunakan password lain.',
     ],
+    'permission_prerequisites' => ':Permission membutuhkan :requires.',
     'present' => ':Attribute wajib dikirim.',
     'required' => ':Attribute wajib diisi.',
     'size' => [

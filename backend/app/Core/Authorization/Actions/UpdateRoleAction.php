@@ -18,29 +18,37 @@ final class UpdateRoleAction
     ) {}
 
     /**
-     * @param  list<string>|null  $permissions
+     * @param  array{name?: string, description?: string|null, permissions?: list<string>, version?: int}  $changes
      *
      * @throws RoleProtectedException
      */
-    public function execute(Role $role, ?string $name, ?array $permissions, ?int $version, User $actor): Role
+    public function execute(Role $role, array $changes, User $actor): Role
     {
-        $isRenaming = $name !== null && $name !== $role->name;
+        $isRenaming = isset($changes['name']) && $changes['name'] !== $role->name;
 
         if ($isRenaming && $role->isProtected()) {
             throw new RoleProtectedException;
         }
 
-        DB::transaction(function () use ($role, $name, $isRenaming, $permissions, $version, $actor): void {
+        DB::transaction(function () use ($role, $changes, $isRenaming, $actor): void {
+            $properties = [];
+
             if ($isRenaming) {
-                $oldName = $role->name;
-
-                $role->update(['name' => $name]);
-
-                $this->auditLogger->record('role.updated', $role, ['old_name' => $oldName, 'new_name' => $name], $actor);
+                $properties += ['old_name' => $role->name, 'new_name' => $changes['name']];
             }
 
-            if ($permissions !== null) {
-                $this->assignPermissions->execute($role, $permissions, (int) $version, $actor);
+            if (array_key_exists('description', $changes) && $changes['description'] !== $role->description) {
+                $properties += ['old_description' => $role->description, 'new_description' => $changes['description']];
+            }
+
+            if ($properties !== []) {
+                $role->update(array_intersect_key($changes, array_flip(['name', 'description'])));
+
+                $this->auditLogger->record('role.updated', $role, $properties, $actor);
+            }
+
+            if (isset($changes['permissions'])) {
+                $this->assignPermissions->execute($role, $changes['permissions'], (int) ($changes['version'] ?? 0), $actor);
             }
         });
 

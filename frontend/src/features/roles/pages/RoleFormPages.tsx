@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
 import { CenteredPage } from '@/components/shared/CenteredPage';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -14,11 +14,56 @@ import { SUPER_ADMIN_ROLE } from '../permissionGroups';
 import { roleKeys, roleService } from '../services/roleService';
 
 export function RoleCreatePage() {
+    const [params] = useSearchParams();
+    const sourceId = params.get('copy');
+
+    const source = useQuery({
+        queryKey: roleKeys.detail(sourceId ?? ''),
+        queryFn: () => roleService.get(sourceId ?? ''),
+        enabled: sourceId !== null,
+    });
+
+    if (sourceId === null) {
+        return (
+            <CenteredPage width="wide">
+                <BackLink to="/roles" label="Daftar role" />
+                <PageHeader title="Tambah role" description="Tentukan nama dan permission role." />
+                <RoleForm />
+            </CenteredPage>
+        );
+    }
+
+    if (source.isPending) {
+        return (
+            <CenteredPage width="wide">
+                <PageSkeleton label="Memuat role yang disalin" />
+            </CenteredPage>
+        );
+    }
+
+    if (source.isError) {
+        return (
+            <CenteredPage width="wide">
+                <BackLink to="/roles" label="Daftar role" />
+                <Card className="py-0">
+                    <ErrorState
+                        title="Role yang disalin tidak dapat dimuat"
+                        message={toApiError(source.error).message}
+                        onRetry={() => void source.refetch()}
+                    />
+                </Card>
+            </CenteredPage>
+        );
+    }
+
     return (
         <CenteredPage width="wide">
-            <BackLink to="/roles" label="Daftar role" />
-            <PageHeader title="Tambah role" description="Tentukan nama dan permission role." />
-            <RoleForm />
+            <BackLink to={`/roles/${source.data.id}`} label={source.data.name} />
+            <PageHeader
+                title="Duplikat role"
+                description={`Role baru dimulai dari salinan ${source.data.name}.`}
+            />
+            <RoleForm source={source.data} />
         </CenteredPage>
     );
 }

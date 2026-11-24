@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Spatie\Permission\Models\Role as SpatieRole;
 
 /**
+ * @property string|null $description
  * @property int $version
  */
 #[UsePolicy(RolePolicy::class)]
@@ -21,7 +22,7 @@ class Role extends SpatieRole
 
     public const string SUPER_ADMIN = 'Super Admin';
 
-    private const array PROTECTED_ROLES = [self::SUPER_ADMIN, 'Admin', 'Staff', 'Viewer'];
+    public const array PROTECTED_ROLES = [self::SUPER_ADMIN, 'Admin', 'Staff', 'Viewer'];
 
     public function isProtected(): bool
     {

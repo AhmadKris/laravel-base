@@ -52,6 +52,16 @@ it('matches the authorization matrix', function (string $role, array $expected) 
     'Viewer' => ['Viewer', ['user.view']],
 ]);
 
+it('describes the built-in roles only when it creates them', function () {
+    $this->seed(RolePermissionSeeder::class);
+    Role::findByName('Admin', 'web')->update(['description' => 'Diubah di aplikasi.']);
+
+    $this->seed(RolePermissionSeeder::class);
+
+    expect(Role::query()->whereNull('description')->exists())->toBeFalse()
+        ->and(Role::findByName('Admin', 'web')->description)->toBe('Diubah di aplikasi.');
+});
+
 it('gives the super admin every permission', function () {
     $this->seed(RolePermissionSeeder::class);
 

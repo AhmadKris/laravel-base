@@ -161,6 +161,7 @@ Modules/
     ├── Jobs/
     ├── Routes/
     │   └── api.php
+    ├── permissions.php
     └── Providers/
         └── UserManagementServiceProvider.php
 ```
@@ -584,6 +585,39 @@ Rules:
 3. Jangan hanya menyembunyikan tombol di frontend.
 5. Jangan memberikan akses berdasarkan role name saja apabila permission lebih tepat.
 6. Uji skenario akses antarpengguna.
+
+## 6.3 Mendaftarkan Permission
+
+Setiap modul yang memiliki permission mendaftarkannya di `permissions.php` pada root modul (`app/Core/*/permissions.php` atau `app/Modules/*/permissions.php`). `PermissionCatalog` membaca semua file tersebut. Seeder membuat permission dari katalog, `GET /permissions` menampilkan label dan deskripsinya, dan validasi role memeriksa prasyaratnya. Frontend tidak menyimpan daftar permission sendiri.
+
+```php
+return [
+    'user' => [
+        'label' => 'Pengguna',
+        'position' => 10,
+        'permissions' => [
+            'user.view' => [
+                'label' => 'Lihat pengguna',
+                'description' => 'Membuka menu, daftar, dan detail pengguna.',
+            ],
+            'user.create' => [
+                'label' => 'Tambah pengguna',
+                'description' => 'Membuat akun pengguna baru.',
+                'requires' => ['user.view'],
+            ],
+        ],
+    ],
+];
+```
+
+Aturan:
+
+1. Key grup adalah bagian `{resource}` dari nama permission. Setiap permission dalam grup diawali key tersebut.
+2. `label` dan `description` ditulis dalam Bahasa Indonesia untuk pengguna yang mengatur role, bukan untuk developer.
+3. `position` menentukan urutan grup di layar. Permission dalam satu grup tampil sesuai urutan penulisan; tulis `view`, `create`, `update`, dan `delete` lebih dulu.
+4. `requires` berisi permission yang wajib dimiliki role agar permission tersebut berguna, misalnya `user.create` membutuhkan `user.view`. Prasyarat boleh berasal dari modul lain dan harus terdaftar di katalog.
+5. Katalog yang tidak valid (nama ganda, prefix tidak sesuai, prasyarat tidak dikenal, atau field wajib tidak ada) melempar `LogicException` saat dimuat. `PermissionCatalogTest` memuat katalog aplikasi, sehingga kesalahan ini gagal di CI. Saat menambah permission, perbarui juga daftar yang diharapkan di test tersebut.
+6. Permission baru di environment yang sudah berjalan dibuat dengan menjalankan ulang `RolePermissionSeeder`. Menghapus permission dari katalog tidak menghapusnya dari database; hapus lewat migration jika memang harus dicabut dari role.
 
 ---
 

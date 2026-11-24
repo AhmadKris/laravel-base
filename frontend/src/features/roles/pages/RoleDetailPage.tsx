@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BackLink } from '@/components/shared/BackLink';
@@ -8,7 +7,7 @@ import { DetailCard } from '@/components/shared/DetailCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { PageSkeleton } from '@/components/shared/skeletons';
+import { ListSkeleton, PageSkeleton } from '@/components/shared/skeletons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,7 +15,11 @@ import { usePermission } from '@/hooks/usePermission';
 import { ApiError, toApiError } from '@/lib/api-error';
 import { formatDateTime } from '@/lib/format';
 import { DeleteRoleDialog } from '../components/DeleteRoleDialog';
-import { describePermission, groupPermissions, SUPER_ADMIN_ROLE } from '../permissionGroups';
+import {
+    DUPLICATE_ROLE_PERMISSIONS,
+    groupPermissions,
+    SUPER_ADMIN_ROLE,
+} from '../permissionGroups';
 import { roleKeys, roleService } from '../services/roleService';
 
 export function RoleDetailPage() {
@@ -28,6 +31,13 @@ export function RoleDetailPage() {
     const query = useQuery({
         queryKey: roleKeys.detail(roleId),
         queryFn: () => roleService.get(roleId),
+    });
+    const hasPermissions = (query.data?.permissions ?? []).length > 0;
+    // Labels come from the role's own endpoint, which needs only role.view.
+    const permissionQuery = useQuery({
+        queryKey: roleKeys.detailPermissions(roleId),
+        queryFn: () => roleService.listRolePermissions(roleId),
+        enabled: hasPermissions,
     });
 
     if (query.isPending) {
@@ -67,7 +77,6 @@ export function RoleDetailPage() {
 
     const role = query.data;
     const permissions = role.permissions ?? [];
-    const groups = groupPermissions(permissions);
     const usersCount = role.users_count ?? 0;
 
     return (
@@ -78,6 +87,12 @@ export function RoleDetailPage() {
                 description={role.is_protected ? 'Role bawaan' : 'Role kustom'}
                 actions={
                     <>
+                        {DUPLICATE_ROLE_PERMISSIONS.every(can) &&
+                            role.name !== SUPER_ADMIN_ROLE && (
+                                <Button asChild variant="outline">
+                                    <Link to={`/roles/new?copy=${role.id}`}>Duplikat role</Link>
+                                </Button>
+                            )}
                         {can('role.update') && role.name !== SUPER_ADMIN_ROLE && (
                             <Button asChild variant="outline">
                                 <Link to={`/roles/${role.id}/edit`}>Ubah role</Link>
@@ -93,6 +108,8 @@ export function RoleDetailPage() {
             />
             <DetailCard title="Ringkasan role">
                 <dl className="grid gap-y-3 text-sm sm:grid-cols-[10rem_1fr]">
+                    <dt className="text-muted-foreground">Deskripsi</dt>
+                    <dd className="whitespace-pre-line">{role.description ?? '-'}</dd>
                     <dt className="text-muted-foreground">Jenis</dt>
                     <dd>
                         <Badge variant={role.is_protected ? 'info' : 'secondary'}>
@@ -121,48 +138,37 @@ export function RoleDetailPage() {
                 </dl>
             </DetailCard>
             <DetailCard title="Hak akses">
-                {groups.length === 0 ? (
+                {!hasPermissions ? (
                     <p className="text-sm text-muted-foreground">
                         Role ini belum memiliki permission.
                     </p>
+                ) : permissionQuery.isPending ? (
+                    <ListSkeleton label="Memuat hak akses" rows={3} />
+                ) : permissionQuery.isError ? (
+                    <ErrorState
+                        title="Hak akses tidak dapat dimuat"
+                        message={toApiError(permissionQuery.error).message}
+                        onRetry={() => void permissionQuery.refetch()}
+                    />
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {groups.map((group) => (
-                            <section key={group.key} className="rounded-lg border p-3.5">
-                                <div className="mb-2.5 flex items-center justify-between gap-2 border-b pb-2">
-                                    <h3 className="text-sm font-medium">{group.label}</h3>
-                                    <Badge variant="secondary" className="tabular-nums">
-                                        {group.permissions.length} izin
-                                    </Badge>
-                                </div>
-                                <ul className="grid gap-2.5">
-                                    {group.permissions.map((name) => {
-                                        const meta = describePermission(name);
-
-                                        return (
-                                            <li key={name} className="flex items-start gap-2">
-                                                <Check
-                                                    aria-hidden="true"
-                                                    className="mt-0.5 size-4 shrink-0 text-primary"
-                                                />
-                                                <div className="grid min-w-0 gap-0.5">
-                                                    <span className="text-sm font-medium">
-                                                        {meta.label}
-                                                    </span>
-                                                    <code className="font-mono text-xs text-muted-foreground">
-                                                        {name}
-                                                    </code>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {meta.description}
-                                                    </p>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </section>
+                    <dl className="grid gap-x-4 gap-y-3 text-sm sm:grid-cols-[10rem_1fr]">
+                        {groupPermissions(permissionQuery.data).map((group) => (
+                            <div key={group.key} className="contents">
+                                <dt className="font-medium">{group.label}</dt>
+                                <dd className="flex flex-wrap gap-1.5">
+                                    {group.permissions.map((permission) => (
+                                        <Badge
+                                            key={permission.name}
+                                            variant="secondary"
+                                            title={permission.name}
+                                        >
+                                            {permission.label}
+                                        </Badge>
+                                    ))}
+                                </dd>
+                            </div>
                         ))}
-                    </div>
+                    </dl>
                 )}
             </DetailCard>
             <DeleteRoleDialog

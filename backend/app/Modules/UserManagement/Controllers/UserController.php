@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\UserManagement\Controllers;
 
 use App\Core\Api\Responses\ApiResponse;
+use App\Core\Authorization\Permissions\PermissionCatalog;
 use App\Modules\UserManagement\Actions\AssignUserRolesAction;
 use App\Modules\UserManagement\Actions\CreateUserAction;
 use App\Modules\UserManagement\Actions\DeactivateUserAction;
@@ -14,11 +15,15 @@ use App\Modules\UserManagement\Requests\AssignUserRolesRequest;
 use App\Modules\UserManagement\Requests\StoreUserRequest;
 use App\Modules\UserManagement\Requests\UpdateUserRequest;
 use App\Modules\UserManagement\Requests\UserListRequest;
+use App\Modules\UserManagement\Resources\UserPermissionResource;
 use App\Modules\UserManagement\Resources\UserResource;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Spatie\Permission\Models\Permission;
 
 final class UserController
 {
@@ -81,6 +86,25 @@ final class UserController
         Gate::authorize('view', $user);
 
         return ApiResponse::success(['roles' => $user->getRoleNames()], 'User roles retrieved successfully');
+    }
+
+    /**
+     * The permissions the user holds through their roles, each with the roles that grant it.
+     */
+    public function permissions(User $user, PermissionCatalog $catalog): JsonResponse
+    {
+        Gate::authorize('view', $user);
+
+        $roleIds = $user->roles()->pluck('roles.id');
+
+        $permissions = Permission::query()
+            ->whereHas('roles', fn (Builder $roles) => $roles->whereIn('roles.id', $roleIds))
+            ->with(['roles' => fn (BelongsToMany $roles) => $roles->whereIn('roles.id', $roleIds)->orderBy('name')])
+            ->get()
+            ->sortBy(fn (Permission $permission): int => $catalog->position($permission->name))
+            ->values();
+
+        return ApiResponse::success(UserPermissionResource::collection($permissions), 'User permissions retrieved successfully');
     }
 
     public function assignRoles(AssignUserRolesRequest $request, User $user, AssignUserRolesAction $action): JsonResponse

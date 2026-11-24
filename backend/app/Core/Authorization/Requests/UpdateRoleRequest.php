@@ -22,6 +22,7 @@ final class UpdateRoleRequest extends FormRequest
                 'max:150',
                 Rule::unique('roles', 'name')->where('guard_name', 'web')->ignore($this->route('role')),
             ],
+            'description' => ['sometimes', 'nullable', 'string', 'max:500'],
             ...AssignRolePermissionsRequest::permissionRules('sometimes'),
             'version' => ['required_with:permissions', 'integer', 'min:1'],
         ];

@@ -1,61 +1,56 @@
 import { describe, expect, it } from 'vitest';
+import { permissionFixtures } from './permissionFixtures';
 import {
     addPermissionsWithPrerequisites,
-    describePermission,
     diffPermissions,
     groupPermissions,
+    isStandardAction,
     removePermissionsWithDependents,
+    toCatalog,
 } from './permissionGroups';
 
+const catalog = toCatalog(
+    permissionFixtures(['user.view', 'user.create', 'user.assign_role', 'role.view', 'audit.view']),
+);
+
 describe('permissionGroups', () => {
-    it('describes known permissions in Indonesian and falls back for custom names', () => {
-        expect(describePermission('user.assign_role')).toMatchObject({
-            name: 'user.assign_role',
-            label: 'Tetapkan role pengguna',
-            requires: ['user.view', 'role.view'],
-        });
+    it('groups permissions by module in the order the API returns them', () => {
+        const groups = groupPermissions(
+            permissionFixtures(['audit.view', 'user.view', 'role.view']),
+        );
 
-        expect(describePermission('report.export_csv')).toEqual({
-            name: 'report.export_csv',
-            label: 'export csv',
-            description: 'Hak akses untuk report.export_csv.',
-        });
-    });
-
-    it('groups modules in application order', () => {
-        const groups = groupPermissions(['audit.view', 'custom.run', 'user.view', 'role.create']);
-
-        expect(groups.map((group) => group.label)).toEqual([
-            'Pengguna',
-            'Role',
-            'Audit Log',
-            'custom',
+        expect(
+            groups.map((group) => [group.label, group.permissions.map(({ name }) => name)]),
+        ).toEqual([
+            ['Pengguna', ['user.view']],
+            ['Role', ['role.view']],
+            ['Audit Log', ['audit.view']],
         ]);
     });
 
+    it('tells the common actions apart from the special ones', () => {
+        expect(isStandardAction('user.delete')).toBe(true);
+        expect(isStandardAction('user.assign_role')).toBe(false);
+        expect(isStandardAction('system_config.feature_flags')).toBe(false);
+    });
+
     it('adds missing prerequisites when enabling a dependent permission', () => {
-        const available = new Set(['user.view', 'role.view', 'user.assign_role', 'audit.view']);
-
-        const next = addPermissionsWithPrerequisites(
-            [],
-            ['user.assign_role'],
-            available,
-            () => true,
-        );
-
-        expect(next).toEqual(['user.assign_role', 'user.view', 'role.view']);
+        expect(
+            addPermissionsWithPrerequisites([], ['user.assign_role'], catalog, () => true),
+        ).toEqual(['user.assign_role', 'user.view', 'role.view']);
     });
 
     it('removes dependent permissions when revoking a prerequisite', () => {
-        const next = removePermissionsWithDependents(
-            ['user.view', 'user.create', 'user.assign_role', 'role.view', 'audit.view'],
-            ['user.view'],
-        );
-
-        expect(next).toEqual(['role.view', 'audit.view']);
+        expect(
+            removePermissionsWithDependents(
+                ['user.view', 'user.create', 'user.assign_role', 'role.view', 'audit.view'],
+                ['user.view'],
+                catalog,
+            ),
+        ).toEqual(['role.view', 'audit.view']);
     });
 
-    it('computes added and removed permissions cleanly', () => {
+    it('computes added and removed permissions', () => {
         expect(diffPermissions(['user.view', 'role.view'], ['role.view', 'audit.view'])).toEqual({
             added: ['audit.view'],
             removed: ['user.view'],

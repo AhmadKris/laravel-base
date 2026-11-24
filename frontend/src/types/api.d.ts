@@ -388,6 +388,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    '/v1/users/{user}/permissions': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The permissions the user holds through their roles, each with the roles that grant it */
+        get: operations['user.permissions'];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -480,6 +497,11 @@ export interface components {
         PermissionResource: {
             id: number;
             name: string;
+            label: string;
+            description: string;
+            group: string;
+            group_label: string;
+            requires: string[];
         };
         /** ResetPasswordRequest */
         ResetPasswordRequest: {
@@ -493,6 +515,7 @@ export interface components {
         RoleResource: {
             id: number;
             name: string;
+            description: string | null;
             is_protected: boolean;
             can_assign: boolean;
             users_count?: number;
@@ -502,9 +525,15 @@ export interface components {
             /** Format: date-time */
             created_at: string | null;
         };
+        /**
+         * RoleType
+         * @enum {string}
+         */
+        RoleType: 'built_in' | 'custom';
         /** StoreRoleRequest */
         StoreRoleRequest: {
             name: string;
+            description?: string | null;
             permissions?: string[];
         };
         /** StoreUserRequest */
@@ -536,6 +565,7 @@ export interface components {
         /** UpdateRoleRequest */
         UpdateRoleRequest: {
             name?: string;
+            description?: string | null;
             permissions?: string[];
             version?: number;
         };
@@ -552,6 +582,18 @@ export interface components {
         UploadBrandingRequest: {
             /** Format: binary */
             file: string;
+        };
+        /** UserPermissionResource */
+        UserPermissionResource: {
+            id: number;
+            name: string;
+            label: string;
+            description: string;
+            group: string;
+            group_label: string;
+            requires: string[];
+            /** @description Roles of the user that grant this permission. */
+            granted_by: string[];
         };
         /** UserResource */
         UserResource: {
@@ -1129,8 +1171,9 @@ export interface operations {
                 page?: number;
                 per_page?: number;
                 search?: string | null;
-                sort_by?: 'name' | 'created_at';
+                sort_by?: 'name' | 'users_count' | 'created_at';
                 sort_direction?: 'asc' | 'desc';
+                type?: components['schemas']['RoleType'];
             };
             header?: never;
             path?: never;
@@ -1779,6 +1822,37 @@ export interface operations {
             403: components['responses']['AuthorizationException'];
             404: components['responses']['ModelNotFoundException'];
             422: components['responses']['ValidationException'];
+        };
+    };
+    'user.permissions': {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        success: boolean;
+                        /** @constant */
+                        message: 'User permissions retrieved successfully';
+                        data: unknown[] | components['schemas']['UserPermissionResource'][];
+                        meta: null;
+                    };
+                };
+            };
+            401: components['responses']['AuthenticationException'];
+            403: components['responses']['AuthorizationException'];
+            404: components['responses']['ModelNotFoundException'];
         };
     };
 }
