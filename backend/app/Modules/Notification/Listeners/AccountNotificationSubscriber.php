@@ -10,23 +10,34 @@ use App\Modules\Notification\Notifications\PasswordChangedNotification;
 use App\Modules\Notification\Notifications\PasswordResetNotification;
 use App\Modules\Notification\Notifications\UserRolesUpdatedNotification;
 use App\Modules\UserManagement\Events\UserRolesChanged;
+use App\Shared\Contracts\ModuleAvailability;
 use Illuminate\Events\Dispatcher;
 
-final class AccountNotificationSubscriber
+final readonly class AccountNotificationSubscriber
 {
+    private const string MODULE = 'notification';
+
+    public function __construct(private ModuleAvailability $modules) {}
+
     public function handlePasswordChanged(PasswordChanged $event): void
     {
-        $event->user->notify(new PasswordChangedNotification);
+        if ($this->modules->isEnabled(self::MODULE)) {
+            $event->user->notify(new PasswordChangedNotification);
+        }
     }
 
     public function handlePasswordReset(PasswordReset $event): void
     {
-        $event->user->notify(new PasswordResetNotification);
+        if ($this->modules->isEnabled(self::MODULE)) {
+            $event->user->notify(new PasswordResetNotification);
+        }
     }
 
     public function handleUserRolesChanged(UserRolesChanged $event): void
     {
-        $event->user->notify(new UserRolesUpdatedNotification($event->roles));
+        if ($this->modules->isEnabled(self::MODULE)) {
+            $event->user->notify(new UserRolesUpdatedNotification($event->roles));
+        }
     }
 
     /**

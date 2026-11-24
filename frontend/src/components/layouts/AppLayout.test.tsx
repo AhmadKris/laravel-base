@@ -6,11 +6,11 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ProtectedRoute } from '@/app/guards/ProtectedRoute';
 import { useAuthStore } from '@/stores/auth-store';
-import { server } from '@/test/server';
+import { ENABLED_MODULES, server } from '@/test/server';
 import { makeUser, renderWithProviders } from '@/test/utils';
 import { AppLayout } from './AppLayout';
 
-function renderLayout(permissions: string[], queryClient?: QueryClient, initialPath = '/') {
+async function renderLayout(permissions: string[], queryClient?: QueryClient, initialPath = '/') {
     useAuthStore.getState().setUser(makeUser(permissions));
 
     const router = createMemoryRouter(
@@ -35,6 +35,10 @@ function renderLayout(permissions: string[], queryClient?: QueryClient, initialP
 
     const view = renderWithProviders(<RouterProvider router={router} />, queryClient);
 
+    await waitFor(() =>
+        expect(screen.queryByRole('status', { name: 'Memuat menu' })).not.toBeInTheDocument(),
+    );
+
     return { router, unmount: view.unmount };
 }
 
@@ -54,27 +58,108 @@ afterEach(() => {
     localStorage.removeItem('sidebar_collapsed_sections');
 });
 
-it('shows only the menu items allowed by the backend permissions', () => {
-    renderLayout(['user.view', 'audit.view']);
+it('shows the menu items the backend allows for the user', async () => {
+    await renderLayout(['user.view', 'audit.view']);
 
     expect(menuLabels()).toEqual(['Beranda', 'Pengguna', 'Audit Log']);
+    expect(screen.getByRole('button', { name: /^Notifikasi/ })).toBeInTheDocument();
 });
 
-it('shows only the home item without permissions', () => {
-    renderLayout([]);
+it('shows only the home item without permissions', async () => {
+    await renderLayout([]);
 
     expect(menuLabels()).toEqual(['Beranda']);
 });
 
-it('renders the page inside the layout', () => {
-    renderLayout([]);
+function serveMenu(sections: unknown[], modules = ENABLED_MODULES) {
+    return HttpResponse.json({
+        success: true,
+        message: '',
+        data: { sections, modules },
+        meta: null,
+    });
+}
+
+const USERS_SECTION = {
+    key: 'administration',
+    label: 'Administrasi',
+    items: [{ key: 'users', label: 'Pengguna', path: '/users', icon: 'users' }],
+};
+
+it('follows the sections, order, and labels the backend returns', async () => {
+    server.use(
+        http.get('*/api/v1/navigation', () =>
+            serveMenu([
+                {
+                    key: 'security',
+                    label: 'Keamanan',
+                    items: [
+                        {
+                            key: 'audit-logs',
+                            label: 'Jejak aktivitas',
+                            path: '/audit-logs',
+                            icon: 'scroll-text',
+                        },
+                    ],
+                },
+                USERS_SECTION,
+            ]),
+        ),
+    );
+
+    await renderLayout(['user.view', 'audit.view']);
+
+    expect(menuLabels()).toEqual(['Beranda', 'Jejak aktivitas', 'Pengguna']);
+    expect(screen.getByRole('button', { name: 'Keamanan' })).toBeInTheDocument();
+});
+
+it('keeps home and offers a retry when the menu cannot load', async () => {
+    let attempts = 0;
+    server.use(
+        http.get('*/api/v1/navigation', () => {
+            attempts += 1;
+
+            return attempts === 1
+                ? HttpResponse.json({ code: 'AUTH_FORBIDDEN' }, { status: 403 })
+                : serveMenu([USERS_SECTION]);
+        }),
+    );
+    const user = userEvent.setup();
+
+    await renderLayout(['user.view']);
+
+    expect(menuLabels()).toEqual(['Beranda']);
+    expect(screen.getByText('Menu tidak dapat dimuat.')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Muat ulang menu' }));
+
+    expect(await screen.findByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
+});
+
+it('hides the notification bell while the notification module is disabled', async () => {
+    server.use(
+        http.get('*/api/v1/navigation', () =>
+            serveMenu(
+                [],
+                ENABLED_MODULES.filter((key) => key !== 'notification'),
+            ),
+        ),
+    );
+
+    await renderLayout([]);
+
+    expect(screen.queryByRole('button', { name: /^Notifikasi/ })).not.toBeInTheDocument();
+});
+
+it('renders the page inside the layout', async () => {
+    await renderLayout([]);
 
     expect(screen.getByRole('main')).toHaveTextContent('page content');
 });
 
 it('reaches the skip link first with the keyboard', async () => {
     const user = userEvent.setup();
-    renderLayout([]);
+    await renderLayout([]);
 
     await user.tab();
 
@@ -91,7 +176,7 @@ it('logs out with the keyboard and returns to login', async () => {
         }),
     );
     const user = userEvent.setup();
-    renderLayout([]);
+    await renderLayout([]);
 
     screen.getByRole('button', { name: /Menu akun/ }).focus();
     await user.keyboard('{Enter}');
@@ -102,9 +187,9 @@ it('logs out with the keyboard and returns to login', async () => {
     expect(useAuthStore.getState().status).toBe('signed-out');
 });
 
-it('remembers a collapsed sidebar', () => {
+it('remembers a collapsed sidebar', async () => {
     document.cookie = 'sidebar_state=false; path=/';
-    renderLayout([]);
+    await renderLayout([]);
 
     expect(document.querySelector('[data-slot="sidebar"]')).toHaveAttribute(
         'data-state',
@@ -161,7 +246,7 @@ describe('at tablet width', () => {
             value: 800,
         });
         const user = userEvent.setup();
-        renderLayout(['user.view']);
+        await renderLayout(['user.view']);
 
         expect(sidebarState()).toBe('collapsed');
         expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
@@ -172,8 +257,8 @@ describe('at tablet width', () => {
         expect(document.cookie).toContain('sidebar_state=false');
     });
 
-    it('collapses when a desktop window shrinks and restores the desktop choice after', () => {
-        renderLayout([]);
+    it('collapses when a desktop window shrinks and restores the desktop choice after', async () => {
+        await renderLayout([]);
         expect(sidebarState()).toBe('expanded');
 
         resizeTo(800);
@@ -184,8 +269,8 @@ describe('at tablet width', () => {
     });
 });
 
-it('groups administration items under a heading', () => {
-    renderLayout(['user.view']);
+it('groups administration items under a heading', async () => {
+    await renderLayout(['user.view']);
 
     expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
         'aria-expanded',
@@ -193,15 +278,15 @@ it('groups administration items under a heading', () => {
     );
 });
 
-it('hides a heading with no visible items', () => {
-    renderLayout([]);
+it('hides a heading with no visible items', async () => {
+    await renderLayout([]);
 
     expect(screen.queryByText('Administrasi')).not.toBeInTheDocument();
 });
 
 it('collapses and expands a menu section and remembers the preference', async () => {
     const user = userEvent.setup();
-    const { unmount } = renderLayout(['user.view', 'role.view']);
+    const { unmount } = await renderLayout(['user.view', 'role.view']);
 
     const toggle = screen.getByRole('button', { name: 'Administrasi' });
     await user.click(toggle);
@@ -211,7 +296,7 @@ it('collapses and expands a menu section and remembers the preference', async ()
     expect(screen.getByRole('link', { name: 'Beranda' })).toBeInTheDocument();
 
     unmount();
-    renderLayout(['user.view', 'role.view']);
+    await renderLayout(['user.view', 'role.view']);
 
     expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
         'aria-expanded',
@@ -230,7 +315,7 @@ it('collapses and expands a menu section and remembers the preference', async ()
 
 it('automatically expands a collapsed section when its route is active', async () => {
     localStorage.setItem('sidebar_collapsed_sections', JSON.stringify(['administration']));
-    renderLayout(['user.view'], undefined, '/users');
+    await renderLayout(['user.view'], undefined, '/users');
 
     expect(screen.getByRole('button', { name: 'Administrasi' })).toHaveAttribute(
         'aria-expanded',
@@ -241,7 +326,7 @@ it('automatically expands a collapsed section when its route is active', async (
 
 it('auto-expands on route entry while allowing manual collapse within the section', async () => {
     const user = userEvent.setup();
-    const { router } = renderLayout(['user.view', 'role.view']);
+    const { router } = await renderLayout(['user.view', 'role.view']);
 
     await user.click(screen.getByRole('button', { name: 'Administrasi' }));
     expect(screen.queryByRole('link', { name: 'Pengguna' })).not.toBeInTheDocument();
@@ -274,7 +359,7 @@ it('keeps section items reachable in icon mode even if collapsed in desktop view
     document.cookie = 'sidebar_state=false; path=/';
     const user = userEvent.setup();
 
-    renderLayout(['user.view']);
+    await renderLayout(['user.view']);
 
     expect(sidebarState()).toBe('collapsed');
     expect(screen.getByRole('link', { name: 'Pengguna' })).toBeInTheDocument();
@@ -295,7 +380,7 @@ it('closes the mobile menu after choosing a page', async () => {
     const desktopWidth = window.innerWidth;
     window.innerWidth = 375;
     const user = userEvent.setup();
-    renderLayout(['user.view']);
+    await renderLayout(['user.view']);
 
     await user.click(screen.getByRole('button', { name: 'Buka atau tutup menu' }));
     await user.click(await screen.findByRole('link', { name: 'Beranda' }));
@@ -309,7 +394,7 @@ it('closes the mobile menu after choosing a page', async () => {
 
 it('shows account details in the user menu dropdown', async () => {
     const user = userEvent.setup();
-    renderLayout([]);
+    await renderLayout([]);
 
     await user.click(screen.getByRole('button', { name: /Menu akun/ }));
 
@@ -322,7 +407,7 @@ it('removes cached data when the user logs out', async () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(['users'], ['data pengguna sebelumnya']);
     const user = userEvent.setup();
-    renderLayout([], queryClient);
+    await renderLayout([], queryClient);
 
     await user.click(screen.getByRole('button', { name: /Menu akun/ }));
     await user.click(await screen.findByRole('menuitem', { name: 'Keluar' }));
@@ -338,7 +423,7 @@ it('keeps the session and reports a failed logout', async () => {
         ),
     );
     const user = userEvent.setup();
-    renderLayout([]);
+    await renderLayout([]);
 
     await user.click(screen.getByRole('button', { name: /Menu akun/ }));
     await user.click(await screen.findByRole('menuitem', { name: 'Keluar' }));

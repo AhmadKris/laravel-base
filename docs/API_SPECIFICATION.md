@@ -1044,6 +1044,56 @@ Aturan tambahan:
 - Pengaturan tampilan disimpan pada key `company.logo_show_name`, `company.logo_background`, dan `company.logo_size`, dan diubah melalui `PATCH /system-configurations/{key}` dengan `version`.
 - Aturan file dan header keamanan mengikuti `SECURITY_SPECIFICATION.md` bagian 10.5.
 
+### Menu dan Modul
+
+| Method | Endpoint | Permission |
+|---|---|---|
+| GET | /navigation | Login |
+| GET | /navigation/layout | system_config.update |
+| PUT | /navigation/layout | system_config.update |
+| GET | /modules | system_config.feature_flags |
+| PUT | /modules | system_config.feature_flags |
+
+Item menu dan modul didaftarkan oleh kode (lihat `DEVELOPMENT_GUIDELINE.md` bagian 6.4). Admin hanya mengatur susunan menu dan status aktif modul, tidak membuat item baru. Menu bukan batas keamanan: halaman tetap dilindungi permission di backend.
+
+`GET /navigation` mengembalikan menu untuk user yang sedang login:
+
+```json
+{
+  "sections": [
+    {
+      "key": "administration",
+      "label": "Administrasi",
+      "items": [
+        { "key": "users", "label": "Pengguna", "path": "/users", "icon": "users" }
+      ]
+    }
+  ],
+  "modules": ["audit", "authorization", "notification", "system_configuration", "user_management"]
+}
+```
+
+- Item disaring berdasarkan permission user, modul yang aktif, dan status tersembunyi. Bagian tanpa item tidak dikembalikan.
+- `modules` berisi key modul yang aktif, agar client dapat menyembunyikan bagian UI milik modul yang nonaktif, misalnya lonceng notifikasi.
+- Beranda tidak termasuk dalam menu ini karena selalu tampil paling atas.
+
+`GET /navigation/layout` mengembalikan `sections` (susunan tersimpan, dengan `label` item berisi label pengganti atau `null` dan `hidden` berupa boolean), `items` (seluruh item terdaftar dengan `key`, `module`, `label` bawaan, `path`, `icon`, `can_hide`, dan `module_enabled`), `default` (susunan bawaan dengan bentuk yang sama dengan `sections`), dan `version`.
+
+`PUT /navigation/layout` menerima `sections` dan `version`, lalu mengganti seluruh susunan:
+
+- Setiap item terdaftar muncul tepat satu kali. Item yang tidak dikenal ditolak.
+- `key` bagian unik dengan pola `^[a-z0-9-]{1,50}$`, `label` bagian wajib dan maksimal 50 karakter, dan jumlah bagian maksimal 20. Bagian boleh kosong.
+- `label` item boleh `null` untuk memakai label bawaan, atau teks maksimal 50 karakter.
+- Item dengan `can_hide` bernilai `false`, yaitu Pengaturan, tidak dapat disembunyikan.
+- Item yang ditambahkan oleh modul setelah susunan disimpan otomatis tampil di bagian bawaannya, di urutan terakhir.
+
+`GET /modules` mengembalikan `modules` (daftar `key`, `label`, `description`, `is_core`, dan `enabled`) serta `version`. `PUT /modules` menerima `disabled`, yaitu daftar key modul yang dinonaktifkan, dan `version`.
+
+- Modul inti (`is_core` bernilai `true`) tidak dapat dinonaktifkan: Role & Permission, Audit Log, Pengguna, dan Pengaturan sistem. Base v1 hanya memiliki satu modul opsional, yaitu Notifikasi.
+- Route modul yang nonaktif mengembalikan HTTP 404 dengan code `MODULE_DISABLED`, dan modul tersebut berhenti membuat data baru, misalnya notifikasi.
+- Data modul tidak dihapus saat modul dinonaktifkan, sehingga tersedia lagi ketika modul diaktifkan kembali.
+- Susunan menu disimpan pada key `navigation.layout` dan status modul pada key `modules.disabled`. Keduanya tidak dapat diubah melalui `PATCH /system-configurations/{key}`. Perubahan tercatat di audit log sebagai `system.configuration_updated`.
+
 ---
 
 ## 8.10 Health Check
@@ -1162,6 +1212,7 @@ AUTH_PASSWORD_RESET_INVALID
 AUTH_PRIVILEGE_ESCALATION
 ROLE_PROTECTED
 ROLE_IN_USE
+MODULE_DISABLED
 USER_SELF_DEACTIVATION
 USER_LAST_SUPER_ADMIN
 INVALID_REQUEST
@@ -1323,6 +1374,8 @@ Digunakan ketika beberapa user dapat mengubah resource yang sama dan perubahan y
 |---|---|---|---|
 | PUT /roles/{id}/permissions | Role & Permission | Base v1 | Seluruh daftar permission tertimpa |
 | PATCH /system-configurations/{key} | System Configuration | Base v1 | Konfigurasi tertimpa |
+| PUT /navigation/layout | System Configuration | Base v1 | Seluruh susunan menu tertimpa |
+| PUT /modules | System Configuration | Base v1 | Status modul tertimpa |
 | PATCH /workflows/{id} | Workflow | 2 | Definisi workflow tertimpa |
 | PATCH /documents/{id} | Document | 2 | Metadata dokumen tertimpa |
 | PATCH /master-data/{type}/{id} | Master Data | 3 | Data referensi tertimpa |
@@ -1747,6 +1800,11 @@ Nama parameter path tidak dibandingkan, sehingga `{id}` di tabel cocok dengan `{
 | GET | /branding/{asset} | Publik |
 | POST | /branding/{asset} | system_config.update |
 | DELETE | /branding/{asset} | system_config.update |
+| GET | /navigation | Login |
+| GET | /navigation/layout | system_config.update |
+| PUT | /navigation/layout | system_config.update |
+| GET | /modules | system_config.feature_flags |
+| PUT | /modules | system_config.feature_flags |
 | GET | /notifications | Login |
 | GET | /notifications/unread-count | Login |
 | PATCH | /notifications/{id}/read | Login |

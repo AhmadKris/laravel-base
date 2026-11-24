@@ -15,6 +15,7 @@ import {
 import { useIsTablet } from '@/hooks/use-mobile';
 import { readSidebarState, saveSidebarState } from '@/lib/sidebar-state';
 import { MainNavigation } from './MainNavigation';
+import { useModuleEnabled } from '@/features/navigation/hooks/useNavigation';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { UserMenu } from './UserMenu';
 
@@ -23,6 +24,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+    const hasNotifications = useModuleEnabled('notification');
     const isTablet = useIsTablet();
     const [desktopOpen, setDesktopOpen] = useState(readSidebarState);
     const [tabletOpen, setTabletOpen] = useState(false);
@@ -74,7 +76,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                         <HeaderBreadcrumb />
                     </div>
                     <div className="flex items-center gap-2">
-                        <NotificationBell />
+                        {hasNotifications && <NotificationBell />}
                         <UserMenu />
                     </div>
                 </header>

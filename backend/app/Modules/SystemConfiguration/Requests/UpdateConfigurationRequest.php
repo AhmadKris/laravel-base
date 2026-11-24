@@ -34,8 +34,9 @@ final class UpdateConfigurationRequest extends FormRequest
     {
         $configuration = $this->configuration();
 
-        // Branding keys hold a file path, which only the upload endpoint may write.
-        if (in_array($configuration->key, BrandingAsset::keys(), true)) {
+        // Branding keys hold a file path, which only the upload endpoint may write. Managed keys are
+        // validated against the registered modules by their own endpoints.
+        if (in_array($configuration->key, BrandingAsset::keys(), true) || SystemConfiguration::isManagedKey($configuration->key)) {
             return ['value' => ['present', 'missing'], 'version' => ['required', 'integer', 'min:1']];
         }
 

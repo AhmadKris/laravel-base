@@ -29,6 +29,9 @@ return [
     'password' => [
         'uncompromised' => ':Attribute ini pernah muncul di kebocoran data. Gunakan password lain.',
     ],
+    'menu_item_always_visible' => 'Item menu :item tidak dapat disembunyikan.',
+    'menu_item_missing' => 'Item menu :item belum ditempatkan di bagian mana pun.',
+    'menu_item_unknown' => 'Item menu :item tidak terdaftar.',
     'permission_prerequisites' => ':Permission membutuhkan :requires.',
     'present' => ':Attribute wajib dikirim.',
     'required' => ':Attribute wajib diisi.',
@@ -41,6 +44,9 @@ return [
     'uuid' => ':Attribute tidak valid.',
 
     'custom' => [
+        'disabled.*' => [
+            'in' => 'Modul inti tidak dapat dinonaktifkan.',
+        ],
         'value' => [
             'missing' => ':Attribute hanya dapat diubah dengan mengunggah file.',
         ],
@@ -50,6 +56,10 @@ return [
     ],
 
     'attributes' => [
+        'sections' => 'susunan menu',
+        'sections.*.key' => 'kunci bagian',
+        'sections.*.label' => 'nama bagian',
+        'sections.*.items.*.label' => 'label item',
         'action' => 'aksi',
         'code' => 'kode',
         'company.address' => 'alamat perusahaan',

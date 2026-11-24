@@ -435,6 +435,8 @@ Mengikuti migration resmi Spatie Laravel Permission.
 
 Gunakan satu `guard_name`, yaitu `web`, termasuk untuk request yang memakai Sanctum token.
 
+Key `navigation.layout` (susunan menu, `null` berarti susunan bawaan) dan `modules.disabled` (daftar key modul yang dinonaktifkan) pada tabel `system_configurations` hanya diubah melalui `PUT /navigation/layout` dan `PUT /modules`, karena keduanya membutuhkan validasi terhadap modul yang terdaftar di kode.
+
 Tabel `roles` ditambah kolom `version` (INT UNSIGNED, default 1) untuk optimistic locking dan `description` (VARCHAR(500), NULL) untuk menjelaskan kegunaan role kepada pengguna yang menetapkannya. Seeder mengisi deskripsi role bawaan hanya saat role tersebut dibuat.
 
 ## 5.2 Workflow Module

@@ -455,6 +455,8 @@ Mengelola konfigurasi global aplikasi dan pengaturan sistem.
 | Currency | Mata uang |
 | Number Format | Format angka |
 | Feature Flags | Aktivasi fitur |
+| Menu | Susunan bagian dan item menu, label pengganti, dan item tersembunyi |
+| Modul | Mengaktifkan atau menonaktifkan modul opsional |
 | Upload Settings | Pengaturan file |
 | System Parameters | Parameter sistem |
 
@@ -485,6 +487,9 @@ Mengelola konfigurasi global aplikasi dan pengaturan sistem.
 3. Perubahan konfigurasi harus dicatat.
 4. Konfigurasi harus memiliki default value yang aman.
 5. Perubahan kritis dapat memerlukan approval.
+6. Menu memiliki dua tingkat, yaitu bagian lalu item, dan berlaku sama untuk semua user. Item hanya tampil bagi user yang memiliki permission-nya.
+7. Menyembunyikan item menu tidak menutup akses ke halamannya. Pengaturan tidak dapat disembunyikan agar admin tidak terkunci.
+8. Modul inti tidak dapat dinonaktifkan. Modul opsional yang nonaktif tidak dapat diakses melalui API dan tidak membuat data baru, tetapi datanya tetap tersimpan.
 
 ---
 

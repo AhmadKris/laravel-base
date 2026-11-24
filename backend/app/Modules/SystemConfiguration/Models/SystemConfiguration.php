@@ -33,6 +33,18 @@ class SystemConfiguration extends Model
 
     public const string BRANDING_DIRECTORY = 'branding';
 
+    public const string NAVIGATION_LAYOUT = 'navigation.layout';
+
+    public const string DISABLED_MODULES = 'modules.disabled';
+
+    /**
+     * Keys only written by their own endpoint, which validates them against the code, as default value and description.
+     */
+    private const array MANAGED_KEYS = [
+        self::NAVIGATION_LAYOUT => [null, 'Susunan menu'],
+        self::DISABLED_MODULES => [[], 'Modul yang dinonaktifkan'],
+    ];
+
     private const array BRANDING_CONTENT_TYPES = [
         'png' => 'image/png',
         'jpg' => 'image/jpeg',
@@ -44,6 +56,34 @@ class SystemConfiguration extends Model
     public function getRouteKeyName(): string
     {
         return 'key';
+    }
+
+    public static function isManagedKey(string $key): bool
+    {
+        return isset(self::MANAGED_KEYS[$key]);
+    }
+
+    /**
+     * The row of a managed key, created with its default on first use so a deployment needs no extra step.
+     */
+    public static function managed(string $key): self
+    {
+        [$default, $description] = self::MANAGED_KEYS[$key];
+
+        $configuration = self::query()->firstOrCreate(['key' => $key], [
+            'value' => $default,
+            'is_public' => false,
+            'is_sensitive' => false,
+            'description' => $description,
+        ]);
+
+        // A new row has to be read back for the version the database filled in.
+        return $configuration->wasRecentlyCreated ? $configuration->refresh() : $configuration;
+    }
+
+    public static function storedValue(string $key): mixed
+    {
+        return self::query()->where('key', $key)->first()?->value;
     }
 
     /**

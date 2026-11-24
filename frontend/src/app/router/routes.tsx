@@ -1,5 +1,6 @@
 import { Outlet, type Params, type RouteObject } from 'react-router';
 import { GuestRoute } from '@/app/guards/GuestRoute';
+import { ModuleRoute } from '@/app/guards/ModuleRoute';
 import { ProtectedRoute } from '@/app/guards/ProtectedRoute';
 import { NotFoundPage } from '@/app/pages/NotFoundPage';
 import { RouteErrorPage } from '@/app/pages/RouteErrorPage';
@@ -51,7 +52,11 @@ export const routes: RouteObject[] = [
                             },
                             {
                                 path: 'notifications',
-                                element: <NotificationsPage />,
+                                element: (
+                                    <ModuleRoute module="notification">
+                                        <NotificationsPage />
+                                    </ModuleRoute>
+                                ),
                                 handle: { title: 'Notifikasi' },
                             },
                             {

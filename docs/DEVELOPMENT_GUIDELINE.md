@@ -619,6 +619,39 @@ Aturan:
 5. Katalog yang tidak valid (nama ganda, prefix tidak sesuai, prasyarat tidak dikenal, atau field wajib tidak ada) melempar `LogicException` saat dimuat. `PermissionCatalogTest` memuat katalog aplikasi, sehingga kesalahan ini gagal di CI. Saat menambah permission, perbarui juga daftar yang diharapkan di test tersebut.
 6. Permission baru di environment yang sudah berjalan dibuat dengan menjalankan ulang `RolePermissionSeeder`. Menghapus permission dari katalog tidak menghapusnya dari database; hapus lewat migration jika memang harus dicabut dari role.
 
+## 6.4 Mendaftarkan Modul dan Menu
+
+Modul yang tampil di halaman Pengaturan > Modul atau memiliki item menu mendaftarkan dirinya di `module.php` pada root modul. `ModuleCatalog` membaca semua file tersebut, sedangkan bagian menu bawaan didefinisikan di `config/navigation.php`.
+
+```php
+return [
+    'key' => 'user_management',
+    'label' => 'Pengguna',
+    'description' => 'Akun pengguna, status, dan role yang dimilikinya.',
+    'core' => true,
+    'menu' => [
+        'users' => [
+            'label' => 'Pengguna',
+            'path' => '/users',
+            'icon' => 'users',
+            'permission' => 'user.view',
+            'section' => 'administration',
+            'position' => 10,
+        ],
+    ],
+];
+```
+
+Aturan:
+
+1. `key` modul dan key item menu unik di seluruh aplikasi, memakai huruf kecil, angka, garis bawah, atau tanda hubung.
+2. `core` bernilai `true` untuk modul yang dibutuhkan agar aplikasi dapat dikelola. Modul opsional memasang middleware `module:{key}` pada seluruh route-nya dan memeriksa `ModuleAvailability` sebelum membuat data dari listener atau job.
+3. `icon` adalah nama ikon Lucide dalam format kebab-case yang terdaftar di `frontend/src/components/layouts/navigationIcons.tsx`. Ikon yang tidak terdaftar ditampilkan dengan ikon bawaan.
+4. `permission` sama dengan permission yang melindungi halaman tersebut. Kosongkan hanya untuk halaman yang dapat dibuka semua user yang login.
+5. `section` merujuk ke key di `config/navigation.php`. `position` menentukan urutan bawaan di dalam bagian.
+6. `can_hide` bernilai `true` jika tidak diisi. Isi `false` untuk halaman yang dibutuhkan admin agar tidak terkunci dari pengaturan.
+7. Route frontend milik modul opsional dibungkus `ModuleRoute` (`frontend/src/app/guards/ModuleRoute.tsx`), sehingga membuka URL modul yang nonaktif menampilkan halaman "Modul tidak aktif". Bagian UI di luar halamannya, seperti lonceng notifikasi, memakai `useModuleEnabled`.
+
 ---
 
 # 7. Frontend Development Guideline

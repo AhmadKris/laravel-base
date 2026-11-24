@@ -191,10 +191,14 @@ describe('audit log list', () => {
         });
         expect(search).toHaveValue('budi');
 
+        // The menu loads after the page, so the link is awaited.
         await userEvent.click(
-            within(screen.getByRole('navigation', { name: 'Menu utama' })).getByRole('link', {
-                name: 'Audit Log',
-            }),
+            await within(screen.getByRole('navigation', { name: 'Menu utama' })).findByRole(
+                'link',
+                {
+                    name: 'Audit Log',
+                },
+            ),
         );
 
         await waitFor(() => expect(lastRequest().has('search')).toBe(false));

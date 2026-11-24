@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Core\Authorization\Permissions\PermissionCatalog;
+use App\Core\Modules\ModuleCatalog;
 use App\Core\Security\RateLimits;
+use App\Modules\SystemConfiguration\Services\ConfiguredModuleAvailability;
 use App\Modules\UserManagement\Models\User;
+use App\Shared\Contracts\ModuleAvailability;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -22,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
             ...glob(app_path('Core/*/permissions.php')) ?: [],
             ...glob(app_path('Modules/*/permissions.php')) ?: [],
         ]));
+
+        $this->app->singleton(ModuleCatalog::class, fn (): ModuleCatalog => ModuleCatalog::fromFiles([
+            ...glob(app_path('Core/*/module.php')) ?: [],
+            ...glob(app_path('Modules/*/module.php')) ?: [],
+        ], config('navigation.sections')));
+
+        $this->app->bind(ModuleAvailability::class, ConfiguredModuleAvailability::class);
     }
 
     /**
