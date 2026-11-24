@@ -153,6 +153,10 @@ export function MainNavigation() {
                     />
                 );
 
+                if (section.label === null) {
+                    return <SidebarGroup key={key}>{menu}</SidebarGroup>;
+                }
+
                 // Icon mode hides section headings, so items stay accessible until the sidebar expands again.
                 const isOpen = isIconCollapsed || !collapsedSections.includes(key);
 

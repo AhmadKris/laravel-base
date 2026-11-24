@@ -619,10 +619,84 @@ export interface components {
         UpdateNavigationLayoutRequest: {
             sections: {
                 key: string;
-                label: string;
+                label: string | null;
                 items: {
                     key: string;
                     label?: string | null;
+                    /** @enum {string|null} */
+                    icon:
+                        | 'activity'
+                        | 'archive'
+                        | 'banknote'
+                        | 'barcode'
+                        | 'bell'
+                        | 'book-open'
+                        | 'box'
+                        | 'boxes'
+                        | 'briefcase'
+                        | 'building'
+                        | 'building-2'
+                        | 'calculator'
+                        | 'calendar'
+                        | 'calendar-days'
+                        | 'car'
+                        | 'chart-column'
+                        | 'chart-line'
+                        | 'chart-pie'
+                        | 'clipboard-check'
+                        | 'clipboard-list'
+                        | 'clock'
+                        | 'contact'
+                        | 'credit-card'
+                        | 'database'
+                        | 'factory'
+                        | 'file-text'
+                        | 'files'
+                        | 'folder'
+                        | 'folder-open'
+                        | 'gauge'
+                        | 'globe'
+                        | 'graduation-cap'
+                        | 'hammer'
+                        | 'handshake'
+                        | 'heart-pulse'
+                        | 'house'
+                        | 'id-card'
+                        | 'inbox'
+                        | 'key'
+                        | 'landmark'
+                        | 'layers'
+                        | 'layout-dashboard'
+                        | 'list-checks'
+                        | 'lock'
+                        | 'mail'
+                        | 'map'
+                        | 'map-pin'
+                        | 'megaphone'
+                        | 'message-square'
+                        | 'package'
+                        | 'percent'
+                        | 'phone'
+                        | 'printer'
+                        | 'qr-code'
+                        | 'receipt'
+                        | 'scroll-text'
+                        | 'server'
+                        | 'settings'
+                        | 'shield-check'
+                        | 'shopping-bag'
+                        | 'shopping-cart'
+                        | 'store'
+                        | 'tag'
+                        | 'tags'
+                        | 'truck'
+                        | 'user'
+                        | 'user-cog'
+                        | 'users'
+                        | 'wallet'
+                        | 'warehouse'
+                        | 'wrench'
+                        | null;
                     hidden: boolean;
                 }[];
             }[];
@@ -1193,6 +1267,7 @@ export interface operations {
                             | {
                                   sections: unknown[];
                                   items: unknown[];
+                                  icons: string[];
                                   default: unknown[];
                                   version: number;
                               };
@@ -1230,6 +1305,7 @@ export interface operations {
                             | {
                                   sections: unknown[];
                                   items: unknown[];
+                                  icons: string[];
                                   default: unknown[];
                                   version: number;
                               };

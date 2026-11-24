@@ -14,9 +14,9 @@ const DEFAULT_SECTIONS: LayoutSection[] = [
         key: 'administration',
         label: 'Administrasi',
         items: [
-            { key: 'users', label: null, hidden: false },
-            { key: 'roles', label: null, hidden: false },
-            { key: 'settings', label: null, hidden: false },
+            { key: 'users', label: null, icon: null, hidden: false },
+            { key: 'roles', label: null, icon: null, hidden: false },
+            { key: 'settings', label: null, icon: null, hidden: false },
         ],
     },
 ];
@@ -53,6 +53,7 @@ function makeLayout(sections: LayoutSection[] = DEFAULT_SECTIONS, version = 1): 
                 module_enabled: true,
             },
         ],
+        icons: ['contact', 'key', 'shield-check', 'users', 'warehouse'],
         default: DEFAULT_SECTIONS,
         version,
     };
@@ -164,15 +165,108 @@ describe('menu settings', () => {
                         key: 'administration',
                         label: 'Admin',
                         items: [
-                            { key: 'roles', label: 'Hak akses', hidden: false },
-                            { key: 'users', label: null, hidden: true },
-                            { key: 'settings', label: null, hidden: false },
+                            { key: 'roles', label: 'Hak akses', icon: null, hidden: false },
+                            { key: 'users', label: null, icon: null, hidden: true },
+                            { key: 'settings', label: null, icon: null, hidden: false },
                         ],
                     },
                 ],
                 version: 1,
             },
         ]);
+    });
+
+    it('picks an icon by searching and returns to the registered icon', async () => {
+        asUser(SUPER_ADMIN);
+        const user = userEvent.setup();
+        await openMenuTab();
+
+        await user.click(screen.getByRole('button', { name: 'Ikon menu Role: Perisai' }));
+        await user.type(screen.getByLabelText('Cari ikon'), 'akses');
+
+        const options = screen.getByRole('group', { name: 'Pilihan ikon untuk menu Role' });
+        expect(
+            within(options)
+                .getAllByRole('button')
+                .map((button) => button.title),
+        ).toEqual(['Kunci']);
+
+        await user.keyboard('{Enter}');
+
+        expect(screen.getByRole('button', { name: 'Ikon menu Role: Kunci' })).toHaveFocus();
+
+        await user.click(
+            screen.getByRole('button', { name: 'Ikon menu Pengguna: Kelompok orang' }),
+        );
+        await user.click(screen.getByRole('button', { name: 'Kontak' }));
+        await user.click(screen.getByRole('button', { name: 'Ikon menu Pengguna: Kontak' }));
+        await user.click(screen.getByRole('button', { name: 'Pakai ikon bawaan' }));
+        await user.click(screen.getByRole('button', { name: 'Simpan menu' }));
+
+        await waitFor(() => expect(saved).toHaveLength(1));
+        expect(saved[0].sections[0].items).toEqual([
+            { key: 'users', label: null, icon: null, hidden: false },
+            { key: 'roles', label: null, icon: 'key', hidden: false },
+            { key: 'settings', label: null, icon: null, hidden: false },
+        ]);
+    });
+
+    it('explains when no icon matches the search', async () => {
+        asUser(SUPER_ADMIN);
+        const user = userEvent.setup();
+        await openMenuTab();
+
+        await user.click(screen.getByRole('button', { name: 'Ikon menu Role: Perisai' }));
+        await user.type(screen.getByLabelText('Cari ikon'), 'pesawat');
+
+        expect(screen.getByText('Tidak ada ikon yang cocok dengan "pesawat".')).toBeVisible();
+    });
+
+    it('collapses a section to a summary and expands it again', async () => {
+        asUser(SUPER_ADMIN);
+        const user = userEvent.setup();
+        await openMenuTab();
+
+        await user.click(screen.getByRole('checkbox', { name: 'Tampilkan menu Pengguna' }));
+        await user.click(screen.getByRole('button', { name: 'Ciutkan bagian Administrasi' }));
+
+        expect(screen.queryByRole('textbox', { name: 'Label menu Role' })).not.toBeInTheDocument();
+        expect(screen.getByText('3 item, 1 disembunyikan')).toBeVisible();
+        expect(screen.getByRole('textbox', { name: 'Nama bagian' })).toBeVisible();
+
+        await user.click(screen.getByRole('button', { name: 'Bentangkan bagian Administrasi' }));
+
+        expect(screen.getByRole('textbox', { name: 'Label menu Role' })).toBeVisible();
+    });
+
+    it('collapses every section at once and opens a section whose item the server rejects', async () => {
+        asUser(SUPER_ADMIN);
+        server.use(
+            http.put('*/api/v1/navigation/layout', () =>
+                HttpResponse.json(
+                    {
+                        success: false,
+                        message: 'Data tidak valid.',
+                        code: 'VALIDATION_ERROR',
+                        errors: { 'sections.0.items.1.label': ['Label maksimal 50 karakter.'] },
+                    },
+                    { status: 422 },
+                ),
+            ),
+        );
+        const user = userEvent.setup();
+        await openMenuTab();
+
+        await user.click(screen.getByRole('button', { name: 'Tambah bagian' }));
+        await user.click(screen.getByRole('button', { name: 'Ciutkan semua bagian' }));
+
+        expect(screen.queryByRole('textbox', { name: 'Label menu Role' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Bentangkan semua bagian' })).toBeVisible();
+
+        await user.click(screen.getByRole('button', { name: 'Simpan menu' }));
+
+        expect(await screen.findByText('Label maksimal 50 karakter.')).toBeVisible();
+        expect(screen.getByRole('textbox', { name: 'Label menu Role' })).toBeVisible();
     });
 
     it('adds a section, moves an item there, and deletes only empty sections', async () => {
@@ -197,17 +291,25 @@ describe('menu settings', () => {
         expect(screen.getByRole('button', { name: 'Simpan menu' })).toBeEnabled();
     });
 
-    it('requires a section name before calling the server', async () => {
+    it('saves a section without a name so its items show without a heading', async () => {
         asUser(SUPER_ADMIN);
         const user = userEvent.setup();
         const sectionName = await openMenuTab();
 
         await user.clear(sectionName);
+
+        expect(sectionName).toHaveAccessibleDescription(
+            'Tanpa judul: item di bagian ini tampil langsung di menu, sejajar dengan Beranda.',
+        );
+        const preview = screen.getByRole('complementary', { name: 'Pratinjau menu' });
+        expect(within(preview).queryByText('Administrasi')).not.toBeInTheDocument();
+        expect(within(preview).getByText('Pengguna')).toBeVisible();
+
+        await user.type(sectionName, '   ');
         await user.click(screen.getByRole('button', { name: 'Simpan menu' }));
 
-        expect(await screen.findByText('Nama bagian wajib diisi.')).toBeVisible();
-        expect(sectionName).toHaveAttribute('aria-invalid', 'true');
-        expect(saved).toEqual([]);
+        await waitFor(() => expect(saved).toHaveLength(1));
+        expect(saved[0].sections[0].label).toBeNull();
     });
 
     it('returns to the default arrangement', async () => {
@@ -220,9 +322,9 @@ describe('menu settings', () => {
                             key: 'custom',
                             label: 'Kustom',
                             items: [
-                                { key: 'settings', label: null, hidden: false },
-                                { key: 'users', label: 'Akun', hidden: false },
-                                { key: 'roles', label: null, hidden: false },
+                                { key: 'settings', label: null, icon: null, hidden: false },
+                                { key: 'users', label: 'Akun', icon: 'contact', hidden: false },
+                                { key: 'roles', label: null, icon: null, hidden: false },
                             ],
                         },
                     ]),

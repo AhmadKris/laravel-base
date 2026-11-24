@@ -1074,16 +1074,18 @@ Item menu dan modul didaftarkan oleh kode (lihat `DEVELOPMENT_GUIDELINE.md` bagi
 ```
 
 - Item disaring berdasarkan permission user, modul yang aktif, dan status tersembunyi. Bagian tanpa item tidak dikembalikan.
+- Bagian dengan `label` bernilai `null` tidak memiliki judul. Itemnya ditampilkan langsung, sejajar dengan Beranda.
 - `modules` berisi key modul yang aktif, agar client dapat menyembunyikan bagian UI milik modul yang nonaktif, misalnya lonceng notifikasi.
 - Beranda tidak termasuk dalam menu ini karena selalu tampil paling atas.
 
-`GET /navigation/layout` mengembalikan `sections` (susunan tersimpan, dengan `label` item berisi label pengganti atau `null` dan `hidden` berupa boolean), `items` (seluruh item terdaftar dengan `key`, `module`, `label` bawaan, `path`, `icon`, `can_hide`, dan `module_enabled`), `default` (susunan bawaan dengan bentuk yang sama dengan `sections`), dan `version`.
+`GET /navigation/layout` mengembalikan `sections` (susunan tersimpan, dengan `label` item berisi label pengganti atau `null`, `icon` berisi ikon pengganti atau `null`, dan `hidden` berupa boolean), `items` (seluruh item terdaftar dengan `key`, `module`, `label` bawaan, `path`, `icon`, `can_hide`, dan `module_enabled`), `icons` (nama ikon yang boleh dipilih), `default` (susunan bawaan dengan bentuk yang sama dengan `sections`), dan `version`.
 
 `PUT /navigation/layout` menerima `sections` dan `version`, lalu mengganti seluruh susunan:
 
 - Setiap item terdaftar muncul tepat satu kali. Item yang tidak dikenal ditolak.
-- `key` bagian unik dengan pola `^[a-z0-9-]{1,50}$`, `label` bagian wajib dan maksimal 50 karakter, dan jumlah bagian maksimal 20. Bagian boleh kosong.
+- `key` bagian unik dengan pola `^[a-z0-9-]{1,50}$`, `label` bagian wajib dikirim, berisi teks maksimal 50 karakter atau `null` (teks kosong dianggap `null`), dan jumlah bagian maksimal 20. Bagian boleh kosong.
 - `label` item boleh `null` untuk memakai label bawaan, atau teks maksimal 50 karakter.
+- `icon` item wajib dikirim, berisi `null` untuk memakai ikon bawaan atau salah satu nama di `icons`. Daftar ini diatur di `config/navigation.php`. Ikon tersimpan yang kemudian dihapus dari daftar kembali ke ikon bawaan.
 - Item dengan `can_hide` bernilai `false`, yaitu Pengaturan, tidak dapat disembunyikan.
 - Item yang ditambahkan oleh modul setelah susunan disimpan otomatis tampil di bagian bawaannya, di urutan terakhir.
 

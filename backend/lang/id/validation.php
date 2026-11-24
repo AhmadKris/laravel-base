@@ -60,6 +60,7 @@ return [
         'sections.*.key' => 'kunci bagian',
         'sections.*.label' => 'nama bagian',
         'sections.*.items.*.label' => 'label item',
+        'sections.*.items.*.icon' => 'ikon item',
         'action' => 'aksi',
         'code' => 'kode',
         'company.address' => 'alamat perusahaan',

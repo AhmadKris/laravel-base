@@ -29,7 +29,7 @@ function withSampleModule(): void
 }
 
 /**
- * @param  list<array{key: string, label: string, items: list<array{key: string, label: string|null, hidden: bool}>}>  $sections
+ * @param  list<array{key: string, label: string, items: list<array<string, mixed>>}>  $sections
  */
 function storeLayout(array $sections): void
 {
@@ -38,11 +38,11 @@ function storeLayout(array $sections): void
 
 /**
  * @param  list<string>  $keys
- * @return list<array{key: string, label: null, hidden: bool}>
+ * @return list<array{key: string, label: null, icon: null, hidden: bool}>
  */
 function layoutItems(array $keys, array $hidden = []): array
 {
-    return array_map(fn (string $key): array => ['key' => $key, 'label' => null, 'hidden' => in_array($key, $hidden, true)], $keys);
+    return array_map(fn (string $key): array => ['key' => $key, 'label' => null, 'icon' => null, 'hidden' => in_array($key, $hidden, true)], $keys);
 }
 
 function putLayout(mixed $test, User $actor, array $sections, int $version = 1): mixed
@@ -105,6 +105,26 @@ it('follows the stored arrangement, labels, and hidden items', function () {
         ->assertJsonPath('data.sections.1.items.*.key', ['settings', 'users']);
 });
 
+it('shows the chosen icon and falls back to the registered one for an icon no longer allowed', function () {
+    storeLayout([
+        ['key' => 'administration', 'label' => 'Administrasi', 'items' => [
+            ['key' => 'users', 'label' => null, 'icon' => 'contact', 'hidden' => false],
+            ['key' => 'roles', 'label' => null, 'icon' => 'removed-icon', 'hidden' => false],
+            ...layoutItems(['audit-logs', 'settings']),
+        ]],
+    ]);
+
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/navigation')
+        ->assertOk()
+        ->assertJsonPath('data.sections.0.items.*.icon', ['contact', 'shield-check', 'scroll-text', 'settings']);
+
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/navigation/layout')
+        ->assertOk()
+        ->assertJsonPath('data.sections.0.items.*.icon', ['contact', null, null, null]);
+});
+
 it('places items registered after the layout was saved at the end of their default section', function () {
     withSampleModule();
     storeLayout([
@@ -138,6 +158,7 @@ it('gives the editor the layout, the registered items, the default, and the vers
         ->assertOk()
         ->assertJsonPath('data.version', 1)
         ->assertJsonPath('data.sections.0.items', layoutItems(['users', 'roles', 'audit-logs', 'settings']))
+        ->assertJsonPath('data.icons', config('navigation.icons'))
         ->assertJsonPath('data.default', [['key' => 'administration', 'label' => 'Administrasi', 'items' => layoutItems(['users', 'roles', 'audit-logs', 'settings'])]])
         ->assertJsonPath('data.items.3', [
             'key' => 'settings',
@@ -154,8 +175,8 @@ it('saves a new arrangement and records the change', function () {
     $sections = [
         ['key' => 'administration', 'label' => 'Administrasi', 'items' => layoutItems(['settings', 'users'])],
         ['key' => 'security', 'label' => 'Keamanan', 'items' => [
-            ['key' => 'roles', 'label' => 'Hak akses', 'hidden' => false],
-            ['key' => 'audit-logs', 'label' => null, 'hidden' => true],
+            ['key' => 'roles', 'label' => 'Hak akses', 'icon' => 'key', 'hidden' => false],
+            ['key' => 'audit-logs', 'label' => null, 'icon' => null, 'hidden' => true],
         ]],
     ];
 
@@ -168,6 +189,26 @@ it('saves a new arrangement and records the change', function () {
     expect(SystemConfiguration::storedValue(SystemConfiguration::NAVIGATION_LAYOUT))->toEqual($sections)
         ->and(Activity::query()->where('event', 'system.configuration_updated')->sole()->properties['key'])
         ->toBe('navigation.layout');
+});
+
+it('keeps a section without a name, whose items show without a heading', function () {
+    $sections = [
+        ['key' => 'bagian-2', 'label' => '', 'items' => layoutItems(['users'])],
+        ['key' => 'administration', 'label' => 'Administrasi', 'items' => layoutItems(['roles', 'audit-logs', 'settings'])],
+    ];
+
+    putLayout($this, $this->superAdmin, $sections)
+        ->assertOk()
+        ->assertJsonPath('data.sections.0.label', null);
+
+    $this->actingAs($this->superAdmin)
+        ->getJson('/api/v1/navigation')
+        ->assertOk()
+        ->assertJsonPath('data.sections.0', [
+            'key' => 'bagian-2',
+            'label' => null,
+            'items' => [['key' => 'users', 'label' => 'Pengguna', 'path' => '/users', 'icon' => 'users']],
+        ]);
 });
 
 it('rejects a stale version', function () {
@@ -223,16 +264,34 @@ it('validates the arrangement', function (array $sections, string $field, ?strin
         [['key' => 'Admin Area', 'label' => 'Administrasi', 'items' => layoutItems(['users', 'roles', 'audit-logs', 'settings'])]],
         'sections.0.key',
     ],
-    'section without a label' => [
-        [['key' => 'administration', 'label' => '', 'items' => layoutItems(['users', 'roles', 'audit-logs', 'settings'])]],
+    'section label too long' => [
+        [['key' => 'administration', 'label' => str_repeat('a', 51), 'items' => layoutItems(['users', 'roles', 'audit-logs', 'settings'])]],
+        'sections.0.label',
+    ],
+    'section without a label field' => [
+        [['key' => 'administration', 'items' => layoutItems(['users', 'roles', 'audit-logs', 'settings'])]],
         'sections.0.label',
     ],
     'item label too long' => [
         [['key' => 'administration', 'label' => 'Administrasi', 'items' => [
-            ['key' => 'users', 'label' => str_repeat('a', 51), 'hidden' => false],
+            ['key' => 'users', 'label' => str_repeat('a', 51), 'icon' => null, 'hidden' => false],
             ...layoutItems(['roles', 'audit-logs', 'settings']),
         ]]],
         'sections.0.items.0.label',
+    ],
+    'icon outside the allowed list' => [
+        [['key' => 'administration', 'label' => 'Administrasi', 'items' => [
+            ['key' => 'users', 'label' => null, 'icon' => 'skull', 'hidden' => false],
+            ...layoutItems(['roles', 'audit-logs', 'settings']),
+        ]]],
+        'sections.0.items.0.icon',
+    ],
+    'item without an icon field' => [
+        [['key' => 'administration', 'label' => 'Administrasi', 'items' => [
+            ['key' => 'users', 'label' => null, 'hidden' => false],
+            ...layoutItems(['roles', 'audit-logs', 'settings']),
+        ]]],
+        'sections.0.items.0.icon',
     ],
     'too many sections' => [
         array_map(fn (int $index): array => ['key' => "section-{$index}", 'label' => 'Bagian', 'items' => []], range(1, 21)),

@@ -646,7 +646,7 @@ Aturan:
 
 1. `key` modul dan key item menu unik di seluruh aplikasi, memakai huruf kecil, angka, garis bawah, atau tanda hubung.
 2. `core` bernilai `true` untuk modul yang dibutuhkan agar aplikasi dapat dikelola. Modul opsional memasang middleware `module:{key}` pada seluruh route-nya dan memeriksa `ModuleAvailability` sebelum membuat data dari listener atau job.
-3. `icon` adalah nama ikon Lucide dalam format kebab-case yang terdaftar di `frontend/src/components/layouts/navigationIcons.tsx`. Ikon yang tidak terdaftar ditampilkan dengan ikon bawaan.
+3. `icon` adalah nama ikon Lucide dalam format kebab-case yang terdaftar di `frontend/src/components/layouts/navigationIconSet.ts`. Ikon yang tidak terdaftar ditampilkan dengan ikon bawaan. Ikon yang boleh dipilih admin di editor menu diatur di `icons` pada `backend/config/navigation.php`. Ikon yang ditambahkan ke daftar itu juga ditambahkan ke `navigationIconSet.ts` beserta label dan kata kunci pencarian dalam Bahasa Indonesia.
 4. `permission` sama dengan permission yang melindungi halaman tersebut. Kosongkan hanya untuk halaman yang dapat dibuka semua user yang login.
 5. `section` merujuk ke key di `config/navigation.php`. `position` menentukan urutan bawaan di dalam bagian.
 6. `can_hide` bernilai `true` jika tidak diisi. Isi `false` untuk halaman yang dibutuhkan admin agar tidak terkunci dari pengaturan.

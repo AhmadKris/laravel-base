@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\SystemConfiguration\Requests;
 
 use App\Core\Modules\ModuleCatalog;
+use App\Modules\SystemConfiguration\Services\NavigationLayout;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 final class UpdateNavigationLayoutRequest extends FormRequest
@@ -20,11 +22,12 @@ final class UpdateNavigationLayoutRequest extends FormRequest
             'sections' => ['required', 'array', 'list', 'max:20'],
             'sections.*' => ['array:key,label,items'],
             'sections.*.key' => ['required', 'string', 'regex:/^[a-z0-9-]{1,50}$/', 'distinct'],
-            'sections.*.label' => ['required', 'string', 'max:50'],
+            'sections.*.label' => ['present', 'nullable', 'string', 'max:50'],
             'sections.*.items' => ['present', 'array', 'list'],
-            'sections.*.items.*' => ['array:key,label,hidden'],
+            'sections.*.items.*' => ['array:key,label,icon,hidden'],
             'sections.*.items.*.key' => ['required', 'string', 'distinct'],
             'sections.*.items.*.label' => ['nullable', 'string', 'max:50'],
+            'sections.*.items.*.icon' => ['present', 'nullable', 'string', Rule::in(NavigationLayout::icons())],
             'sections.*.items.*.hidden' => ['required', 'boolean:strict'],
             'version' => ['required', 'integer', 'min:1'],
         ];
@@ -47,7 +50,7 @@ final class UpdateNavigationLayoutRequest extends FormRequest
         $items = app(ModuleCatalog::class)->menuItems();
         $placed = [];
 
-        /** @var list<array{key: string, label: string, items: list<array{key: string, label: string|null, hidden: bool}>}> $sections */
+        /** @var list<array{key: string, label: string|null, items: list<array{key: string, label: string|null, icon: string|null, hidden: bool}>}> $sections */
         $sections = $this->input('sections');
 
         foreach ($sections as $sectionIndex => $section) {

@@ -12,8 +12,8 @@ use App\Shared\Contracts\ModuleAvailability;
 /**
  * Combines the menu items registered in code with the arrangement stored by administrators.
  *
- * @phpstan-type LayoutItem array{key: string, label: string|null, hidden: bool}
- * @phpstan-type LayoutSection array{key: string, label: string, items: list<LayoutItem>}
+ * @phpstan-type LayoutItem array{key: string, label: string|null, icon: string|null, hidden: bool}
+ * @phpstan-type LayoutSection array{key: string, label: string|null, items: list<LayoutItem>}
  */
 final readonly class NavigationLayout
 {
@@ -43,9 +43,11 @@ final readonly class NavigationLayout
         $placed = [];
 
         foreach (is_array($stored) ? $stored : [] as $section) {
-            if (! is_array($section) || ! is_string($section['key'] ?? null) || ! is_string($section['label'] ?? null)) {
+            if (! is_array($section) || ! is_string($section['key'] ?? null)) {
                 continue;
             }
+
+            $label = $section['label'] ?? null;
 
             $entries = [];
 
@@ -56,15 +58,18 @@ final readonly class NavigationLayout
                     continue;
                 }
 
+                $icon = $entry['icon'] ?? null;
                 $placed[$key] = true;
                 $entries[] = [
                     'key' => $key,
                     'label' => is_string($entry['label'] ?? null) ? $entry['label'] : null,
+                    // An icon removed from the allowed list falls back to the one the module registers.
+                    'icon' => is_string($icon) && in_array($icon, self::icons(), true) ? $icon : null,
                     'hidden' => ($entry['hidden'] ?? false) === true && $items[$key]->canHide,
                 ];
             }
 
-            $sections[$section['key']] = ['key' => $section['key'], 'label' => $section['label'], 'items' => $entries];
+            $sections[$section['key']] = ['key' => $section['key'], 'label' => is_string($label) ? $label : null, 'items' => $entries];
         }
 
         foreach ($items as $key => $item) {
@@ -73,16 +78,28 @@ final readonly class NavigationLayout
             }
 
             $sections[$item->section] ??= ['key' => $item->section, 'label' => $this->catalog->sections()[$item->section], 'items' => []];
-            $sections[$item->section]['items'][] = ['key' => $key, 'label' => null, 'hidden' => false];
+            $sections[$item->section]['items'][] = ['key' => $key, 'label' => null, 'icon' => null, 'hidden' => false];
         }
 
         return array_values($sections);
     }
 
     /**
-     * The menu a user sees: visible items of enabled modules they have the permission for.
+     * Icons administrators may choose for a menu item.
      *
-     * @return list<array{key: string, label: string, items: list<array{key: string, label: string, path: string, icon: string}>}>
+     * @return list<string>
+     */
+    public static function icons(): array
+    {
+        /** @var list<string> */
+        return config('navigation.icons');
+    }
+
+    /**
+     * The menu a user sees: visible items of enabled modules they have the permission for. A section
+     * without a label shows its items without a heading.
+     *
+     * @return list<array{key: string, label: string|null, items: list<array{key: string, label: string, path: string, icon: string}>}>
      */
     public function forUser(User $user, mixed $stored): array
     {
@@ -100,7 +117,7 @@ final readonly class NavigationLayout
                     continue;
                 }
 
-                $visible[] = ['key' => $item->key, 'label' => $entry['label'] ?? $item->label, 'path' => $item->path, 'icon' => $item->icon];
+                $visible[] = ['key' => $item->key, 'label' => $entry['label'] ?? $item->label, 'path' => $item->path, 'icon' => $entry['icon'] ?? $item->icon];
             }
 
             if ($visible !== []) {
@@ -114,7 +131,7 @@ final readonly class NavigationLayout
     /**
      * Everything the menu editor needs.
      *
-     * @return array{sections: list<LayoutSection>, items: list<array<string, mixed>>, default: list<LayoutSection>, version: int}
+     * @return array{sections: list<LayoutSection>, items: list<array<string, mixed>>, icons: list<string>, default: list<LayoutSection>, version: int}
      */
     public function editor(mixed $stored, int $version): array
     {
@@ -131,6 +148,7 @@ final readonly class NavigationLayout
                 'can_hide' => $item->canHide,
                 'module_enabled' => in_array($item->module, $enabled, true),
             ], $this->catalog->menuItems())),
+            'icons' => self::icons(),
             'default' => $this->default(),
             'version' => $version,
         ];

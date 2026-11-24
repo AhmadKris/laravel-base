@@ -62,7 +62,8 @@ export interface MenuItem {
 
 export interface MenuSection {
     key: string;
-    label: string;
+    /** Null for a section whose items show without a heading. */
+    label: string | null;
     items: MenuItem[];
 }
 
@@ -76,12 +77,15 @@ export interface LayoutItem {
     key: string;
     /** A replacement label, or null for the label the module registers. */
     label: string | null;
+    /** A replacement icon, or null for the icon the module registers. */
+    icon: string | null;
     hidden: boolean;
 }
 
 export interface LayoutSection {
     key: string;
-    label: string;
+    /** Null for a section whose items show without a heading. */
+    label: string | null;
     items: LayoutItem[];
 }
 
@@ -98,6 +102,8 @@ export interface RegisteredMenuItem {
 export interface NavigationLayout {
     sections: LayoutSection[];
     items: RegisteredMenuItem[];
+    /** Icon names administrators may choose. */
+    icons: string[];
     default: LayoutSection[];
     version: number;
 }

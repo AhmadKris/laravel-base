@@ -113,6 +113,19 @@ it('follows the sections, order, and labels the backend returns', async () => {
     expect(screen.getByRole('button', { name: 'Keamanan' })).toBeInTheDocument();
 });
 
+it('shows the items of a section without a name directly, without a heading', async () => {
+    server.use(
+        http.get('*/api/v1/navigation', () =>
+            serveMenu([{ ...USERS_SECTION, key: 'bagian-2', label: null }]),
+        ),
+    );
+
+    await renderLayout(['user.view']);
+
+    expect(menuLabels()).toEqual(['Beranda', 'Pengguna']);
+    expect(screen.queryByRole('button', { name: 'Administrasi' })).not.toBeInTheDocument();
+});
+
 it('keeps home and offers a retry when the menu cannot load', async () => {
     let attempts = 0;
     server.use(
